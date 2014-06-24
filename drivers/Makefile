@@ -4,6 +4,9 @@ endif
 ifneq (,$(filter netdev_802154,$(USEMODULE)))
     DIRS += netdev/802154
 endif
+ifneq (,$(filter pdc8544,$(USEMODULE)))
+    DIRS += pdc8544
+endif
 
 DIRS += $(dir $(wildcard $(addsuffix /Makefile, ${USEMODULE})))
 
