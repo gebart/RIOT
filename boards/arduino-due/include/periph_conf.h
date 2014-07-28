@@ -81,6 +81,25 @@
 
 
 /**
+ * @name PWM configuration
+ * @{
+ */
+#define PWM_NUMOF           (1U)
+#define PWM_0_EN            1
+#define PWM_MAX_CHANNELS    8
+
+/* PWM 0 device configuration */
+#define PWM_0_DEV           PWM
+#define PWM_0_CLKEN()       (PMC->PMC_PCER1 = (1 << ID_PWM))
+#define PWM_0_CLKDIS()      (PMC->PMC_PCDR1 = (1 << ID_PWM))
+/* PWM 0 pin configuration */
+#define PWM_0_PORT          PIOC
+#define PWM_0_PINS          (PIO_PC2 | PIO_PC4 | PIO_PC6 | PIO_PC8 |
+                             PIO_PC21 | PIO_PC22 | PIO_PC23 | PIO_PC24)
+/** @} */
+
+
+/**
  * @name GPIO configuration
  * @{
  */
