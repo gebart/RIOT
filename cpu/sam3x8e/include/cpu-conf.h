@@ -48,5 +48,8 @@
 /** @} */
 
 
+#define CPUID_LENGTH                    (128U)
+
+
 #endif /* __CPU_CONF_H */
 /** @} */
