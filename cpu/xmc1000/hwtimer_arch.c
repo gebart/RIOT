@@ -7,7 +7,7 @@
  */
 
 /**
- * @ingroup     cpu_stm32f0
+ * @ingroup     cpu_xmc1000
  * @{
  *
  * @file
@@ -69,5 +69,4 @@ unsigned long hwtimer_arch_now(void)
 void irq_handler(int channel)
 {
     timeout_handler((short)(channel));
-    thread_yield();
 }

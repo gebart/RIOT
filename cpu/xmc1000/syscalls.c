@@ -7,11 +7,11 @@
  */
 
 /**
- * @ingroup     cpu_stm32f0
+ * @ingroup     cpu_xmc1000
  * @{
  *
  * @file
- * @brief       NewLib system calls implementations for STM32F0
+ * @brief       NewLib system calls implementations for XMC1000
  *
  * @author      Michael Baar <michael.baar@fu-berlin.de>
  * @author      Stefan Pfeiffer <pfeiffer@inf.fu-berlin.de>
@@ -46,7 +46,7 @@ caddr_t heap_top = (caddr_t)&_end + 4;
  */
 void _init(void)
 {
-    uart_init_blocking(STDIO, 115200);
+    uart_init_blocking(STDIO, STDIO_BAUDRATE);
 }
 
 /**

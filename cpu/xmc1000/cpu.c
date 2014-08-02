@@ -7,7 +7,7 @@
  */
 
 /**
- * @ingroup     cpu_stm32f0
+ * @ingroup     cpu_xmc1000
  * @{
  *
  * @file
@@ -40,5 +40,17 @@ void cpu_init(void)
  */
 static void clock_init(void)
 {
-
+    /* disable bit protection for clock register */
+    SCU_GENERAL->PASSWD = 0x000000C0;
+    /* reset clock register */
+    SCU_CLOCK->CLKCR &= ~(SCU_CLOCK_CLKCR_FDIV_Msk | SCU_CLOCK_CLKCR_IDIV_Msk |
+                          SCU_CLOCK_CLKCR_PCLKSEL_Msk);
+    /* set clock values */
+    SCU_CLOCK->CLKCR |= ((CLOCK_IDIV & 0xff) << SCU_CLOCK_CLKCR_IDIV_Pos) |
+                        ((CLOCK_FDIV & 0xff) << SCU_CLOCK_CLKCR_FDIV_Pos) |
+                        ((CLOCK_PCLK_MUL2 & 0x1) << SCU_CLOCK_CLKCR_RTCCLKSEL_Pos);
+    /* wait for new value to be stable */
+    while (SCU_CLOCK->CLKCR & SCU_CLOCK_CLKCR_VDDC2LOW_Msk);
+    /* enable bit protection for clock register */
+    SCU_GENERAL->PASSWD = 0x000000C3;
 }

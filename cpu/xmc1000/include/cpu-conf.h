@@ -7,8 +7,8 @@
  */
 
 /**
- * @defgroup        cpu_stm32f0 STM32F0
- * @brief           STM32F0 specific code
+ * @defgroup        cpu_xmc1000 XMC1000 family
+ * @brief           XMC1000 specific code
  * @ingroup         cpu
  * @{
  *
@@ -21,8 +21,8 @@
 #ifndef __CPU_CONF_H
 #define __CPU_CONF_H
 
-#ifdef CPU_MODEL_STM32F051R8
-#include "stm32f051x8.h"
+#ifdef CPU_MODEL_XMC1100
+#include "xmc1100.h"
 #endif
 
 
@@ -35,10 +35,10 @@
  * TODO: measure and adjust for the Cortex-M0
  * @{
  */
-#define KERNEL_CONF_STACKSIZE_PRINTF    (512)
+#define KERNEL_CONF_STACKSIZE_PRINTF    (768)
 
 #ifndef KERNEL_CONF_STACKSIZE_DEFAULT
-#define KERNEL_CONF_STACKSIZE_DEFAULT   (512)
+#define KERNEL_CONF_STACKSIZE_DEFAULT   (768)
 #endif
 
 #define KERNEL_CONF_STACKSIZE_IDLE      (192)
