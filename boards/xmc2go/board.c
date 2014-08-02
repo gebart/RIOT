@@ -7,11 +7,11 @@
  */
 
 /**
- * @ingroup     board_stm32f0discovery
+ * @ingroup     board_xmc2go
  * @{
  *
  * @file
- * @brief       Board specific implementations for the STM32F0Discovery evaluation board
+ * @brief       Board specific implementations for the xmc2go board
  *
  * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
  *
@@ -34,17 +34,21 @@ void board_init(void)
 }
 
 /**
- * @brief Initialize the boards on-board LEDs (LD3 and LD4)
+ * @brief Initialize the boards on-board LEDs (LED1 and LED2)
  *
  * The LED initialization is hard-coded in this function. As the LEDs are soldered
  * onto the board they are fixed to their CPU pins.
  *
  * The LEDs are connected to the following pins:
- * - LD3: PC8
- * - LD4: PC9
+ * - LED1: P1.1
+ * - LED2: P1.0
  */
-void leds_init(void)
+static void leds_init(void)
 {
-    /* enable clock for port GPIOC */
-    LED_PORT->IOCR0 =
+    /* set pin function to push-pull general purpose output */
+    LED_PORT->IOCR0 &= ~(PORT1_IOCR0_PC0_Msk | PORT1_IOCR0_PC1_Msk);
+    LED_PORT->IOCR0 |= (0x10 << PORT1_IOCR0_PC0_Pos) | (0x10 << PORT1_IOCR0_PC1_Pos);
+
+    /* turn LEDs off (high-active) */
+    LED_PORT->OMR = (1 << LED1_PIN) | (1 << LED2_PIN);
 }
