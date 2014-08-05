@@ -18,18 +18,17 @@
  * @}
  */
 #include <stdio.h>
+
 #include "cpu.h"
 #include "periph/spi.h"
-#include "periph/gpio.h"
 #include "periph_conf.h"
 #include "thread.h"
 #include "sched.h"
-#include "stm32f407xx.h"
 
 #define ENABLE_DEBUG (0)
 #include "debug.h"
 
-#define with_gpio_stuff    1
+#if SPI_NUMOF
 
 
 typedef struct {
@@ -39,7 +38,7 @@ typedef struct {
 static inline void irq_handler_transfer(SPI_TypeDef *spi, spi_t dev);
 static inline void irq_handler_begin(spi_t dev);
 
-static spi_state_t config[SPI_NUMOF];
+static spi_state_t spi_config[SPI_NUMOF];
 
 static char byte_begin = 0xab;
 
@@ -53,37 +52,26 @@ int spi_init_master(spi_t dev, spi_conf_t conf, spi_speed_t speed)
     SPI_TypeDef *spi_port = 0;
 
     switch (speed) {
-        case 0:
+
+        case SPI_SPEED_400KHZ:
             speed_devider = 7; // makes 656 kHz
             break;
 
-        case 1:
-            speed_devider = 7; // makes 656 kHz
-            break;
-
-        case 2:
+        case SPI_SPEED_1MHZ:
             speed_devider = 6; // makes 1.3 MHz
             break;
 
-        case 3:
-            speed_devider = 5; // makes 2.6 MHz
-            break;
-
-        case 4:
+        case SPI_SPEED_5MHZ:
             speed_devider = 4; // makes 5.3 MHz
             break;
 
-        /*	    case 5: speed_devider = 3; // makes 11 MHz
-                        break;
-        	    case 6: speed_devider = 2; // makes 21 MHz
-                        break;
-        	    case 7: speed_devider = 1; // makes 42 MHz
-                        break;
-                case 8: speed_devider = 0; // makes 84 MHz
-                        break;
-        */
+        case SPI_SPEED_10MHZ:
+            speed_devider = 3; // makes 10.5 MHz
+            break;
+            
         default:
-            speed_devider = 7;
+            return -2;
+            break;
     }
 
     switch (dev) {
@@ -95,14 +83,12 @@ int spi_init_master(spi_t dev, spi_conf_t conf, spi_speed_t speed)
 
             /***************** GPIO-Init *****************/
             /* Set GPIOs to AF mode */
-            port->MODER &= ~(2 << (2 * SPI_0_SCK_GPIO));
+            port->MODER &= ~(3 << (2 * SPI_0_SCK_GPIO));
             port->MODER |= (2 << (2 * SPI_0_SCK_GPIO));
-            port->MODER &= ~(2 << (2 * SPI_0_MISO_GPIO));
+            port->MODER &= ~(3 << (2 * SPI_0_MISO_GPIO));
             port->MODER |= (2 << (2 * SPI_0_MISO_GPIO));
-            port->MODER &= ~(2 << (2 * SPI_0_MOSI_GPIO));
+            port->MODER &= ~(3 << (2 * SPI_0_MOSI_GPIO));
             port->MODER |= (2 << (2 * SPI_0_MOSI_GPIO));
-
-#if with_gpio_stuff
 
             /* Set speed */
             port->OSPEEDR &= ~(3 << (2 * SPI_0_SCK_GPIO));
@@ -128,31 +114,29 @@ int spi_init_master(spi_t dev, spi_conf_t conf, spi_speed_t speed)
             port->PUPDR &= ~(3 << (2 * SPI_0_MOSI_GPIO));
             port->PUPDR |= (0 << (2 * SPI_0_MOSI_GPIO));
 
-#endif
-
             /* Configure GPIOs to SPI0 (static) */
 #if (SPI_0_SCK_GPIO < 8)
-            port->AFR[0] &= ~(5 << (4 * SPI_0_SCK_GPIO));
+            port->AFR[0] &= ~(0xf << (4 * SPI_0_SCK_GPIO));
             port->AFR[0] |= (5 << (4 * SPI_0_SCK_GPIO));
 
 #else
-            port->AFR[1] &= ~(5 << (4 * (SPI_0_SCK_GPIO - 8)));
+            port->AFR[1] &= ~(0xf << (4 * (SPI_0_SCK_GPIO - 8)));
             port->AFR[1] |= (5 << (4 * (SPI_0_SCK_GPIO - 8)));
 #endif
 
 #if (SPI_0_MISO_GPIO < 8)
-            port->AFR[0] &= ~(5 << (4 * SPI_0_MISO_GPIO));
+            port->AFR[0] &= ~(0xf << (4 * SPI_0_MISO_GPIO));
             port->AFR[0] |= (5 << (4 * SPI_0_MISO_GPIO));
 #else
-            port->AFR[1] &= ~(5 << (4 * (SPI_0_MISO_GPIO - 8)));
+            port->AFR[1] &= ~(0xf << (4 * (SPI_0_MISO_GPIO - 8)));
             port->AFR[1] |= (5 << (4 * (SPI_0_MISO_GPIO - 8)));
 #endif
 
 #if (SPI_0_MOSI_GPIO < 8)
-            port->AFR[0] &= ~(5 << (4 * SPI_0_MOSI_GPIO));
+            port->AFR[0] &= ~(0xf << (4 * SPI_0_MOSI_GPIO));
             port->AFR[0] |= (5 << (4 * SPI_0_MOSI_GPIO));
 #else
-            port->AFR[1] &= ~(5 << (4 * (SPI_0_MOSI_GPIO - 8)));
+            port->AFR[1] &= ~(0xf << (4 * (SPI_0_MOSI_GPIO - 8)));
             port->AFR[1] |= (5 << (4 * (SPI_0_MOSI_GPIO - 8)));
 #endif
             break;
@@ -166,14 +150,12 @@ int spi_init_master(spi_t dev, spi_conf_t conf, spi_speed_t speed)
             /************************* GPIO-Init *************************/
 
             /* Set GPIOs to AF mode */
-            port->MODER &= ~(2 << (2 * SPI_1_SCK_GPIO));
+            port->MODER &= ~(3 << (2 * SPI_1_SCK_GPIO));
             port->MODER |= (2 << (2 * SPI_1_SCK_GPIO));
-            port->MODER &= ~(2 << (2 * SPI_1_MISO_GPIO));
+            port->MODER &= ~(3 << (2 * SPI_1_MISO_GPIO));
             port->MODER |= (2 << (2 * SPI_1_MISO_GPIO));
-            port->MODER &= ~(2 << (2 * SPI_1_MOSI_GPIO));
+            port->MODER &= ~(3 << (2 * SPI_1_MOSI_GPIO));
             port->MODER |= (2 << (2 * SPI_1_MOSI_GPIO));
-
-#if with_gpio_stuff
 
             /* Set speed */
             port->OSPEEDR &= ~(3 << (2 * SPI_1_SCK_GPIO));
@@ -198,29 +180,28 @@ int spi_init_master(spi_t dev, spi_conf_t conf, spi_speed_t speed)
             port->PUPDR |= (0 << (2 * SPI_1_MISO_GPIO));
             port->PUPDR &= ~(3 << (2 * SPI_1_MOSI_GPIO));
             port->PUPDR |= (0 << (2 * SPI_1_MOSI_GPIO));
-#endif
 
 #if (SPI_1_SCK_GPIO < 8)
-            port->AFR[0] &= ~(5 << (4 * SPI_1_SCK_GPIO));
+            port->AFR[0] &= ~(0xf << (4 * SPI_1_SCK_GPIO));
             port->AFR[0] |= (5 << (4 * SPI_1_SCK_GPIO));
 #else
-            port->AFR[1] &= ~(5 << (4 * (SPI_1_SCK_GPIO - 8)));
+            port->AFR[1] &= ~(0xf << (4 * (SPI_1_SCK_GPIO - 8)));
             port->AFR[1] |= (5 << (4 * (SPI_1_SCK_GPIO - 8)));
 #endif
 
 #if (SPI_1_MISO_GPIO < 8)
-            port->AFR[0] &= ~(5 << (4 * SPI_1_MISO_GPIO));
+            port->AFR[0] &= ~(0xf << (4 * SPI_1_MISO_GPIO));
             port->AFR[0] |= (5 << (4 * SPI_1_MISO_GPIO));
 #else
-            port->AFR[1] &= ~(5 << (4 * (SPI_1_MISO_GPIO - 8)));
+            port->AFR[1] &= ~(0xf << (4 * (SPI_1_MISO_GPIO - 8)));
             port->AFR[1] |= (5 << (4 * (SPI_1_MISO_GPIO - 8)));
 #endif
 
 #if (SPI_1_MOSI_GPIO < 8)
-            port->AFR[0] &= ~(5 << (4 * SPI_1_MOSI_GPIO));
+            port->AFR[0] &= ~(0xf << (4 * SPI_1_MOSI_GPIO));
             port->AFR[0] |= (5 << (4 * SPI_1_MOSI_GPIO));
 #else
-            port->AFR[1] &= ~(5 << (4 * (SPI_1_MOSI_GPIO - 8)));
+            port->AFR[1] &= ~(0xf << (4 * (SPI_1_MOSI_GPIO - 8)));
             port->AFR[1] |= (5 << (4 * (SPI_1_MOSI_GPIO - 8)));
 #endif
             break;
@@ -283,16 +264,14 @@ int spi_init_slave(spi_t dev, spi_conf_t conf, char(*cb)(char data))
 
             /***************** GPIO-Init *****************/
             /* Set GPIOs to AF mode (not especially input or output) */
-            port->MODER &= ~(2 << (2 * SPI_0_NSS_GPIO));
+            port->MODER &= ~(3 << (2 * SPI_0_NSS_GPIO));
             port->MODER |= (2 << (2 * SPI_0_NSS_GPIO));
-            port->MODER &= ~(2 << (2 * SPI_0_SCK_GPIO));
+            port->MODER &= ~(3 << (2 * SPI_0_SCK_GPIO));
             port->MODER |= (2 << (2 * SPI_0_SCK_GPIO));
-            port->MODER &= ~(2 << (2 * SPI_0_MISO_GPIO));
+            port->MODER &= ~(3 << (2 * SPI_0_MISO_GPIO));
             port->MODER |= (2 << (2 * SPI_0_MISO_GPIO));
-            port->MODER &= ~(2 << (2 * SPI_0_MOSI_GPIO));
+            port->MODER &= ~(3 << (2 * SPI_0_MOSI_GPIO));
             port->MODER |= (2 << (2 * SPI_0_MOSI_GPIO));
-
-#if with_gpio_stuff
 
             /* Set speed */
             port->OSPEEDR &= ~(3 << (2 * SPI_0_NSS_GPIO));
@@ -323,38 +302,37 @@ int spi_init_slave(spi_t dev, spi_conf_t conf, char(*cb)(char data))
             port->PUPDR |= (0 << (2 * SPI_0_MISO_GPIO));
             port->PUPDR &= ~(3 << (2 * SPI_0_MOSI_GPIO));
             port->PUPDR |= (0 << (2 * SPI_0_MOSI_GPIO));
-#endif
 
 #if (SPI_0_NSS_GPIO < 8)
-            port->AFR[0] &= ~(5 << (4 * SPI_0_NSS_GPIO));
+            port->AFR[0] &= ~(0xf << (4 * SPI_0_NSS_GPIO));
             port->AFR[0] |= (5 << (4 * SPI_0_NSS_GPIO));
 #else
-            port->AFR[1] &= ~(5 << (4 * (SPI_0_NSS_GPIO - 8)));
+            port->AFR[1] &= ~(0xf << (4 * (SPI_0_NSS_GPIO - 8)));
             port->AFR[1] |= (5 << (4 * (SPI_0_NSS_GPIO - 8)));
 #endif
 
 #if (SPI_0_SCK_GPIO < 8)
-            port->AFR[0] &= ~(5 << (4 * SPI_0_SCK_GPIO));
+            port->AFR[0] &= ~(0xf << (4 * SPI_0_SCK_GPIO));
             port->AFR[0] |= (5 << (4 * SPI_0_SCK_GPIO));
 
 #else
-            port->AFR[1] &= ~(5 << (4 * (SPI_0_SCK_GPIO - 8)));
+            port->AFR[1] &= ~(0xf << (4 * (SPI_0_SCK_GPIO - 8)));
             port->AFR[1] |= (5 << (4 * (SPI_0_SCK_GPIO - 8)));
 #endif
 
 #if (SPI_0_MISO_GPIO < 8)
-            port->AFR[0] &= ~(5 << (4 * SPI_0_MISO_GPIO));
+            port->AFR[0] &= ~(0xf << (4 * SPI_0_MISO_GPIO));
             port->AFR[0] |= (5 << (4 * SPI_0_MISO_GPIO));
 #else
-            port->AFR[1] &= ~(5 << (4 * (SPI_0_MISO_GPIO - 8)));
+            port->AFR[1] &= ~(0xf << (4 * (SPI_0_MISO_GPIO - 8)));
             port->AFR[1] |= (5 << (4 * (SPI_0_MISO_GPIO - 8)));
 #endif
 
 #if (SPI_0_MOSI_GPIO < 8)
-            port->AFR[0] &= ~(5 << (4 * SPI_0_MOSI_GPIO));
+            port->AFR[0] &= ~(0xf << (4 * SPI_0_MOSI_GPIO));
             port->AFR[0] |= (5 << (4 * SPI_0_MOSI_GPIO));
 #else
-            port->AFR[1] &= ~(5 << (4 * (SPI_0_MOSI_GPIO - 8)));
+            port->AFR[1] &= ~(0xf << (4 * (SPI_0_MOSI_GPIO - 8)));
             port->AFR[1] |= (5 << (4 * (SPI_0_MOSI_GPIO - 8)));
 #endif
 
@@ -381,16 +359,14 @@ int spi_init_slave(spi_t dev, spi_conf_t conf, char(*cb)(char data))
 
             /***************** GPIO-Init *****************/
             /* Set GPIOs to AF mode (not especially input or output) */
-            port->MODER &= ~(2 << (2 * SPI_1_NSS_GPIO));
+            port->MODER &= ~(3 << (2 * SPI_1_NSS_GPIO));
             port->MODER |= (2 << (2 * SPI_1_NSS_GPIO));
-            port->MODER &= ~(2 << (2 * SPI_1_SCK_GPIO));
+            port->MODER &= ~(3 << (2 * SPI_1_SCK_GPIO));
             port->MODER |= (2 << (2 * SPI_1_SCK_GPIO));
-            port->MODER &= ~(2 << (2 * SPI_1_MISO_GPIO));
+            port->MODER &= ~(3 << (2 * SPI_1_MISO_GPIO));
             port->MODER |= (2 << (2 * SPI_1_MISO_GPIO));
-            port->MODER &= ~(2 << (2 * SPI_1_MOSI_GPIO));
+            port->MODER &= ~(3 << (2 * SPI_1_MOSI_GPIO));
             port->MODER |= (2 << (2 * SPI_1_MOSI_GPIO));
-
-#if with_gpio_stuff
 
             /* Set speed */
             port->OSPEEDR &= ~(3 << (2 * SPI_1_NSS_GPIO));
@@ -421,38 +397,37 @@ int spi_init_slave(spi_t dev, spi_conf_t conf, char(*cb)(char data))
             port->PUPDR |= (0 << (2 * SPI_1_MISO_GPIO));
             port->PUPDR &= ~(3 << (2 * SPI_1_MOSI_GPIO));
             port->PUPDR |= (0 << (2 * SPI_1_MOSI_GPIO));
-#endif
 
 #if (SPI_1_NSS_GPIO < 8)
-            port->AFR[0] &= ~(5 << (4 * SPI_1_NSS_GPIO));
+            port->AFR[0] &= ~(0xf << (4 * SPI_1_NSS_GPIO));
             port->AFR[0] |= (5 << (4 * SPI_1_NSS_GPIO));
 #else
-            port->AFR[1] &= ~(5 << (4 * (SPI_1_NSS_GPIO - 8)));
+            port->AFR[1] &= ~(0xf << (4 * (SPI_1_NSS_GPIO - 8)));
             port->AFR[1] |= (5 << (4 * (SPI_1_NSS_GPIO - 8)));
 #endif
 
 #if (SPI_1_SCK_GPIO < 8)
-            port->AFR[0] &= ~(5 << (4 * SPI_1_SCK_GPIO));
+            port->AFR[0] &= ~(0xf << (4 * SPI_1_SCK_GPIO));
             port->AFR[0] |= (5 << (4 * SPI_1_SCK_GPIO));
 
 #else
-            port->AFR[1] &= ~(5 << (4 * (SPI_1_SCK_GPIO - 8)));
+            port->AFR[1] &= ~(0xf << (4 * (SPI_1_SCK_GPIO - 8)));
             port->AFR[1] |= (5 << (4 * (SPI_1_SCK_GPIO - 8)));
 #endif
 
 #if (SPI_1_MISO_GPIO < 8)
-            port->AFR[0] &= ~(5 << (4 * SPI_1_MISO_GPIO));
+            port->AFR[0] &= ~(0xf << (4 * SPI_1_MISO_GPIO));
             port->AFR[0] |= (5 << (4 * SPI_1_MISO_GPIO));
 #else
-            port->AFR[1] &= ~(5 << (4 * (SPI_1_MISO_GPIO - 8)));
+            port->AFR[1] &= ~(0xf << (4 * (SPI_1_MISO_GPIO - 8)));
             port->AFR[1] |= (5 << (4 * (SPI_1_MISO_GPIO - 8)));
 #endif
 
 #if (SPI_1_MOSI_GPIO < 8)
-            port->AFR[0] &= ~(5 << (4 * SPI_1_MOSI_GPIO));
+            port->AFR[0] &= ~(0xf << (4 * SPI_1_MOSI_GPIO));
             port->AFR[0] |= (5 << (4 * SPI_1_MOSI_GPIO));
 #else
-            port->AFR[1] &= ~(5 << (4 * (SPI_1_MOSI_GPIO - 8)));
+            port->AFR[1] &= ~(0xf << (4 * (SPI_1_MOSI_GPIO - 8)));
             port->AFR[1] |= (5 << (4 * (SPI_1_MOSI_GPIO - 8)));
 #endif
             break;
@@ -477,7 +452,7 @@ int spi_init_slave(spi_t dev, spi_conf_t conf, char(*cb)(char data))
     spi_port->CR1 |= (conf);
 
     /* set callback */
-    config[dev].cb = cb;
+    spi_config[dev].cb = cb;
 
     return 0;
 }
@@ -511,15 +486,14 @@ int spi_transfer_byte(spi_t dev, char out, char *in)
     }
 
     while (!(spi_port->SR & SPI_SR_TXE));
-
     spi_port->DR = out;
 
-if (in) {
-    
-    while (!(spi_port->SR & SPI_SR_RXNE));
+    if (in) {
+        
+        while (!(spi_port->SR & SPI_SR_RXNE));
+        *in = spi_port->DR;
+    }
 
-    *in = spi_port->DR;
-}
 
     return 1;
 }
@@ -530,7 +504,6 @@ int spi_transfer_bytes(spi_t dev, char *out, char *in, unsigned int length)
 
     int i, trans_ret, trans_bytes = 0;
     char in_temp;
-
 
     for (i = 0; i < length; i++) {
 
@@ -649,7 +622,6 @@ void spi_poweroff(spi_t dev)
             while (SPI_0_DEV->SR & SPI_SR_BSY);
 
             SPI_0_CLKDIS();
-            SPI_0_PORT_CLKDIS();
             break;
 #endif
 
@@ -659,7 +631,6 @@ void spi_poweroff(spi_t dev)
             while (SPI_1_DEV->SR & SPI_SR_BSY);
 
             SPI_1_CLKDIS();
-            SPI_1_PORT_CLKDIS();
             break;
 #endif
 
@@ -674,16 +645,8 @@ static inline void irq_handler_transfer(SPI_TypeDef *spi, spi_t dev)
     if (spi->SR & SPI_SR_RXNE) {
 
         data = spi->DR;
-        data = config[dev].cb(data);
+        data = spi_config[dev].cb(data);
         spi->DR = data;
-
-    }
-    else {
-        while (1) {
-            for (int i = 0; i < 2000000; i++) {
-                asm("nop");
-            }
-        }
     }
 
     /* see if a thread with higher priority wants to run now */
@@ -697,25 +660,27 @@ static inline void irq_handler_begin(spi_t dev)
     spi_transmission_begin(dev, byte_begin);
 }
 
-
-__attribute__((naked))
-void isr_spi1(void)
+#if SPI_0_EN
+__attribute__((naked)) void isr_spi1(void)
 {
     ISR_ENTER();
     irq_handler_transfer(SPI_0_DEV, SPI_0);
     ISR_EXIT();
 }
-__attribute__((naked))
-void isr_spi2(void)
+#endif
+
+#if SPI_1_EN
+__attribute__((naked)) void isr_spi2(void)
 {
     ISR_ENTER();
     irq_handler_transfer(SPI_1_DEV, SPI_1);
     ISR_EXIT();
 }
+#endif
+
 
 #if SPI_0_EN
-__attribute__((naked))
-void isr_exti4(void)
+__attribute__((naked)) void isr_exti4(void)
 {
     ISR_ENTER();
 
@@ -729,8 +694,7 @@ void isr_exti4(void)
 #endif
 
 #if SPI_1_EN
-__attribute__((naked))
-void isr_exti15_10(void)
+__attribute__((naked)) void isr_exti15_10(void)
 {
     ISR_ENTER();
 
@@ -742,3 +706,5 @@ void isr_exti15_10(void)
     ISR_EXIT();
 }
 #endif
+
+#endif /* SPI_NUMOF */

@@ -213,7 +213,6 @@
 #define SPI_0_MOSI_GPIO       7
 
 #define SPI_0_PORT_CLKEN()    (RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN)
-#define SPI_0_PORT_CLKDIS()   (RCC->AHB1ENR &= ~RCC_AHB1ENR_GPIOAEN)
 
 /* SPI 1 device config */
 #define SPI_1_DEV             SPI2
@@ -231,7 +230,6 @@
 #define SPI_1_MOSI_GPIO       15
 
 #define SPI_1_PORT_CLKEN()    (RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN)
-#define SPI_1_PORT_CLKDIS()   (RCC->AHB1ENR &= ~RCC_AHB1ENR_GPIOBEN)
 /** @} */
 
 
