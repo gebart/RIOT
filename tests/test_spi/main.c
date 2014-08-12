@@ -48,6 +48,7 @@
 #define TESTDEV_SLAVE   SPI_1_DEV
 #endif
 
+#define SPI_SLAVE_FIRST_RESPONSE 0xcc
 
 #define SHELL_BUFFER_SIZE        128
 #define BUF_SEND_LEN             21
@@ -74,8 +75,12 @@ char on_data(char data)
     if (buf_count > (BUF_SEND_LEN-1)) {
         buf_count = 0;
     }
-
     return data;
+}
+
+void on_cs(void) {
+
+    spi_transmission_begin(TESTPORT_SLAVE, SPI_SLAVE_FIRST_RESPONSE);
 }
 
 /**
@@ -101,6 +106,8 @@ void cmd_init_slave(int argc, char **argv)
 
     (void) argc;
     (void) argv;
+
+    gpio_init_int(GPIO_3, GPIO_PULLUP, GPIO_FALLING, on_cs);
 
     spi_poweron(TESTPORT_SLAVE);
     spi_init_slave(TESTPORT_SLAVE, SPI_CONF_FIRST_RISING, on_data);

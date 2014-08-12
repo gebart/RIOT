@@ -207,7 +207,6 @@
 /* SPI 0 pin configuration */
 #define SPI_0_PORT            GPIOA
 
-#define SPI_0_NSS_GPIO        4
 #define SPI_0_SCK_GPIO        5
 #define SPI_0_MISO_GPIO       6
 #define SPI_0_MOSI_GPIO       7
@@ -224,7 +223,6 @@
 /* SPI 1 pin configuration */
 #define SPI_1_PORT            GPIOB
 
-#define SPI_1_NSS_GPIO        12
 #define SPI_1_SCK_GPIO        13
 #define SPI_1_MISO_GPIO       14
 #define SPI_1_MOSI_GPIO       15
