@@ -1,9 +1,9 @@
 /*
  * Copyright (C) 2014 Hamburg University of Applied Sciences
  *
- * This file is subject to the terms and conditions of the GNU Lesser General
- * Public License. See the file LICENSE in the top level directory for more
- * details.
+ * This file is subject to the terms and conditions of the GNU Lesser
+ * General Public License v2.1. See the file LICENSE in the top level
+ * directory for more details.
  */
 
 /**
@@ -11,7 +11,7 @@
  * @{
  *
  * @file
- * @brief SPI test application
+ * @brief       SPI test application
  *
  * @author      Peter Kietzmann <peter.kietzmann@haw-hamburg.de>
  *
@@ -30,7 +30,7 @@
 #include "shell.h"
 #include "shell_commands.h"
 
-#define USE_SPI_MASTER              0
+#define USE_SPI_MASTER             0
 #if USE_SPI_MASTER == 0
 #define TESTPORT_MASTER  SPI_0
 #define TESTDEV_MASTER   SPI_0_DEV
@@ -123,7 +123,7 @@ void cmd_init_master(int argc, char **argv)
     (void) argc;
     (void) argv;
 
-    gpio_init_out(GPIO_7, GPIO_NOPULL); /* GPIO_7 is mapped to pin PD6 */
+    gpio_init_out(GPIO_7, GPIO_NOPULL);
     gpio_set(GPIO_7);
 
     spi_poweron(TESTPORT_MASTER);
