@@ -51,7 +51,7 @@
 #define SPI_SLAVE_FIRST_RESPONSE 0xcc
 
 #define SHELL_BUFFER_SIZE        128
-#define BUF_SEND_LEN             21
+#define BUF_SEND_LEN             10
 
 static int shell_read(void);
 static void shell_write(int);

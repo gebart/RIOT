@@ -98,19 +98,17 @@ int spi_init_master(spi_t dev, spi_conf_t conf, spi_speed_t speed)
 
             /* Set to push-pull configuration */
             SPI_0_SCK_PORT->OTYPER &= ~(1 << SPI_0_SCK_GPIO);
-            SPI_0_SCK_PORT->OTYPER |= (0 << SPI_0_SCK_GPIO);
             SPI_0_MISO_PORT->OTYPER &= ~(1 << SPI_0_MISO_GPIO);
-            SPI_0_MISO_PORT->OTYPER |= (0 << SPI_0_MISO_GPIO);
             SPI_0_MOSI_PORT->OTYPER &= ~(1 << SPI_0_MOSI_GPIO);
-            SPI_0_MOSI_PORT->OTYPER |= (0 << SPI_0_MOSI_GPIO);
 
             /* Configure push-pull resistors */
             SPI_0_SCK_PORT->PUPDR &= ~(3 << (2 * SPI_0_SCK_GPIO));
-            SPI_0_SCK_PORT->PUPDR |= (0 << (2 * SPI_0_SCK_GPIO));
+            SPI_0_SCK_PORT->PUPDR |= (2 << (2 * SPI_0_SCK_GPIO));
             SPI_0_MISO_PORT->PUPDR &= ~(3 << (2 * SPI_0_MISO_GPIO));
-            SPI_0_MISO_PORT->PUPDR |= (0 << (2 * SPI_0_MISO_GPIO));
+            SPI_0_MISO_PORT->PUPDR |= (2 << (2 * SPI_0_MISO_GPIO));
             SPI_0_MOSI_PORT->PUPDR &= ~(3 << (2 * SPI_0_MOSI_GPIO));
-            SPI_0_MOSI_PORT->PUPDR |= (0 << (2 * SPI_0_MOSI_GPIO));
+            SPI_0_MOSI_PORT->PUPDR |= (2 << (2 * SPI_0_MOSI_GPIO));
+
 
             /* Configure GPIOs to SPI0 (static) */
 #if (SPI_0_SCK_GPIO < 8)
@@ -164,19 +162,17 @@ int spi_init_master(spi_t dev, spi_conf_t conf, spi_speed_t speed)
 
             /* Set to push-pull configuration */
             SPI_1_SCK_PORT->OTYPER &= ~(1 << SPI_1_SCK_GPIO);
-            SPI_1_SCK_PORT->OTYPER |= (0 << SPI_1_SCK_GPIO);
             SPI_1_MISO_PORT->OTYPER &= ~(1 << SPI_1_MISO_GPIO);
-            SPI_1_MISO_PORT->OTYPER |= (0 << SPI_1_MISO_GPIO);
             SPI_1_MOSI_PORT->OTYPER &= ~(1 << SPI_1_MOSI_GPIO);
-            SPI_1_MOSI_PORT->OTYPER |= (0 << SPI_1_MOSI_GPIO);
 
             /* Configure push-pull resistors */
             SPI_1_SCK_PORT->PUPDR &= ~(3 << (2 * SPI_1_SCK_GPIO));
-            SPI_1_SCK_PORT->PUPDR |= (0 << (2 * SPI_1_SCK_GPIO));
+            SPI_1_SCK_PORT->PUPDR |= (2 << (2 * SPI_1_SCK_GPIO));
             SPI_1_MISO_PORT->PUPDR &= ~(3 << (2 * SPI_1_MISO_GPIO));
-            SPI_1_MISO_PORT->PUPDR |= (0 << (2 * SPI_1_MISO_GPIO));
+            SPI_1_MISO_PORT->PUPDR |= (2 << (2 * SPI_1_MISO_GPIO));
             SPI_1_MOSI_PORT->PUPDR &= ~(3 << (2 * SPI_1_MOSI_GPIO));
-            SPI_1_MOSI_PORT->PUPDR |= (0 << (2 * SPI_1_MOSI_GPIO));
+            SPI_1_MOSI_PORT->PUPDR |= (2 << (2 * SPI_1_MOSI_GPIO));
+
 
 #if (SPI_1_SCK_GPIO < 8)
             SPI_1_SCK_PORT->AFR[0] &= ~(0xf << (4 * SPI_1_SCK_GPIO));
@@ -214,7 +210,9 @@ int spi_init_master(spi_t dev, spi_conf_t conf, spi_speed_t speed)
     spi_port->CR1 = 0;
     spi_port->CR2 = 0;
 
-    spi_port->CR2 |= (SPI_CR2_SSOE);  /* 1: enable master = disable multimaster */
+    /* the NSS (chip select) is managed purely by software */
+    spi_port->CR1 |= SPI_CR1_SSM | SPI_CR1_SSI;
+    //spi_port->CR2 |= (SPI_CR2_SSOE); /* 1: enable master = disable multimaster */
 
     spi_port->CR1 |= (SPI_CR1_SPE); /* SPI enable */
     spi_port->CR1 |= (speed_devider << 3);  /* Define serial clock baud rate. 001 leads to f_PCLK/4 */
@@ -260,19 +258,16 @@ int spi_init_slave(spi_t dev, spi_conf_t conf, char(*cb)(char data))
 
             /* Set to push-pull configuration (not open drain) */
             SPI_0_SCK_PORT->OTYPER &= ~(1 << SPI_0_SCK_GPIO);
-            SPI_0_SCK_PORT->OTYPER |= (0 << SPI_0_SCK_GPIO);
             SPI_0_MISO_PORT->OTYPER &= ~(1 << SPI_0_MISO_GPIO);
-            SPI_0_MISO_PORT->OTYPER |= (0 << SPI_0_MISO_GPIO);
             SPI_0_MOSI_PORT->OTYPER &= ~(1 << SPI_0_MOSI_GPIO);
-            SPI_0_MOSI_PORT->OTYPER |= (0 << SPI_0_MOSI_GPIO);
 
             /* Configure push-pull resistors */
             SPI_0_SCK_PORT->PUPDR &= ~(3 << (2 * SPI_0_SCK_GPIO));
-            SPI_0_SCK_PORT->PUPDR |= (0 << (2 * SPI_0_SCK_GPIO));
+            SPI_0_SCK_PORT->PUPDR |= (2 << (2 * SPI_0_SCK_GPIO));
             SPI_0_MISO_PORT->PUPDR &= ~(3 << (2 * SPI_0_MISO_GPIO));
-            SPI_0_MISO_PORT->PUPDR |= (0 << (2 * SPI_0_MISO_GPIO));
+            SPI_0_MISO_PORT->PUPDR |= (2 << (2 * SPI_0_MISO_GPIO));
             SPI_0_MOSI_PORT->PUPDR &= ~(3 << (2 * SPI_0_MOSI_GPIO));
-            SPI_0_MOSI_PORT->PUPDR |= (0 << (2 * SPI_0_MOSI_GPIO));
+            SPI_0_MOSI_PORT->PUPDR |= (2 << (2 * SPI_0_MOSI_GPIO));
 
 
 #if (SPI_0_SCK_GPIO < 8)
@@ -329,19 +324,16 @@ int spi_init_slave(spi_t dev, spi_conf_t conf, char(*cb)(char data))
 
             /* Set to push-pull configuration (not open drain) */
             SPI_1_SCK_PORT->OTYPER &= ~(1 << SPI_1_SCK_GPIO);
-            SPI_1_SCK_PORT->OTYPER |= (0 << SPI_1_SCK_GPIO);
             SPI_1_MISO_PORT->OTYPER &= ~(1 << SPI_1_MISO_GPIO);
-            SPI_1_MISO_PORT->OTYPER |= (0 << SPI_1_MISO_GPIO);
             SPI_1_MOSI_PORT->OTYPER &= ~(1 << SPI_1_MOSI_GPIO);
-            SPI_1_MOSI_PORT->OTYPER |= (0 << SPI_1_MOSI_GPIO);
 
             /* Configure push-pull resistors */
             SPI_1_SCK_PORT->PUPDR &= ~(3 << (2 * SPI_1_SCK_GPIO));
-            SPI_1_SCK_PORT->PUPDR |= (0 << (2 * SPI_1_SCK_GPIO));
+            SPI_1_SCK_PORT->PUPDR |= (2 << (2 * SPI_1_SCK_GPIO));
             SPI_1_MISO_PORT->PUPDR &= ~(3 << (2 * SPI_1_MISO_GPIO));
-            SPI_1_MISO_PORT->PUPDR |= (0 << (2 * SPI_1_MISO_GPIO));
+            SPI_1_MISO_PORT->PUPDR |= (2 << (2 * SPI_1_MISO_GPIO));
             SPI_1_MOSI_PORT->PUPDR &= ~(3 << (2 * SPI_1_MOSI_GPIO));
-            SPI_1_MOSI_PORT->PUPDR |= (0 << (2 * SPI_1_MOSI_GPIO));
+            SPI_1_MOSI_PORT->PUPDR |= (2 << (2 * SPI_1_MOSI_GPIO));
 
 #if (SPI_1_SCK_GPIO < 8)
             SPI_1_SCK_PORT->AFR[0] &= ~(0xf << (4 * SPI_1_SCK_GPIO));
@@ -385,6 +377,9 @@ int spi_init_slave(spi_t dev, spi_conf_t conf, char(*cb)(char data))
     spi_port->CR1 |= (SPI_CR1_SPE); /* SPI enable */
     spi_port->CR1 |= (conf);
 
+     /* the NSS (chip select) is managed by software and NSS is low (slave enabled) */
+    spi_port->CR1 |= SPI_CR1_SSM;
+
     /* set callback */
     spi_config[dev].cb = cb;
 
@@ -419,8 +414,9 @@ int spi_transfer_byte(spi_t dev, char out, char *in)
     while (!(spi_port->SR & SPI_SR_TXE));
     spi_port->DR = out;
 
+    while (!(spi_port->SR & SPI_SR_RXNE));
+
     if (in) {
-        while (!(spi_port->SR & SPI_SR_RXNE));
         *in = spi_port->DR;
     }
 
