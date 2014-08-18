@@ -14,6 +14,7 @@
  * @name       Peripheral MCU configuration for the STM32F4discovery board
  *
  * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
+ * @author      Peter Kietzmann <peter.kietzmann@haw-hamburg.de>
  */
 
 #ifndef __PERIPH_CONF_H

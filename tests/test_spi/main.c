@@ -19,6 +19,8 @@
  */
 
 #include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 #include <time.h>
 
 #include "board.h"
@@ -51,7 +53,7 @@
 #define SPI_SLAVE_FIRST_RESPONSE 0xcc
 
 #define SHELL_BUFFER_SIZE        128
-#define BUF_SEND_LEN             10
+#define BUF_SEND_LEN             15
 
 static int shell_read(void);
 static void shell_write(int);
@@ -60,6 +62,7 @@ static void cmd_init_master(int argc, char **argv);
 static void cmd_send_master_byte(int argc, char **argv);
 static void cmd_send_master_bytes(int argc, char **argv);
 static void cmd_send_master_8x1_byte(int argc, char **argv);
+static void cmd_transfer_string(int argc, char **argv);
 static void cmd_prxbuf(int argc, char **argv);
 static void cmd_clearbuf(int argc, char **argv);
 
@@ -78,9 +81,33 @@ char on_data(char data)
     return data;
 }
 
-void on_cs(void) {
-
+void on_cs(void *arg) {
+    LD3_ON;
     spi_transmission_begin(TESTPORT_SLAVE, SPI_SLAVE_FIRST_RESPONSE);
+    LD3_OFF;
+}
+
+
+void print_bytes(char* title, char* chars, int length)
+{
+    printf("%4s", title);
+    for (int i = 0; i < length; i++) {
+        printf(" %2i ", i);
+    }
+    printf("\n ");
+    for (int i = 0; i < length; i++) {
+        printf(" 0x%02x", (int)chars[i]);
+    }
+    printf("\n ");
+    for (int i = 0; i < length; i++) {
+        if (chars[i] < ' ' || chars[i] > '~') {
+            printf(" ?? ");
+        }
+        else {
+            printf(" %c ", chars[i]);
+        }
+    }
+    printf("\n\n");
 }
 
 /**
@@ -92,6 +119,7 @@ static const shell_command_t shell_commands[] = {
     { "smb", "send master byte", cmd_send_master_byte },
     { "smbs", "send master bytes", cmd_send_master_bytes },
     { "smb81", "send master 8x1 bytes", cmd_send_master_8x1_byte },
+    { "smst", "send master string", cmd_transfer_string },
     { "prxbuf", "print rx buffer from cb function", cmd_prxbuf },
     { "clearbuf", "clear rx buffer from cb function", cmd_clearbuf },
     { NULL, NULL, NULL }
@@ -107,7 +135,7 @@ void cmd_init_slave(int argc, char **argv)
     (void) argc;
     (void) argv;
 
-    gpio_init_int(GPIO_3, GPIO_PULLUP, GPIO_FALLING, on_cs);
+    gpio_init_int(GPIO_3, GPIO_PULLUP, GPIO_FALLING, on_cs, 0);
 
     spi_poweron(TESTPORT_SLAVE);
     spi_init_slave(TESTPORT_SLAVE, SPI_CONF_FIRST_RISING, on_data);
@@ -127,7 +155,7 @@ void cmd_init_master(int argc, char **argv)
     gpio_set(GPIO_7);
 
     spi_poweron(TESTPORT_MASTER);
-    spi_init_master(TESTPORT_MASTER, SPI_CONF_FIRST_RISING, SPI_SPEED_400KHZ);
+    spi_init_master(TESTPORT_MASTER, SPI_CONF_FIRST_RISING, SPI_SPEED_1MHZ);
 }
 
 /**
@@ -144,6 +172,7 @@ void cmd_send_master_byte(int argc, char **argv)
     char data_return, data_send = 0x99;
 
     gpio_clear(GPIO_7);
+    vtimer_usleep(2);
     spi_transfer_byte(TESTPORT_MASTER, data_send, &data_return);
     gpio_set(GPIO_7);
 
@@ -165,6 +194,7 @@ void cmd_send_master_bytes(int argc, char **argv)
     char buf_return[BUF_SEND_LEN];
 
     gpio_clear(GPIO_7);
+    vtimer_usleep(2);
     spi_transfer_bytes(TESTPORT_MASTER, buf_send, buf_return, BUF_SEND_LEN);
     gpio_set(GPIO_7);
 
@@ -189,11 +219,41 @@ void cmd_send_master_8x1_byte(int argc, char **argv)
     for (int i = 0; i < 8; i++) {
 
         gpio_clear(GPIO_7);
+        vtimer_usleep(2);
         spi_transfer_byte(TESTPORT_MASTER, data_send, &data_return);
         gpio_set(GPIO_7);
 
         printf("One Byte transferred: %x, received: %x\n", data_send, data_return);
         data_send++;
+    }
+}
+
+/**
+ * @send master string
+ */
+void cmd_transfer_string(int argc, char **argv)
+{
+    (void) argc;
+    (void) argv;
+
+    int res;
+    char buffer[256]; 
+
+    char *hello = "Hello";
+
+    gpio_clear(GPIO_7);
+    vtimer_usleep(1);
+    res = spi_transfer_bytes(TESTPORT_MASTER, hello, buffer, strlen(hello));
+    gpio_set(GPIO_7);
+
+    /* look at the results */
+    if (res < 0) {
+        printf("error: unable to transfer data to slave (code: %i)\n", res);
+    }
+    else {
+        printf("Transfered %i bytes:\n", res);
+        print_bytes("MOSI", hello, res);
+        print_bytes("MISO", buffer, res);
     }
 }
 
@@ -266,4 +326,5 @@ int main(void)
     shell_run(&shell);
     return 0;
 }
+
 

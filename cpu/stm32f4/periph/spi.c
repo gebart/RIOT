@@ -19,11 +19,13 @@
  */
 #include <stdio.h>
 
+#include "board.h"
 #include "cpu.h"
 #include "periph/spi.h"
 #include "periph_conf.h"
 #include "thread.h"
 #include "sched.h"
+#include "vtimer.h"
 
 #define ENABLE_DEBUG (0)
 #include "debug.h"
@@ -212,7 +214,6 @@ int spi_init_master(spi_t dev, spi_conf_t conf, spi_speed_t speed)
 
     /* the NSS (chip select) is managed purely by software */
     spi_port->CR1 |= SPI_CR1_SSM | SPI_CR1_SSI;
-    //spi_port->CR2 |= (SPI_CR2_SSOE); /* 1: enable master = disable multimaster */
 
     spi_port->CR1 |= (SPI_CR1_SPE); /* SPI enable */
     spi_port->CR1 |= (speed_devider << 3);  /* Define serial clock baud rate. 001 leads to f_PCLK/4 */
@@ -416,10 +417,12 @@ int spi_transfer_byte(spi_t dev, char out, char *in)
 
     while (!(spi_port->SR & SPI_SR_RXNE));
 
-    if (in) {
+    if (in != NULL) {
         *in = spi_port->DR;
     }
-
+    else {
+        spi_port->DR;
+    }
 
     return 1;
 }
@@ -444,10 +447,9 @@ int spi_transfer_bytes(spi_t dev, char *out, char *in, unsigned int length)
             return -1;
         }
 
-        if (in) {
+        if (in != NULL) {
             in[i] = in_temp;
         }
-
         trans_bytes++;
     }
 
@@ -459,13 +461,42 @@ int spi_transfer_reg(spi_t dev, uint8_t reg, char out, char *in)
 {
     int trans_ret;
 
+    SPI_TypeDef *spi_port = 0;
+
+    switch (dev) {
+#if SPI_0_EN
+
+        case SPI_0:
+            spi_port = SPI_0_DEV;
+            break;
+#endif
+
+#if SPI_1_EN
+
+        case SPI_1:
+            spi_port = SPI_1_DEV;
+            break;
+#endif
+
+        default:
+            return -1;
+    }
+
+
     trans_ret = spi_transfer_byte(dev, reg, NULL);
 
     if (trans_ret < 0) {
-        return -1;
+        return -2;
     }
 
-    return spi_transfer_byte(dev, out, in);
+    trans_ret = spi_transfer_byte(dev, out, in);
+
+    if (trans_ret < 0) {
+        return -3;
+    }
+
+    while (spi_port->SR & SPI_SR_BSY);
+    return 1;
 }
 
 
@@ -473,13 +504,40 @@ int spi_transfer_regs(spi_t dev, uint8_t reg, char *out, char *in, unsigned int 
 {
     int trans_ret;
 
+    SPI_TypeDef *spi_port = 0;
+
+    switch (dev) {
+#if SPI_0_EN
+
+        case SPI_0:
+            spi_port = SPI_0_DEV;
+            break;
+#endif
+
+#if SPI_1_EN
+
+        case SPI_1:
+            spi_port = SPI_1_DEV;
+            break;
+#endif
+
+        default:
+            return -1;
+    }
+
     trans_ret = spi_transfer_byte(dev, reg, NULL);
 
     if (trans_ret < 0) {
-        return -1;
+        return -2;
     }
 
-    return spi_transfer_bytes(dev, out, in, length);
+    trans_ret = spi_transfer_bytes(dev, out, in, length);
+
+    if (trans_ret < 0) {
+        return -3;
+    }
+    while (spi_port->SR & SPI_SR_BSY);
+    return trans_ret;
 }
 
 void spi_transmission_begin(spi_t dev, char reset_val)
@@ -589,7 +647,9 @@ static inline void irq_handler_transfer(SPI_TypeDef *spi, spi_t dev)
 __attribute__((naked)) void SPI_0_IRQ_HANDLER(void)
 {
     ISR_ENTER();
+    LD4_TOGGLE;
     irq_handler_transfer(SPI_0_DEV, SPI_0);
+    LD4_TOGGLE;
     ISR_EXIT();
 }
 #endif
@@ -598,9 +658,12 @@ __attribute__((naked)) void SPI_0_IRQ_HANDLER(void)
 __attribute__((naked)) void SPI_1_IRQ_HANDLER(void)
 {
     ISR_ENTER();
+    LD4_ON;
     irq_handler_transfer(SPI_1_DEV, SPI_1);
+    LD4_OFF;
     ISR_EXIT();
 }
 #endif
 
 #endif /* SPI_NUMOF */
+
