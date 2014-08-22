@@ -28,7 +28,6 @@ typedef struct {
     short active_bank;
 } enc28j60_dev_t;
 
-
 int enc28j60_setup(enc28j60_dev_t *dev, spi_t spi, gpio_t cs_pin, gpio_t int_pin);
 
 int enc28j60_init(net_dev_t *dev);

@@ -68,7 +68,13 @@ void enc28j60_init_device(enc28j60_dev_t *dev)
     enc28j60_set_mac_addr(dev, mac);
 }
 
-void enc28j60_send
+void enc28j60_transmit(enc28j60_dev_t *dev,
+                       char *data, size_t data_len,
+                       char *dst_mac_addr)
+{
+
+
+}
 
 
 void enc28j60_set_mac_addr(enc28j60_dev_t *dev, char *mac)
@@ -128,6 +134,23 @@ void cmd_bfc(enc28j60_dev_t *dev, char reg, short bank, char mask)
     gpio_set(dev->cs);
 }
 
+int cmd_rbm(enc28j60_dev_t *dev, char *data, size_t data_len)
+{
+    int res;
+
+    gpio_clear(dev->cs);
+    res = spi_transfer_regs(dev->spi, 0, data, data_len);
+    gpio_set(dev->cs);
+
+    return res;
+}
+
+void cmd_wbm(enc28j60_dev_t *dev, char *data, size_t data_len)
+{
+    gpio_clear(dev->cs);
+    spi_transfer_regs(dev->spi, CMD_WBM, data, 0, data_len);
+    gpio_set(dev->cs);
+}
 
 void cmd_src(enc28j60_dev_t *dev)
 {
