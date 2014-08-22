@@ -33,12 +33,15 @@ int enc28j60_setup(enc28j60_dev_t *dev, spi_t spi, gpio_t cs_pin, gpio_t int_pin
 
 int enc28j60_init(net_dev_t *dev)
 {
+    enc28j60_dev_t *enc = (enc28j60_dev_t *)dev;
+
     /* setup the low-level interfaces */
-    gpio_init_out(dev->cs, GPIO_PULLUP);
-    gpio_init_int(dev->int_pin, GPIO_PULLUP, GPIO_FALLING, enc28j60_on_int, dev);
-    spi_init_master(dev->spi, SPI_CONF_FIRST_RISING, ENC28J60_SPI_SPEED);
+    gpio_init_out(enc->cs, GPIO_PULLUP);
+    gpio_init_int(enc->int_pin, GPIO_PULLUP, GPIO_FALLING, enc28j60_on_int, dev);
+    spi_init_master(enc->spi, SPI_CONF_FIRST_RISING, ENC28J60_SPI_SPEED);
 
     /* setup the device itself */
+    enc28j60_init_device(enc);
 }
 
 
@@ -49,10 +52,12 @@ int send_data(net_dev_t *dev,
               void *data,
               size_t data_len)
 {
+    enc28j60_dev_t *enc = (enc28j60_dev_t *)dev;
 
 }
 
 int enc28j60_set_option(net_dev_t, net_dev_opt_t opt, void *value, size_t value_len)
 {
+    enc28j60_dev_t *enc = (enc28j60_dev_t *)dev;
 
 }

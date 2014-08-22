@@ -105,9 +105,9 @@
  * @name Registers in bank 2 - MAC registers
  * @{
  */
-#define REG_B2_MACON1       0x00
-#define REG_B2_MACON3       0x02
-#define REG_B2_MACON4       0x03
+#define REG_B2_MACON1       0x00    /* MAC control register 1 */
+#define REG_B2_MACON3       0x02    /* MAC control register 3 */
+#define REG_B2_MACON4       0x03    /* MAC control register 4 */
 #define REG_B2_MABBIPG      0x04    /* back-to-back inter-packet gap */
 #define REG_B2_MAIPGL       0x06    /* non-back-to-back inter-packet gap - low byte */
 #define REG_B2_MAIPGH       0x07    /* non-back-to-back inter-packet gap - high byte */
@@ -115,12 +115,12 @@
 #define REG_B2_MACLCON2     0x09    /* collision window */
 #define REG_B2_MAMXFLL      0x0a    /* maximum frame length - low byte */
 #define REG_B2_MAMXFLH      0x0b    /* maximum frame length - high byte */
-#define REG_B2_MICMD        0x12
-#define REG_B2_MIREGADR     0x14
-#define REG_B2_MIWRL        0x16
-#define REG_B2_MIWRH        0x17
-#define REG_B2_MIRDL        0x18
-#define REG_B2_MIRDH        0x19
+#define REG_B2_MICMD        0x12    /* MIIM command */
+#define REG_B2_MIREGADR     0x14    /* MIIM register address */
+#define REG_B2_MIWRL        0x16    /* MIIM write data register - low byte */
+#define REG_B2_MIWRH        0x17    /* MIIM write data register - high byte */
+#define REG_B2_MIRDL        0x18    /* MIIM read data register - low byte */
+#define REG_B2_MIRDH        0x19    /* MIIM read data register - high byte */
 /** @} */
 
 /**
@@ -137,7 +137,7 @@
 #define REG_B3_EBSTCON      0x07    /* built-in self-test control register */
 #define REG_B3_EBSTCSL      0x08    /* built-in self-test checksum - low byte */
 #define REG_B3_EBSTCSH      0x09    /* built-in self-test checksum - high byte */
-#define REG_B3_MISTAT       0x0a
+#define REG_B3_MISTAT       0x0a    /* MIIM status register */
 #define REG_B3_EREVID       0x12    /* Ethernet revision ID */
 #define REG_B3_ECOCON       0x15
 #define REG_B3_EFLOCON      0x17
@@ -145,19 +145,34 @@
 #define REG_B3_EPAUSH       0x19    /* pause timer value - high byte */
 /** @} */
 
+/**
+ * @name PHY Registers
+ * @{
+ */
+#define REG_PHY_PHCON1      0x00    /*  */
+#define REG_PHY_PHSTAT1     0x01
+#define REG_PHY_PHID1       0x02
+#define REG_PHY_PHID2       0x03
+#define REG_PHY_PHCON2      0x10
+#define REG_PHY_PHSTAT2     0x11
+#define REG_PHY_PHIE        0x12
+#define REG_PHY_PHIR        0x13
+#define REG_PHY_PHLCON      0x14
+/** @} */
+
 
 
 /** @name ESTAT bitfields */
-#define ESTAT_INT
-#define ESTAT_BUFFER
-#define ESTAT_LATECOL
-#define ESTAT_RXBUSY
-#define ESTAT_TXABRT
-#define ESTAT_
+#define ESTAT_INT           0x80
+#define ESTAT_BUFFER        0x40
+#define ESTAT_LATECOL       0x10
+#define ESTAT_RXBUSY        0x40
+#define ESTAT_TXABRT        0x20
+#define ESTAT_CLKRDY        0x01
 
 
 /** @name ECON1 bitfields */
-#define ECON1_BSEL_MASK         0x03;
+#define ECON1_BSEL_MASK     0x03;
 
 /** @name ERXFCON bitfields */
 #define ERXFCON_UCEN        0x80
@@ -168,6 +183,38 @@
 #define ERXFCON_HTEN        0x04
 #define ERXFCON_MCEN        0x02
 #define ERXFCON_BCEN        0x01
+
+/** @name MACON1 bitfields */
+#define MACON1_TXPAUS       0x08
+#define MACON1_RXPAUS       0x04
+#define MACON1_PASSALL      0x02
+#define MACON1_MARXEN       0x01
+
+/** @name MACON3 bitfields */
+#define MACON3_PADCFG2      0x80
+#define MACON3_PADCFG1      0x40
+#define MACON3_PADCFG0      0x20
+#define MACON3_TXCRCEN      0x10
+#define MACON3_PHDREN       0x08
+#define MACON3_HFRMEN       0x04
+#define MACON3_FRMLNEN      0x02
+#define MACON3_FULDPX       0x01
+
+/** @name MACON4 bitfields */
+#define MACON4_DEFER        0x40
+#define MACON4_BPEN         0x20
+#define MACON4_NOBKOFF      0x10
+
+
+
+/** @name MICMD bitfields */
+#define MICMD_MIISCAN       0x02
+#define MICMD_MIIRD         0x01
+
+/** @name MISTAT bitfields */
+#define MISTAT_NVALID       0x04
+#define MISTAT_SCAN         0x02
+#define MISTAT_BUSY         0x01
 
 
 #endif /* __ENC28J69_REGS_H */

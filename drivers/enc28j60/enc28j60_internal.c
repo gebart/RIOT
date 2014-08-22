@@ -35,26 +35,40 @@ void enc28j60_init_device(enc28j60_dev_t *dev)
 
     /* setup receive buffer */
     ptr.addr = BUFFER_SIZE - ENC28J60_RX_BUF_SIZE;
-    wcr(dev, REG_B0_ERXSTL, 0, ptr.bytes.low);
-    wcr(dev, REG_B0_ERXSTH, 0, ptr.bytes.high);
+    cmd_wcr(dev, REG_B0_ERXSTL, 0, ptr.bytes.low);
+    cmd_wcr(dev, REG_B0_ERXSTH, 0, ptr.bytes.high);
     ptr.addr = BUFFER_SIZE - 1;
-    wcr(dev, REG_B0_ERXNDL, 0, ptr.bytes.low);
-    wcr(dev, REG_B0_ERXNDH, 0, ptr.bytes.high);
+    cmd_wcr(dev, REG_B0_ERXNDL, 0, ptr.bytes.low);
+    cmd_wcr(dev, REG_B0_ERXNDH, 0, ptr.bytes.high);
 
-
-    /* setup receiver filters */
+    /* setup receive filters */
     reg = 0;    /* accept everything */
-    wcr(dev, REG_B1_ERXFCON, 1, reg);
+    cmd_wcr(dev, REG_B1_ERXFCON, 1, reg);
 
     /* wait for oscillator to be stable (by polling ESTAT.CLKRDY bit) */
-
+    do {
+        reg = cmd_rcr(dev, REG_ESTAT, -1);
+    } while (!(reg & ESTAT_CLKRDY));
 
     /* setup MAC address and MAC behavior */
+    reg = MACON1_TXPAUS | MACON1_RXPAUS | MACON1_MARXEN;
+    cmd_wcr(dev, REG_B2_MACON1, 2, reg);
+    reg = MACON3_FULDPX | MACON3_PADCFG0 | MACON3_TXCRCEN;
+    cmd_wcr(dev, REG_B2_MACON3, 2, reg);
+    reg = MACON4_DEFER;
+    cmd_wrc(dev, REG_B2_MACON4, 2, reg);
+    ptr.addr = ENC28J60_MAX_FRAME_LEN;
+    cmd_wcr(dev, REG_B2_MAMXFLL, 2, ptr.bytes.low);
+    cmd_wcr(dev, REG_B2_MAMXFLH, 2, ptr.bytes.high);
+    reg = ENC28J60_B2B_GAP;
+    cmd_wcr(dev, REG_B2_MABBIPG, 2, reg);
+    reg = ENC28J60_NB2B_GAP;
+    cmd_wcr(dev, REG_B2_MAIPGL, 2, reg);
     init_mac(mac);
     enc28j60_set_mac_addr(dev, mac);
-
-    /* setup PHY */
 }
+
+void enc28j60_send
 
 
 void enc28j60_set_mac_addr(enc28j60_dev_t *dev, char *mac)
@@ -74,7 +88,7 @@ void enc28j60_on_int(void *arg)
 
 }
 
-char enc28j60_rcr(enc28j60_dev_t *dev, char reg, short bank)
+char cmd_rcr(enc28j60_dev_t *dev, char reg, short bank)
 {
     char res;
 
@@ -87,7 +101,7 @@ char enc28j60_rcr(enc28j60_dev_t *dev, char reg, short bank)
     return res;
 }
 
-void enc28j60_wcr(enc28j60_dev_t *dev, char reg, short bank, char value)
+void cmd_wcr(enc28j60_dev_t *dev, char reg, short bank, char value)
 {
     switch_bank(dev, bank);
 
@@ -96,7 +110,7 @@ void enc28j60_wcr(enc28j60_dev_t *dev, char reg, short bank, char value)
     gpio_set(dev->cs);
 }
 
-void enc28j60_bfs(enc28j60_dev_t *dev, char reg, short bank, char mask)
+void cmd_bfs(enc28j60_dev_t *dev, char reg, short bank, char mask)
 {
     switch_bank(dev, bank);
 
@@ -105,7 +119,7 @@ void enc28j60_bfs(enc28j60_dev_t *dev, char reg, short bank, char mask)
     gpio_set(dev->cs);
 }
 
-void enc28j60_bfs(enc28j60_dev_t *dev, char reg, short bank, char mask)
+void cmd_bfc(enc28j60_dev_t *dev, char reg, short bank, char mask)
 {
     switch_bank(dev, bank);
 
@@ -115,20 +129,44 @@ void enc28j60_bfs(enc28j60_dev_t *dev, char reg, short bank, char mask)
 }
 
 
-void enc28j60_src(enc28j60_dev_t *dev)
+void cmd_src(enc28j60_dev_t *dev)
 {
     gpio_clear(dev->cs);
     spi_transfer_byte(dev->spi, CMD_SRC);
     gpio_set(dev->cs);
 }
 
+uint16_t cmd_phy_read(enc28j60_dev_t *dev, char reg)
+{
+    enc28j60_ptr_t data;
+
+    cmd_wcr(dev, REG_B2_MIREGADR, 2, reg);
+    cmd_bfs(dev, REG_B2_MICMD, 2, MICMD_MIIRD);
+    do {
+        reg = cmd_rcr(dev, REG_B3_MISTAT, 3);
+    } while (reg & MISTAT_BUSY);
+    cmd_bfc(dev, REG_B2_MICMD, 2, MICMD_MIIRD);
+    data.bytes.low = cmd_rcr(dev, REG_B2_MIRDL, 2);
+    data.bytes.high = cmd_rcr(dev, REG_B2_MIRDH, 2);
+
+    return data.addr;
+}
+
+void cmd_phy_write(enc28j60_dev_t *dev, char reg, uint16_t val)
+{
+    enc28j60_ptr_t data = val;
+
+    cmd_wcr(dev, REG_B2_MIREGADR, 2, reg);
+    cmd_wcr(dev, REG_B2_MIWRL, 2, data.bytes.low);
+    cmd_wcr(dev, REG_B2_MIWRH, 2, data.bytes.high);
+}
 
 static void switch_bank(enc28j60_dev_t *dev, short bank)
 {
     char ctrl_reg;
 
     /* only switch bank if needed */
-    if (dev->active_bank == bank) {
+    if (dev->active_bank == bank || bank < 0) {
         return;
     }
 

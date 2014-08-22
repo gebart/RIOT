@@ -29,6 +29,9 @@
 #define ENC28J60_MAC3    0x3456
 
 #define ENC28J60_RX_BUF_SIZE    (0x1000)             /* 4K -> half of available 8K */
+#define ENC28J60_MAX_FRAME_LEN  (1518U)
+#define ENC28J60_B2B_GAP        (0x15)
+#define ENC28J60_NB2B_GAP       (0x0c)
 
 
 
@@ -40,15 +43,7 @@ typedef union {
     } bytes;
 } enc28j60_ptr_t;
 
-char enc28j60_rcr(enc28j60_dev_t *dev, char reg, short bank);
-
-void enc28j60_wcr(enc28j60_dev_t *dev, char reg, short bank, char value);
-
-void enc28j60_bfs(enc28j60_dev_t *dev, char reg, short bank, char mask);
-
-void enc28j60_bfs(enc28j60_dev_t *dev, char reg, short bank, char mask);
-
-void enc28j60_src(enc28j60_dev_t *dev);
+int enc28j60_init_device(enc28j60_dev_t *dev);
 
 #endif /* __ENC28J60_INTERNAL_H */
 /** @} */
