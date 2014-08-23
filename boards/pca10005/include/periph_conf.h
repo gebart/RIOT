@@ -15,6 +15,7 @@
  *
  * @author      Christian Kühling <kuehling@zedat.fu-berlin.de>
  * @author      Timo Ziegler <timo.ziegler@fu-berlin.de>
+ * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
  */
 
 #ifndef __PERIPH_CONF_H
@@ -70,6 +71,17 @@
 #define UART_0_PIN_TX       9
 /** @} */
 
+/**
+ * @name ADC configuration
+ * @{
+ */
+#define ADC_NUMOF           (1U)        /* the NRF51822 only knows 1 ADC... */
+#define ADC_CHANNELS        (2)
+#define ADC_CH0_PIN         26
+#define ADC_CH0_AIN         0
+#define ADC_CH1_PIN         27
+#define ADC_CH1_AIN         1
+/** @} */
 
 /**
  * @name GPIO configuration
