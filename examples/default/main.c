@@ -21,7 +21,7 @@
  *
  * @}
  */
-
+//~ #define __CUSTOM_FILE_IO__
 #include <stdio.h>
 #include <string.h>
 
@@ -145,6 +145,7 @@ static int shell_readc(void)
 static void shell_putchar(int c)
 {
     (void) putchar(c);
+    fflush(stdout);
 }
 
 int main(void)
