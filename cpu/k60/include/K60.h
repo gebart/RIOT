@@ -40,7 +40,19 @@
 #ifndef K60_H_
 #define K60_H_
 
-#include "config-board.h"
+#if !defined(K60_CPU_REV)
+#if defined(CPU_MODEL_K60DN512VLL10)
+/* Rev. 2.x silicon */
+#define K60_CPU_REV 2
+#include "MK60D10-CMSIS.h"
+#elif defined(CPU_MODEL_K60DN512ZVLL10)
+/* Rev. 1.x silicon */
+#define K60_CPU_REV 1
+#include "MK60DZ10-CMSIS.h"
+#else
+#error Unknown CPU model. Update Makefile.include in the board directory.
+#endif /* defined(CPU_MODEL_???) */
+#endif /* !defined(K60_CPU_REV) */
 
 #if K60_CPU_REV == 2
 
