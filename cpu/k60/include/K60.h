@@ -57,7 +57,7 @@
 #if K60_CPU_REV == 2
 
 /* K60 CPU silicon version 2.x */
-#include "MK60D10.h"
+//~ #include "MK60D10.h"
 
 /* These definitions are missing from the rev 2.x header, although they are
  * defined in the reference manual... */
@@ -71,7 +71,7 @@
 #elif K60_CPU_REV == 1
 
 /* K60 CPU silicon version 1.x */
-#include "MK60DZ10.h"
+//~ #include "MK60DZ10.h"
 
 /* Some compatibility defines to minimize the ifdefs needed for the register
  * name changes */
