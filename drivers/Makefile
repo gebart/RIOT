@@ -7,6 +7,9 @@ endif
 ifneq (,$(filter nrf24l01p,$(USEMODULE)))
     DIRS += nrf24l01p
 endif
+ifneq (,$(filter enc28j60,$(USEMODULE)))
+    DIRS += enc28j60
+endif
 
 DIRS += $(dir $(wildcard $(addsuffix /Makefile, ${USEMODULE})))
 

@@ -13,6 +13,7 @@ endif
 ifneq (,$(filter at86rf231,$(USEMODULE)))
     USEMODULE_INCLUDES += $(RIOTBASE)/drivers/at86rf231/include
 endif
+<<<<<<< HEAD
 ifneq (,$(filter isl29020,$(USEMODULE)))
     USEMODULE_INCLUDES += $(RIOTBASE)/drivers/isl29020/include
 endif
@@ -36,4 +37,7 @@ ifneq (,$(filter mma8652,$(USEMODULE)))
 endif
 ifneq (,$(filter mag3110,$(USEMODULE)))
     USEMODULE_INCLUDES += $(RIOTBASE)/drivers/mag3110/include
+endif
+ifneq (,$(filter enc28j60,$(USEMODULE)))
+    USEMODULE_INCLUDES += $(RIOTBASE)/drivers/enc28j60/include
 endif
