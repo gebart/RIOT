@@ -33,6 +33,8 @@
 #define ENC28J60_B2B_GAP        (0x15)
 #define ENC28J60_NB2B_GAP       (0x0c)
 
+#define ENC28J60_EVT_RX         (0x01)
+
 
 
 typedef union {

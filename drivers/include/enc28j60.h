@@ -21,12 +21,23 @@
 #ifndef __ENC28J60_H
 #define __ENC28J60_H
 
+#include "mutex.h"
+#include "periph/spi.h"
+#include "periph/gpio.h"
+
 typedef struct {
     spi_t spi;
     gpio_t cs;
     gpio_t int_pin;
     short active_bank;
+    char mac[6];
+    mutex_t tx_mutex;
+    net_dev_rcv_data_cb_t rx_cb;
+    kernel_pid_t pid;
+    enc28j60_ptr_t next_pkt;
 } enc28j60_dev_t;
+
+extern net_dev_driver_t enc28j60;
 
 int enc28j60_setup(enc28j60_dev_t *dev, spi_t spi, gpio_t cs_pin, gpio_t int_pin);
 
@@ -50,6 +61,8 @@ int enc28j60_set_option(net_dev_t, net_dev_opt_t opt, void *value, size_t value_
 int enc28j60_get_state(net_dev_t *dev, net_dev_state_t *state);
 
 int enc28j60_set_state(net_dev_t *dev, net_dev_state_t state);
+
+void enc28j60_event(net_dev_t *dev, uint32_t event_type);
 
 #endif /* __ENC28J60_H */
 /** @} */

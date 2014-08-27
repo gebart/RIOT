@@ -161,6 +161,22 @@
 /** @} */
 
 
+/* @name EIE bitfields */
+#define EIE_INTIE           0x80
+#define EIE_PKTIE           0x40
+#define EIE_DMAIE           0x20
+#define EIE_LINKIE          0x10
+#define EIE_TXIE            0x08
+#define EIE_TXERIE          0x02
+#define EIE_RXERIE          0x01
+
+/* @name EIR bitfields */
+#define EIR_PKTIF           0x40
+#define EIR_DMAIF           0x20
+#define EIR_LINKIF          0x10
+#define EIR_TXIF            0x08
+#define EIR_TXERIF          0x02
+#define EIR_RXERIF          0x01
 
 /** @name ESTAT bitfields */
 #define ESTAT_INT           0x80
@@ -170,9 +186,22 @@
 #define ESTAT_TXABRT        0x20
 #define ESTAT_CLKRDY        0x01
 
-
 /** @name ECON1 bitfields */
-#define ECON1_BSEL_MASK     0x03;
+#define ECON1_TXRST         0x80
+#define ECON1_RXRST         0x40
+#define ECON1_DMAST         0x20
+#define ECON1_CSUMEN        0x10
+#define ECON1_TXRTS         0x08
+#define ECON1_RXEN          0x04
+#define ECON1_BSEL1         0x02
+#define ECON1_BSEL0         0x01
+#define ECON1_BSEL_MASK     0x03
+
+/** @name ECON2 bitfields */
+#define ECON2_AUTOINC       0x80
+#define ECON2_PKTDEC        0x40
+#define ECON2_PWRSV         0x20
+#define ECON2_VRPS          0x40
 
 /** @name ERXFCON bitfields */
 #define ERXFCON_UCEN        0x80
@@ -205,8 +234,6 @@
 #define MACON4_BPEN         0x20
 #define MACON4_NOBKOFF      0x10
 
-
-
 /** @name MICMD bitfields */
 #define MICMD_MIISCAN       0x02
 #define MICMD_MIIRD         0x01
@@ -216,6 +243,11 @@
 #define MISTAT_SCAN         0x02
 #define MISTAT_BUSY         0x01
 
+/* @name EFLOCON bitfields */
+#define EFLOCON_FULDPXS     0x04
+#define EFLOCON_FCEN1       0x02
+#define EFLOCON_FCEN0       0x01
+#define EFLOCON_FCEN_MASK   0x03
 
 #endif /* __ENC28J69_REGS_H */
 /** @} */

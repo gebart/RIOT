@@ -18,6 +18,9 @@
  * @}
  */
 
+#include "mutex.h"
+#include "msg.h"
+
 #include "enc28j60.h"
 #include "enc28j60_internal.h"
 #include "enc28j60_regs.h"
@@ -66,14 +69,98 @@ void enc28j60_init_device(enc28j60_dev_t *dev)
     cmd_wcr(dev, REG_B2_MAIPGL, 2, reg);
     init_mac(mac);
     enc28j60_set_mac_addr(dev, mac);
+
+    /* enable hardware flow control */
+    cmd_wcr(dev, REG_B3_EFLOCON, 3, EFLOCON_FULDPXS | EFLOCON_FCEN1);
+
+    /* enable auto-increment of read and write pointers for the RBM/WBM commands */
+    cmd_bfs(dev, REG_ECON2, -1, ECON2_AUTOINC);
+
+    /* enable receive interrupt */
+    cmd_bfs(dev, REG_EIE, -1, EIE_INTIE | EIE_PKTIE);
+    /* allow receiving bytes from now on */
+    cmd_bfs(dev, REG_ECON1, -1, ECON1_RXEN);
 }
 
 void enc28j60_transmit(enc28j60_dev_t *dev,
                        char *data, size_t data_len,
+                       char type,
                        char *dst_mac_addr)
 {
+    enc28j60_ptr_t start, end;
+    start.addr = 0x0000;            /* start at address 0 */
+    end.addr = 15 + data_len;       /* 1*control byte + 2*type byte + 2*mac + data length */
 
+    /* wait for any ongoing transmission to finish */
+    mutex_lock(dev->tx_mutex);
 
+    /* set ETXST pointer to address 0x4 */
+    cmd_wcr(dev, REG_B0_ETXSTL, 0, start.low);
+    cmd_wcr(dev, REG_B0_ETXSTH, 0, start.high);
+
+    /* set the write data pointer for WBM command to same start address */
+    cmd_wcr(dev, REG_B0_EWRPTL, 0, start.low);
+    cmd_wcr(dev, REG_B0_EWRPTH, 0, start.high);
+
+    /* use WBM command to write data to chip */
+    gpio_clear(dev->cs);
+    spi_transfer_reg(dev->spi, CMD_WBM, 0, 0);          /* control byte := 0 */
+    spi_transfer_bytes(dev->spi, dst_mac_addr, 0, 6);   /* dst address */
+    spi_transfer_bytes(dev->spi, dev->mac, 6);          /* src address */
+    spi_transfer_bytes(dev->spi, type, 0, 2);               /* Ethernet type filed */
+    spi_transfer_bytes(dev->spi, data, 0, data_len);    /* actual data */
+    gpio_set(dev->cs);
+
+    /* set the ETXND pointer to the last address we wrote data to */
+    cmd_wcr(dev, REG_B0_ETXNDL, 0, end.low);
+    cmd_wcr(dev, REG_B0_ETXNDH, 0, end.high);
+
+    /* start transmission of data */
+    cmd_bfs(dev, REG_ECON1, -1, ECON1_TXRTS);
+
+    /* unlock transmit mutex */
+    mutex_unlock(dev->tx_mutex);
+}
+
+int end28j60_receive(enc28j60_t *dev,
+                      char *buffer, size_t max_len,
+                      char *src_mac_addr, char *dst_mac_addr, uint16_t *type)
+{
+    int size;
+    char status[4];
+    enc28j60_ptr_t next;
+
+    /* set the read data pointer for RBM command to start of packet */
+    cmd_wcr(dev, REG_B0_ERDPTL, dev->next_pkt.low);
+    cmd_wcr(dev, REG_B0_ERDPTH, dev->next_pkt.high);
+
+    /* read new next packet pointer and status bytes */
+    cmd_rbm(dev, (char *)&dev->next_pkt.low, 1);
+    cmd_rbm(dev, (char *)&dev->next_pkt.high, 1);
+    cmd_rbm(dev, status, 4);
+
+    /* get number of received bytes from status field */
+    /* TODO: make this work with other systems then little-endian */
+    size = ((int)status[1] << 8) & (int)status[0];
+    /* from the size we can deduct the actual amount of payload bytes */
+    size -= 18;       /* 2 byte Ethernet type, 12 byte mac addresses, 4 byte CRC */
+
+    /* read addresses */
+    cmd_rbm(dev, dst_mac_addr, 6);
+    cmd_rbm(dev, src_mac_addr, 6);
+
+    /* read Ethernet type field */
+    cmd_rbm(dev, (char *)type, 2);
+
+    /* read the actual data, but just ignore the 4 bytes with the CRC for now */
+    cmd_rbm(dev, data, size);
+
+    /* and finally free the buffer space used by the packet just read */
+    cmd_wcr(dev, REG_B0_ERXRDPTL, 0, dev->next_pkt.low);
+    cmd_wcr(dev, REG_B0_ERXRDPTH, 0, dev->next_pkt.high);
+    cmd_bfs(dev, REG_ECON2, -1, ECON2_PKTDEC);
+
+    return size;
 }
 
 
@@ -90,8 +177,20 @@ void enc28j60_set_mac_addr(enc28j60_dev_t *dev, char *mac)
 
 void enc28j60_on_int(void *arg)
 {
+    char eir;
+    mst_t msg;
     enc28j60_dev_t *dev = (enc28j60_dev_t *)arg;
 
+    /* read interrupt flat register */
+    eir = cmd_rcr(dev, EIR_PKTIF, -1);
+
+    /* see if new packet was received */
+    if (eir & EIR_PKTIF) {
+        msg.type = SOME_WIERED_TYPE_OF_MESSGE;
+        msg.content.value = ENC28J60_EVT_RX;
+        msg_send(&msg, dev->pid, 0);
+    }
+    /* ignore all other interrupts for now */
 }
 
 char cmd_rcr(enc28j60_dev_t *dev, char reg, short bank)
