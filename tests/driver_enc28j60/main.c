@@ -39,7 +39,7 @@ int main(void)
     enc28j60_setup(&dev, SPI_0, GPIO_5, GPIO_6);
 
     /* initialize the module */
-    enc28j60_init(&dev);
+    enc28j60_init((net_dev_t *)&dev);
 
 
     while (1) {
