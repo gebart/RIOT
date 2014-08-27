@@ -35,17 +35,18 @@
 
 #define ENC28J60_EVT_RX         (0x01)
 
+int enc28j60_init_device(enc28j60_t *dev);
 
+void enc28j60_transmit(enc28j60_t *dev, char *data, size_t data_len, uint16_t type,
+                       char *dst_mac_addr);
 
-typedef union {
-    uint16_t addr;
-    struct {
-        char low;
-        char high;
-    } bytes;
-} enc28j60_ptr_t;
+int end28j60_receive(enc28j60_t *dev,
+                      char *buffer, size_t max_len,
+                      char *src_mac_addr, char *dst_mac_addr, uint16_t *type);
 
-int enc28j60_init_device(enc28j60_dev_t *dev);
+void enc28j60_set_mac_addr(enc28j60_t *dev, char *mac);
+
+void enc28j60_on_int(void *arg);
 
 #endif /* __ENC28J60_INTERNAL_H */
 /** @} */

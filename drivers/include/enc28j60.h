@@ -22,8 +22,18 @@
 #define __ENC28J60_H
 
 #include "mutex.h"
+#include "kernel_types.h"
 #include "periph/spi.h"
 #include "periph/gpio.h"
+#include "net_dev/base.h"
+
+typedef union {
+    uint16_t addr;
+    struct {
+        char low;
+        char high;
+    } bytes;
+} enc28j60_ptr_t;
 
 typedef struct {
     spi_t spi;
@@ -35,11 +45,11 @@ typedef struct {
     net_dev_rcv_data_cb_t rx_cb;
     kernel_pid_t pid;
     enc28j60_ptr_t next_pkt;
-} enc28j60_dev_t;
+} enc28j60_t;
 
 extern net_dev_driver_t enc28j60;
 
-int enc28j60_setup(enc28j60_dev_t *dev, spi_t spi, gpio_t cs_pin, gpio_t int_pin);
+void enc28j60_setup(enc28j60_t *dev, spi_t spi, gpio_t cs_pin, gpio_t int_pin);
 
 int enc28j60_init(net_dev_t *dev);
 
@@ -54,9 +64,9 @@ int enc28j60_add_rcv_cb(net_dev_t *dev, net_dev_rcv_data_cb_t cb);
 
 int enc28j60_rem_rcv_cb(net_dev_t *dev, net_dev_rcv_data_cb_t cb);
 
-int enc28j60_get_option(net_dev_t, net_dev_opt_t opt, void *value, size_t *value_len);
+int enc28j60_get_option(net_dev_t *dev, net_dev_opt_t opt, void *value, size_t *value_len);
 
-int enc28j60_set_option(net_dev_t, net_dev_opt_t opt, void *value, size_t value_len);
+int enc28j60_set_option(net_dev_t *dev, net_dev_opt_t opt, void *value, size_t value_len);
 
 int enc28j60_get_state(net_dev_t *dev, net_dev_state_t *state);
 
