@@ -7,13 +7,13 @@
  */
 
 /**
- * @ingroup     cpu_K60
+ * @ingroup     cpu_k60
  * @{
  *
  * @file
  * @brief       Low-level GPIO driver implementation
  *
- * @author      Hauke Petersen <mail@haukepetersen.de>
+ * @author      Joakim Gebart <joakim.gebart@eistec.se
  *
  * @}
  */
@@ -46,7 +46,7 @@ static gpio_state_t gpio_config[GPIO_NUMOF];
 
 int gpio_init_out(gpio_t dev, gpio_pp_t pullup)
 {
-    GPIO_TypeDef *port = 0;
+    PORT_Type *port = 0;
     uint32_t pin = 0;
 
     switch (dev) {

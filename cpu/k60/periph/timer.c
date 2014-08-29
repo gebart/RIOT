@@ -7,13 +7,13 @@
  */
 
 /**
- * @ingroup     cpu_stm32f4
+ * @ingroup     cpu_k60
  * @{
  *
  * @file
  * @brief       Low-level timer driver implementation
  *
- * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
+ * @author      Joakim Gebart <joakim.gebart@eistec.se
  *
  * @}
  */
@@ -41,7 +41,18 @@ timer_conf_t config[TIMER_NUMOF];
 
 int timer_init(tim_t dev, unsigned int ticks_per_us, void (*callback)(int))
 {
-    TIM_TypeDef *timer;
+    /*
+     * We are not using timer channels of the RIOT API since we already need to
+     * use channel chaining in order to reach the correct timer frequency on
+     * the K60.
+     *
+     * All PIT timers run at F_SYS on the K60, this is why we need to use two
+     * timers in order to set a custom frequency for the timer...
+     */
+    int channel = 0;
+    int psc_channel = 0;
+    unsigned int base_freq = 0;
+    PIT_Type* pit;
 
     switch (dev) {
 #if TIMER_0_EN
@@ -51,8 +62,10 @@ int timer_init(tim_t dev, unsigned int ticks_per_us, void (*callback)(int))
             /* set timer's IRQ priority */
             NVIC_SetPriority(TIMER_0_IRQ_CHAN, TIMER_IRQ_PRIO);
             /* select timer */
-            timer = TIMER_0_DEV;
-            timer->PSC = TIMER_0_PRESCALER * ticks_per_us;
+            pit = TIMER_0_DEV;
+            channel = TIMER_0_CHANNEL;
+            psc_channel = TIMER_0_PSC_CHANNEL;
+            base_freq = TIMER_0_BASE_FREQ;
             break;
 #endif
 #if TIMER_1_EN
@@ -62,8 +75,10 @@ int timer_init(tim_t dev, unsigned int ticks_per_us, void (*callback)(int))
             /* set timer's IRQ priority */
             NVIC_SetPriority(TIMER_1_IRQ_CHAN, TIMER_IRQ_PRIO);
             /* select timer */
-            timer = TIMER_1_DEV;
-            timer->PSC = TIMER_0_PRESCALER * ticks_per_us;
+            pit = TIMER_1_DEV;
+            channel = TIMER_1_CHANNEL;
+            psc_channel = TIMER_1_PSC_CHANNEL;
+            base_freq = TIMER_1_BASE_FREQ;
             break;
 #endif
         case TIMER_UNDEFINED:
@@ -74,12 +89,14 @@ int timer_init(tim_t dev, unsigned int ticks_per_us, void (*callback)(int))
     /* set callback function */
     config[dev].cb = callback;
 
-    /* set timer to run in counter mode */
-    timer->CR1 = 0;
-    timer->CR2 = 0;
+    /* Set up timer chaining */
+    pit->CHANNEL[channel].TCTRL |= PIT_TCTRL_CHN_MASK;
 
-    /* set auto-reload and prescaler values and load new values */
-    timer->EGR |= TIM_EGR_UG;
+    /* Disable interrupt on prescaler timer */
+    pit->CHANNEL[psc_channel].TCTRL &= PIT_TCTRL_TIE_MASK;
+
+    /* Set prescaler frequency */
+    pit->CHANNEL[psc_channel].LDVAL = PIT_LDVAL_TSV(base_freq / (ticks_per_us * 1000000));
 
     /* enable the timer's interrupt */
     timer_irq_enable(dev);
@@ -92,23 +109,33 @@ int timer_init(tim_t dev, unsigned int ticks_per_us, void (*callback)(int))
 
 int timer_set(tim_t dev, int channel, unsigned int timeout)
 {
-    int now = timer_read(dev);
-    return timer_set_absolute(dev, channel, now + timeout - 1);
+    return timer_set_absolute(dev, channel, timeout);
 }
 
 int timer_set_absolute(tim_t dev, int channel, unsigned int value)
 {
-    TIM_TypeDef *timer;
+    /* The K60 timer architecture is a bit different than the STM32 that this
+     * API seem to be modelled around. */
+    /* A side effect of this function is that the timer is always restarted
+     * after setting a new value. */
+    PIT_Type* pit;
+    if (channel != 0) {
+        return -1;
+    }
+
+    int real_channel;
 
     switch (dev) {
 #if TIMER_0_EN
         case TIMER_0:
-            timer = TIMER_0_DEV;
+            pit = TIMER_0_DEV;
+            real_channel = TIMER_0_CHANNEL;
             break;
 #endif
 #if TIMER_1_EN
         case TIMER_1:
-            timer = TIMER_1_DEV;
+            pit = TIMER_1_DEV;
+            real_channel = TIMER_1_CHANNEL;
             break;
 #endif
         case TIMER_UNDEFINED:
@@ -116,47 +143,38 @@ int timer_set_absolute(tim_t dev, int channel, unsigned int value)
             return -1;
     }
 
-    switch (channel) {
-        case 0:
-            timer->CCR1 = value;
-            timer->SR &= ~TIM_SR_CC1IF;
-            timer->DIER |= TIM_DIER_CC1IE;
-            break;
-        case 1:
-            timer->CCR2 = value;
-            timer->SR &= ~TIM_SR_CC2IF;
-            timer->DIER |= TIM_DIER_CC2IE;
-            break;
-        case 2:
-            timer->CCR3 = value;
-            timer->SR &= ~TIM_SR_CC3IF;
-            timer->DIER |= TIM_DIER_CC3IE;
-            break;
-        case 3:
-            timer->CCR4 = value;
-            timer->SR &= ~TIM_SR_CC4IF;
-            timer->DIER |= TIM_DIER_CC4IE;
-            break;
-        default:
-            return -1;
-    }
+    /* The actual hardware timer always counts down to 0 and we can not write
+     * to the counter value, we need to reload the timer with the new value
+     * by resetting it with a new LDVAL parameter. */
+    pit->CHANNEL[real_channel].LDVAL = PIT_LDVAL_TSV(timeout); /* Load timer value */
+    pit->CHANNEL[real_channel].TCTRL &= PIT_TCTRL_TIE_MASK | PIT_TCTRL_TEN_MASK; /* Disable interrupt, disable timer */
+    pit->CHANNEL[real_channel].TFLG |= PIT_TFLG_TIF_MASK; /* Clear interrupt flag */
+    pit->CHANNEL[real_channel].TCTRL |= PIT_TCTRL_TIE_MASK | PIT_TCTRL_TEN_MASK; /* Enable interrupt, enable timer */
 
     return 0;
 }
 
 int timer_clear(tim_t dev, int channel)
 {
-    TIM_TypeDef *timer;
+    PIT_Type* pit;
+
+    if (channel != 0) {
+        return -1;
+    }
+
+    int real_channel;
 
     switch (dev) {
 #if TIMER_0_EN
         case TIMER_0:
-            timer = TIMER_0_DEV;
+            pit = TIMER_0_DEV;
+            real_channel = TIMER_0_CHANNEL;
             break;
 #endif
 #if TIMER_1_EN
         case TIMER_1:
-            timer = TIMER_1_DEV;
+            pit = TIMER_1_DEV;
+            real_channel = TIMER_1_CHANNEL;
             break;
 #endif
         case TIMER_UNDEFINED:
@@ -164,42 +182,27 @@ int timer_clear(tim_t dev, int channel)
             return -1;
     }
 
-    switch (channel) {
-        case 0:
-            timer->DIER &= ~TIM_DIER_CC1IE;
-            break;
-        case 1:
-            timer->DIER &= ~TIM_DIER_CC2IE;
-            break;
-        case 2:
-            timer->DIER &= ~TIM_DIER_CC3IE;
-            break;
-        case 3:
-            timer->DIER &= ~TIM_DIER_CC4IE;
-            break;
-        default:
-            return -1;
-    }
+    pit->CHANNEL[real_channel].TCTRL &= PIT_TCTRL_TIE_MASK; /* Disable interrupt */
 
     return 0;
 }
 
 unsigned int timer_read(tim_t dev)
 {
+    /* The system expects timers to be UP-counting. The K60 only provides DOWN-
+     * counting timers. We convert to an incrementing timer value in this function. */
     switch (dev) {
 #if TIMER_0_EN
         case TIMER_0:
-            return TIMER_0_DEV->CNT;
-            break;
+            return TIMER_0_DEV[TIMER_0_CHANNEL].LDVAL - TIMER_0_DEV[TIMER_0_CHANNEL].CVAL;
 #endif
 #if TIMER_1_EN
         case TIMER_1:
-            return TIMER_1_DEV->CNT;
-            break;
+            return TIMER_1_DEV[TIMER_1_CHANNEL].LDVAL - TIMER_1_DEV[TIMER_1_CHANNEL].CVAL;
 #endif
         case TIMER_UNDEFINED:
         default:
-            return 0;
+            return -1;
     }
 }
 
@@ -208,12 +211,12 @@ void timer_start(tim_t dev)
     switch (dev) {
 #if TIMER_0_EN
         case TIMER_0:
-            TIMER_0_DEV->CR1 |= TIM_CR1_CEN;
+            TIMER_0_DEV->CHANNEL[TIMER_0_CHANNEL].TCTRL |= PIT_TCTRL_TEN_MASK;
             break;
 #endif
 #if TIMER_1_EN
         case TIMER_1:
-            TIMER_1_DEV->CR1 |= TIM_CR1_CEN;
+            TIMER_1_DEV->CHANNEL[TIMER_1_CHANNEL].TCTRL |= PIT_TCTRL_TEN_MASK;
             break;
 #endif
         case TIMER_UNDEFINED:
@@ -223,15 +226,17 @@ void timer_start(tim_t dev)
 
 void timer_stop(tim_t dev)
 {
+    /* Note: Re-enabling the timer after stopping it has the side effect of
+     * resetting the counter value as well. */
     switch (dev) {
 #if TIMER_0_EN
         case TIMER_0:
-            TIMER_0_DEV->CR1 &= ~TIM_CR1_CEN;
+            TIMER_0_DEV->CHANNEL[TIMER_0_CHANNEL].TCTRL &= ~PIT_TCTRL_TEN_MASK;
             break;
 #endif
 #if TIMER_1_EN
         case TIMER_1:
-            TIMER_1_DEV->CR1 &= ~TIM_CR1_CEN;
+            TIMER_1_DEV->CHANNEL[TIMER_1_CHANNEL].TCTRL &= ~PIT_TCTRL_TEN_MASK;
             break;
 #endif
         case TIMER_UNDEFINED:
@@ -277,15 +282,19 @@ void timer_irq_disable(tim_t dev)
 
 void timer_reset(tim_t dev)
 {
+    /* The counter register is not writable, we must reset by disabling and then
+     * enable the timer again. */
     switch (dev) {
 #if TIMER_0_EN
         case TIMER_0:
-            TIMER_0_DEV->CNT = 0;
+            TIMER_0_DEV->CHANNEL[TIMER_0_CHANNEL].TCTRL &= ~PIT_TCTRL_TEN_MASK;
+            TIMER_0_DEV->CHANNEL[TIMER_0_CHANNEL].TCTRL |= PIT_TCTRL_TEN_MASK;
             break;
 #endif
 #if TIMER_1_EN
         case TIMER_1:
-            TIMER_1_DEV->CNT = 0;
+            TIMER_1_DEV->CHANNEL[TIMER_1_CHANNEL].TCTRL &= ~PIT_TCTRL_TEN_MASK;
+            TIMER_1_DEV->CHANNEL[TIMER_1_CHANNEL].TCTRL |= PIT_TCTRL_TEN_MASK;
             break;
 #endif
         case TIMER_UNDEFINED:
@@ -296,38 +305,25 @@ void timer_reset(tim_t dev)
 __attribute__ ((naked)) void TIMER_0_ISR(void)
 {
     ISR_ENTER();
-    irq_handler(TIMER_0, TIMER_0_DEV);
+    irq_handler(TIMER_0, TIMER_0_DEV, TIMER_0_CHANNEL);
     ISR_EXIT();
 }
 
 __attribute__ ((naked)) void TIMER_1_ISR(void)
 {
     ISR_ENTER();
-    irq_handler(TIMER_1, TIMER_1_DEV);
+    irq_handler(TIMER_1, TIMER_1_DEV, TIMER_1_CHANNEL);
     ISR_EXIT();
 }
 
-static inline void irq_handler(tim_t timer, TIM_TypeDef *dev)
+static inline void irq_handler(tim_t timer, PIT_Type* pit, int channel)
 {
-    if (dev->SR & TIM_SR_CC1IF) {
-        dev->DIER &= ~TIM_DIER_CC1IE;
-        dev->SR &= ~TIM_SR_CC1IF;
+    if (pit->CHANNEL[channel].TFLG & PIT_TFLG_TIF_MASK) {
+        /* Disable interrupt */
+        pit->CHANNEL[channel].TCTRL &= ~PIT_TCTRL_TIE_MASK;
+        /* Clear interrupt flag by writing 1 to it */
+        pit->CHANNEL[channel].TFLG |= PIT_TFLG_TIF_MASK;
         config[timer].cb(0);
-    }
-    else if (dev->SR & TIM_SR_CC2IF) {
-        dev->DIER &= ~TIM_DIER_CC2IE;
-        dev->SR &= ~TIM_SR_CC2IF;
-        config[timer].cb(1);
-    }
-    else if (dev->SR & TIM_SR_CC3IF) {
-        dev->DIER &= ~TIM_DIER_CC3IE;
-        dev->SR &= ~TIM_SR_CC3IF;
-        config[timer].cb(2);
-    }
-    else if (dev->SR & TIM_SR_CC4IF) {
-        dev->DIER &= ~TIM_DIER_CC4IE;
-        dev->SR &= ~TIM_SR_CC4IF;
-        config[timer].cb(3);
     }
     if (sched_context_switch_request) {
         thread_yield();
