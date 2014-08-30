@@ -7,8 +7,7 @@
  * interrupt handlers.
  */
 
-#define SECTION(x) __attribute__ ((section(#x)))
-#define ISR_VECTOR_SECTION SECTION(.vector_table)
+#define ISR_VECTOR_SECTION __attribute__ ((used,section(".vector_table")))
 void reset_handler(void) __attribute__((naked));
 void _isr_nmi(void) __attribute__((interrupt));
 void _isr_hardfault(void) __attribute__((interrupt));

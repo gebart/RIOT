@@ -69,6 +69,31 @@ copy_ramcode(void)
     *(ram++) = *(rom++);
   }
 }
+
+/* This variable is used to reference interrupt-vector-k60.c so that it will be
+ * pulled in during linking. */
+extern void *isr_vector[];
+
+/* Start of .vector_table section in RAM */
+extern void *_vector_ram_start[];
+/* End of .vector_table section in RAM */
+extern void *_vector_ram_end[];
+/* Start of .vector_table section in flash */
+extern void *_vector_rom[];
+/*
+ * Copy the interrupt vector table to RAM.
+ */
+static void
+copy_isr_vector(void)
+{
+  void **ram = _vector_ram_start;
+  void **rom = isr_vector;
+  while(ram < _vector_ram_end) {
+    *(ram++) = *(rom++);
+  }
+}
+
+
 /* Initialize all data used by the C runtime. */
 static void __attribute__((unused))
 init_data(void)
@@ -78,6 +103,8 @@ init_data(void)
   clear_bss();
 
   copy_ramcode();
+
+  copy_isr_vector();
 }
 
 /* our local copy of newlib init */
