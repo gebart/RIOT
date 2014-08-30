@@ -28,7 +28,7 @@
 #include "periph/timer.h"
 
 /** Unified IRQ handler for all timers */
-static inline void irq_handler(tim_t timer, TIM_TypeDef *dev);
+static inline void irq_handler(tim_t timer, PIT_Type* pit, int channel);
 
 /** Type for timer state */
 typedef struct {
@@ -46,7 +46,7 @@ int timer_init(tim_t dev, unsigned int ticks_per_us, void (*callback)(int))
      * use channel chaining in order to reach the correct timer frequency on
      * the K60.
      *
-     * All PIT timers run at F_SYS on the K60, this is why we need to use two
+     * All PIT timers run at F_BUS on the K60, this is why we need to use two
      * timers in order to set a custom frequency for the timer...
      */
     int channel = 0;
@@ -146,7 +146,7 @@ int timer_set_absolute(tim_t dev, int channel, unsigned int value)
     /* The actual hardware timer always counts down to 0 and we can not write
      * to the counter value, we need to reload the timer with the new value
      * by resetting it with a new LDVAL parameter. */
-    pit->CHANNEL[real_channel].LDVAL = PIT_LDVAL_TSV(timeout); /* Load timer value */
+    pit->CHANNEL[real_channel].LDVAL = PIT_LDVAL_TSV(value); /* Load timer value */
     pit->CHANNEL[real_channel].TCTRL &= PIT_TCTRL_TIE_MASK | PIT_TCTRL_TEN_MASK; /* Disable interrupt, disable timer */
     pit->CHANNEL[real_channel].TFLG |= PIT_TFLG_TIF_MASK; /* Clear interrupt flag */
     pit->CHANNEL[real_channel].TCTRL |= PIT_TCTRL_TIE_MASK | PIT_TCTRL_TEN_MASK; /* Enable interrupt, enable timer */
@@ -194,11 +194,11 @@ unsigned int timer_read(tim_t dev)
     switch (dev) {
 #if TIMER_0_EN
         case TIMER_0:
-            return TIMER_0_DEV[TIMER_0_CHANNEL].LDVAL - TIMER_0_DEV[TIMER_0_CHANNEL].CVAL;
+            return TIMER_0_DEV->CHANNEL[TIMER_0_CHANNEL].LDVAL - TIMER_0_DEV->CHANNEL[TIMER_0_CHANNEL].CVAL;
 #endif
 #if TIMER_1_EN
         case TIMER_1:
-            return TIMER_1_DEV[TIMER_1_CHANNEL].LDVAL - TIMER_1_DEV[TIMER_1_CHANNEL].CVAL;
+            return TIMER_1_DEV->CHANNEL[TIMER_1_CHANNEL].LDVAL - TIMER_1_DEV->CHANNEL[TIMER_1_CHANNEL].CVAL;
 #endif
         case TIMER_UNDEFINED:
         default:

@@ -31,6 +31,12 @@
 #error Unknown CPU model. Update Makefile.include in the board directory.
 #endif
 
+#define PIN_MUX_FUNCTION_ANALOG 0
+#define PIN_MUX_FUNCTION_GPIO 1
+#define PIN_INTERRUPT_RISING 0b1001
+#define PIN_INTERRUPT_FALLING 0b1010
+#define PIN_INTERRUPT_EDGE 0b1011
+
 /**
  * @name Kernel configuration
  * @{

@@ -41,7 +41,7 @@
  * @name LED pin definitions
  * @{
  */
-#define LED_PORT            GPIOD
+#define LED_PORT            GPIOC
 #define LD3_PIN             (1 << 13)
 #define LD4_PIN             (1 << 12)
 #define LD5_PIN             (1 << 14)
