@@ -41,6 +41,9 @@ void cpu_init(void)
     NVIC_SetPriority(PendSV_IRQn, 0xff);
 }
 
+void core_clocks_init_early(void);
+void core_clocks_init(void);
+
 /**
  * @brief Configure the controllers clock system
  *
@@ -60,5 +63,6 @@ void cpu_init(void)
  */
 static void cpu_clock_init(void)
 {
-
+    core_clocks_init_early();
+    core_clocks_init();
 }

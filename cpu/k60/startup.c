@@ -110,6 +110,8 @@ init_data(void)
 /* our local copy of newlib init */
 void call_init_array(void);
 
+void core_clocks_init_early(void);
+
 /* Stack pointer will be set to _stack_start by the hardware at reset/power on */
 void
 reset_handler(void)
@@ -141,6 +143,11 @@ reset_handler(void)
    * The line below this comment is the earliest possible location for a
    * breakpoint when debugging the startup code.
    */
+
+  core_clocks_init_early(); /* Start up crystal to let it stabilize while we copy data */
+  /* If the clock is not stable then the UART will have the wrong baud rate for debug prints */
+
+  init_data();
 
   board_init();
 
@@ -174,9 +181,7 @@ extern void(*__preinit_array_start[]) (void) __attribute__((weak));
 extern void(*__preinit_array_end[]) (void) __attribute__((weak));
 extern void(*__init_array_start[]) (void) __attribute__((weak));
 extern void(*__init_array_end[]) (void) __attribute__((weak));
-
-/* By default, initialize all C runtime data after preinit */
-void _init(void) __attribute__((weak, alias("init_data")));
+void _init(void);
 
 void
 call_init_array(void)

@@ -87,7 +87,7 @@
 #error K60_CPU_REV must be set to the correct CPU revision!
 #endif
 
-#define K60_RUNNING_CPU_REVISION (SCB_CPUID & SCB_CPUID_REVISION_MASK)
+#define K60_RUNNING_CPU_REVISION (SCB->CPUID & SCB_CPUID_REVISION_Msk)
 
 /*
  * Baud rate generator is driven by the System clock (UART0, UART1) or bus

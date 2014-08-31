@@ -40,10 +40,10 @@ void _isr_reserved(void) UNHANDLED_ALIAS;
 /* void _isr_reserved(void) UNHANDLED_ALIAS; */
 /* void _isr_reserved(void) UNHANDLED_ALIAS; */
 /* void _isr_reserved(void) UNHANDLED_ALIAS; */
-void _isr_svcall(void) UNHANDLED_ALIAS;
+void isr_svc(void) UNHANDLED_ALIAS;
 void _isr_debugmonitor(void) UNHANDLED_ALIAS;
 /* void _isr_reserved(void) UNHANDLED_ALIAS; */
-void _isr_pendsv(void) UNHANDLED_ALIAS;
+void isr_pendsv(void) UNHANDLED_ALIAS;
 void _isr_systick(void) UNHANDLED_ALIAS;
 
 /* device-specific (freescale) defined interrupt vectors */
@@ -162,10 +162,10 @@ const ISR_func isr_vector[111] ISR_VECTOR_SECTION =
   _isr_reserved,
   _isr_reserved,
   _isr_reserved,
-  _isr_svcall,
+  isr_svc,
   _isr_debugmonitor,
   _isr_reserved,
-  _isr_pendsv,
+  isr_pendsv,
   _isr_systick,
 
   /* Device-specific (Freescale defined) interrupt vectors */
