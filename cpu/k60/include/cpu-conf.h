@@ -50,5 +50,11 @@
 #define KERNEL_CONF_STACKSIZE_IDLE      (512)
 /** @} */
 
+/**
+ * @name Length for reading CPU_ID
+ */
+#define CPU_ID_LEN                      (16)
+
+
 #endif /* __CPU_CONF_H */
 /** @} */
