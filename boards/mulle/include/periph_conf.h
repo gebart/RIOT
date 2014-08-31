@@ -178,37 +178,19 @@
  * @name SPI configuration
  * @{
  */
-#define SPI_NUMOF           (0U)                                                /* TODO !!!!!!! */
-#define SPI_0_EN            0
+#define SPI_NUMOF           0
+#define SPI_0_EN            1
 #define SPI_1_EN            0
 
 /* SPI 0 device config */
-#define SPI_0_DEV
+#define SPI_0_DEV           SPI0
 #define SPI_0_CLKEN()
 #define SPI_0_IRQ
 #define SPI_0_IRQ_HANDLER
 #define SPI_0_IRQ_PRIO
-/* SPI 1 pin configuration */
+/* SPI 0 pin configuration */
 #define SPI_0_PORT
 #define SPI_0_PINS
-#define SPI_1_PORT_CLKEN()
-#define SPI_1_SCK_AFCFG()
-#define SPI_1_MISO_AFCFG()
-#define SPI_1_MOSI_AFCFG()
-
-/* SPI 1 device config */
-#define SPI_1_DEV
-#define SPI_1_CLKEN()
-#define SPI_1_IRQ
-#define SPI_1_IRQ_HANDLER
-#define SPI_1_IRQ_PRIO
-/* SPI 1 pin configuration */
-#define SPI_1_PORT
-#define SPI_1_PINS
-#define SPI_1_PORT_CLKEN()
-#define SPI_1_SCK_AFCFG()
-#define SPI_1_MISO_AFCFG()
-#define SPI_1_MOSI_AFCFG()
 /** @} */
 
 

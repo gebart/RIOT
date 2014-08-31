@@ -38,7 +38,6 @@
  *         Joakim Gebart <joakim.gebart@eistec.se>
  */
 
-#include "K60.h"
 #include "cpu.h"
 #include "config-clocks.h"
 
@@ -74,7 +73,7 @@ void core_clocks_init(void)
     {
         uint32_t CPUID = SCB->CPUID; /* This is only to ease debugging, type
                                      * "print /x CPUID" in gdb */
-        uint32_t SILICON_REVISION = K60_RUNNING_CPU_REVISION + 1;
+        uint32_t SILICON_REVISION = (SCB->CPUID & SCB_CPUID_REVISION_Msk) + 1;
         (void)CPUID; /* prevents compiler warnings about an unused variable. */
         (void)SILICON_REVISION;
 
