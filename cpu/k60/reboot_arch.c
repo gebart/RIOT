@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Eistec AB
+ * Copyright (C) 2014 Freie Universität Berlin
  *
  * This file is subject to the terms and conditions of the GNU Lesser General
  * Public License v2.1. See the file LICENSE in the top level directory for more
@@ -13,7 +13,7 @@
  * @file
  * @brief       Implementation of the kernels reboot interface
  *
- * @author      Joakim Gebart <joakim.gebart@eistec.se
+ * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
  *
  * @}
  */
@@ -21,7 +21,7 @@
 #include <stdio.h>
 
 #include "arch/reboot_arch.h"
-#include "MK60D10-CMSIS.h"
+#include "cpu.h"
 
 
 int reboot_arch(int mode)
