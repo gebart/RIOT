@@ -21,10 +21,10 @@
 #ifndef __CPU_CONF_H
 #define __CPU_CONF_H
 
-#if defined(CPU_MODEL_K60DN512VLL10)
+#if defined(CPU_MODEL_K60DN512VLL10) || defined(CPU_MODEL_K60DN256VLL10)
 /* Rev. 2.x silicon */
 #include "MK60D10-CMSIS.h"
-#elif defined(CPU_MODEL_K60DN512ZVLL10)
+#elif defined(CPU_MODEL_K60DN512ZVLL10) || defined(CPU_MODEL_K60DN256ZVLL10)
 /* Rev. 1.x silicon */
 #include "MK60DZ10-CMSIS.h"
 #else

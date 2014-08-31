@@ -21,10 +21,9 @@
 #include "cpu.h"
 #include "periph_conf.h"
 
-
-static void cpu_clock_init(void);
-
 extern void *_vector_rom[];
+
+void core_clocks_init(void);
 
 /**
  * @brief Initialize the CPU, set IRQ priorities
@@ -35,34 +34,10 @@ void cpu_init(void)
     SCB->VTOR = (uint32_t)_vector_rom;
 
     /* initialize the clock system */
-    cpu_clock_init();
+    /* core_clocks_init_early() is run in reset_handler and the crystal should
+     * have had time to stabilize by the time we reach this line. */
+    core_clocks_init();
 
     /* set pendSV interrupt to lowest possible priority */
     NVIC_SetPriority(PendSV_IRQn, 0xff);
-}
-
-void core_clocks_init_early(void);
-void core_clocks_init(void);
-
-/**
- * @brief Configure the controllers clock system
- *
- * The clock initialization make the following assumptions:
- * - the external HSE clock from an external oscillator is used as base clock
- * - the internal PLL circuit is used for clock refinement
- *
- * Use the following formulas to calculate the needed values:
- *
- * SYSCLK = ((HSE_VALUE / CLOCK_PLL_M) * CLOCK_PLL_N) / CLOCK_PLL_P
- * USB, SDIO and RNG Clock =  ((HSE_VALUE / CLOCK_PLL_M) * CLOCK_PLL_N) / CLOCK_PLL_Q
- *
- * The actual used values are specified in the board's `periph_conf.h` file.
- *
- * NOTE: currently there is not timeout for initialization of PLL and other locks
- *       -> when wrong values are chosen, the initialization could stall
- */
-static void cpu_clock_init(void)
-{
-    core_clocks_init_early();
-    core_clocks_init();
 }
