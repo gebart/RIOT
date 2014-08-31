@@ -82,7 +82,7 @@ void core_clocks_init(void)
          * between silicon revision 1.x and 2.x (LSB of CPUID) */
         /* If you unexpectedly end up on this line when debugging:
          * Rebuild the code using the correct value for K60_CPU_REV */
-        __asm("bkpt #99\n");
+        DEBUGGER_BREAK(BREAK_WRONG_K60_CPU_REV);
         while(1);
     }
 
@@ -154,6 +154,18 @@ void core_clocks_init(void)
     }
 
     /* Set FLL scalers to yield 96 MHz clock from 32768 Hz reference */
-    MCG->C4 = (((CONFIG_CLOCK_K60_FLL_MCG_C4_DMX32 << MCG_C4_DMX32_SHIFT) & MCG_C4_DMX32_MASK) | MCG_C4_DRST_DRS(CONFIG_CLOCK_K60_FLL_MCG_C4_DRST_DRS));
+    MCG->C4 = (((CONFIG_CLOCK_K60_FLL_MCG_C4_DMX32 << MCG_C4_DMX32_SHIFT) & MCG_C4_DMX32_MASK) |
+        MCG_C4_DRST_DRS(CONFIG_CLOCK_K60_FLL_MCG_C4_DRST_DRS));
+
+    /* At this point we need to wait for 1 ms until the clock is stable.
+     * Since the clock is not yet stable we can only guess how long we must
+     * wait. I have tried to make this as short as possible but still being able
+     * to read the initialization messages written on the UART.
+     * (If the clock is not stable all UART output is garbled until it has
+     * stabilized) */
+    for(int i = 0; i < 10000; ++i)
+    {
+        asm volatile ("nop\n");
+    }
 }
 
