@@ -68,7 +68,10 @@
  */
 #define UART_NUMOF          (1U)
 #define UART_0_EN           1
-//~ #define UART_1_EN           1
+#define UART_1_EN           0
+#define UART_2_EN           0
+#define UART_3_EN           0
+#define UART_4_EN           0
 #define UART_IRQ_PRIO       1
 
 /* UART 0 device configuration */
@@ -88,19 +91,6 @@
 #define UART_0_TX_PCR_MUX   3
 #define UART_0_RX_PCR_MUX   3
 
-/* UART 1 device configuration */
-#define UART_1_DEV          UART4
-#define UART_1_CLKEN()      (RCC->APB1ENR |= RCC_APB1ENR_USART3EN)
-#define UART_1_CLKDIS()     (RCC->APB1ENR &= ~(RCC_APB1ENR_USART3EN))
-#define UART_1_CLK          (F_BUS)
-#define UART_1_IRQ_CHAN     USART3_IRQn
-#define UART_1_ISR          isr_usart3
-/* UART 1 pin configuration */
-#define UART_1_PORT_CLKEN() (RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN)
-#define UART_1_PORT         GPIOD
-#define UART_1_TX_PIN       8
-#define UART_1_RX_PIN       9
-#define UART_1_AF           7
 /** @} */
 
 
