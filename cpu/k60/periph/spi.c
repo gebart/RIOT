@@ -41,6 +41,12 @@ int spi_init_master(spi_t dev, spi_conf_t conf, spi_speed_t speed)
             SPI_0_CLKEN();
             break;
 #endif
+#ifdef SPI_1_EN
+        case SPI_1:
+            SPIx = SPI_1_DEV;
+            SPI_1_CLKEN();
+            break;
+#endif
         default:
             return -1;
     }
@@ -170,7 +176,11 @@ void spi_poweron(spi_t dev)
 #ifdef SPI_0_EN
         case SPI_0:
             SPI_0_CLKEN();
-            SPI_0_DEV->CR1 |= 0x0040;   /* turn SPI peripheral on */
+            break;
+#endif
+#ifdef SPI_1_EN
+        case SPI_1:
+            SPI_1_CLKEN();
             break;
 #endif
     }
@@ -182,7 +192,11 @@ void spi_poweroff(spi_t dev)
 #ifdef SPI_0_EN
         case SPI_0:
             SPI_0_CLKDIS();
-            SPI_0_DEV->CR1 &= ~(0x0040);   /* turn SPI peripheral off */
+            break;
+#endif
+#ifdef SPI_1_EN
+        case SPI_1:
+            SPI_1_CLKDIS();
             break;
 #endif
     }

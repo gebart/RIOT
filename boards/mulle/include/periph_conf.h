@@ -45,7 +45,7 @@
 #define TIMER_0_MAX_VALUE   (0xffffffff)
 #define TIMER_0_CLKEN()     (SIM->SCGC6 |= SIM_SCGC6_PIT_MASK)
 #define TIMER_0_BASE_FREQ   F_BUS
-#define TIMER_0_ISR         _isr_pit1
+#define TIMER_0_ISR         isr_pit1
 #define TIMER_0_IRQ_CHAN    PIT1_IRQn
 
 /* Timer 0 configuration */
@@ -55,7 +55,7 @@
 #define TIMER_1_MAX_VALUE   (0xffffffff)
 #define TIMER_1_CLKEN()     (SIM->SCGC6 |= SIM_SCGC6_PIT_MASK)
 #define TIMER_1_BASE_FREQ   F_BUS
-#define TIMER_1_ISR         _isr_pit3
+#define TIMER_1_ISR         isr_pit3
 #define TIMER_1_IRQ_CHAN    PIT3_IRQn
 
 
@@ -80,7 +80,7 @@
 #define UART_0_CLKDIS()     (SIM->SCGC4 &= ~(SIM_SCGC4_UART1_MASK))
 #define UART_0_CLK          (F_SYS)
 #define UART_0_IRQ_CHAN     UART1_RX_TX_IRQn
-#define UART_0_ISR          _isr_uart1_status
+#define UART_0_ISR          isr_uart1_status
 /* UART 0 pin configuration */
 #define UART_0_PORT_CLKEN() (SIM->SCGC5 |= SIM_SCGC5_PORTC_MASK)
 #define UART_0_PORT         PORTC
@@ -178,19 +178,26 @@
  * @name SPI configuration
  * @{
  */
-#define SPI_NUMOF           0
+#define SPI_NUMOF           1
 #define SPI_0_EN            1
 #define SPI_1_EN            0
 
 /* SPI 0 device config */
 #define SPI_0_DEV           SPI0
-#define SPI_0_CLKEN()
-#define SPI_0_IRQ
-#define SPI_0_IRQ_HANDLER
-#define SPI_0_IRQ_PRIO
+#define SPI_0_CLKEN()       (SIM->SCGC6 |= SIM_SCGC6_SPI0_MASK)
+#define SPI_0_CLKDIS()      (SIM->SCGC6 &= ~(SIM_SCGC6_SPI0_MASK))
+#define SPI_0_IRQ           SPI0_IRQn
+#define SPI_0_ISR           isr_spi0
+#define SPI_0_IRQ_PRIO      1
 /* SPI 0 pin configuration */
-#define SPI_0_PORT
-#define SPI_0_PINS
+#define SPI_0_SCLK_PIN      GPIO_8_PIN
+#define SPI_0_SCLK_PORT     PORTD
+#define SPI_0_MISO_PIN      GPIO_9_PIN
+#define SPI_0_MISO_PORT     PORTD
+#define SPI_0_MOSI_PIN      GPIO_10_PIN
+#define SPI_0_MOSI_PORT     PORTD
+#define SPI_0_CS_PIN        GPIO_11_PIN
+#define SPI_0_CS_PORT       PORTD
 /** @} */
 
 
@@ -260,7 +267,7 @@
 #define GPIO_0_PIN          15
 #define GPIO_0_CLKEN()      (SIM->SCGC5 |= SIM_SCGC5_PORTC_MASK)
 #define GPIO_0_IRQ          PORTC_IRQn
-#define GPIO_0_ISR          _isr_portc_pin_detect
+#define GPIO_0_ISR          isr_portc_pin_detect
 
 /* GPIO channel 1 config */
 /* Yellow LED */
@@ -269,7 +276,7 @@
 #define GPIO_1_PIN          14
 #define GPIO_1_CLKEN()      (SIM->SCGC5 |= SIM_SCGC5_PORTC_MASK)
 #define GPIO_1_IRQ          PORTC_IRQn
-#define GPIO_1_ISR          _isr_portc_pin_detect
+#define GPIO_1_ISR          isr_portc_pin_detect
 
 /* GPIO channel 2 config */
 /* Green LED */
@@ -278,7 +285,7 @@
 #define GPIO_2_PIN          13
 #define GPIO_2_CLKEN()      (SIM->SCGC5 |= SIM_SCGC5_PORTC_MASK)
 #define GPIO_2_IRQ          PORTC_IRQn
-#define GPIO_2_ISR          _isr_portc_pin_detect
+#define GPIO_2_ISR          isr_portc_pin_detect
 
 /* GPIO channel 3 config */
 /* LIS3DH INT1 */
@@ -287,7 +294,7 @@
 #define GPIO_3_PIN          18
 #define GPIO_3_CLKEN()      (SIM->SCGC5 |= SIM_SCGC5_PORTC_MASK)
 #define GPIO_3_IRQ          PORTC_IRQn
-#define GPIO_3_ISR          _isr_portc_pin_detect
+#define GPIO_3_ISR          isr_portc_pin_detect
 
 /* GPIO channel 4 config */
 /* LIS3DH INT2 */
@@ -296,7 +303,7 @@
 #define GPIO_4_PIN          17
 #define GPIO_4_CLKEN()      (SIM->SCGC5 |= SIM_SCGC5_PORTC_MASK)
 #define GPIO_4_IRQ          PORTC_IRQn
-#define GPIO_4_ISR          _isr_portc_pin_detect
+#define GPIO_4_ISR          isr_portc_pin_detect
 
 /* GPIO channel 5 config */
 /* VSEC enable */
@@ -305,7 +312,7 @@
 #define GPIO_5_PIN          16
 #define GPIO_5_CLKEN()      (SIM->SCGC5 |= SIM_SCGC5_PORTB_MASK)
 #define GPIO_5_IRQ          PORTB_IRQn
-#define GPIO_5_ISR          _isr_portb_pin_detect
+#define GPIO_5_ISR          isr_portb_pin_detect
 
 /* GPIO channel 6 config */
 /* AVDD enable */
@@ -314,7 +321,7 @@
 #define GPIO_6_PIN          17
 #define GPIO_6_CLKEN()      (SIM->SCGC5 |= SIM_SCGC5_PORTB_MASK)
 #define GPIO_6_IRQ          PORTB_IRQn
-#define GPIO_6_ISR          _isr_portb_pin_detect
+#define GPIO_6_ISR          isr_portb_pin_detect
 
 /* GPIO channel 7 config */
 /* VPERIPH enable */
@@ -323,7 +330,7 @@
 #define GPIO_7_PIN          7
 #define GPIO_7_CLKEN()      (SIM->SCGC5 |= SIM_SCGC5_PORTD_MASK)
 #define GPIO_7_IRQ          PORTD_IRQn
-#define GPIO_7_ISR          _isr_portd_pin_detect
+#define GPIO_7_ISR          isr_portd_pin_detect
 
 /* GPIO channel 8 config */
 /* MC34673 enable */
@@ -332,7 +339,7 @@
 #define GPIO_8_PIN          23
 #define GPIO_8_CLKEN()      (SIM->SCGC5 |= SIM_SCGC5_PORTB_MASK)
 #define GPIO_8_IRQ          PORTB_IRQn
-#define GPIO_8_ISR          _isr_portb_pin_detect
+#define GPIO_8_ISR          isr_portb_pin_detect
 
 /* GPIO channel 9 config */
 /* MC34673 CHG */
@@ -341,7 +348,7 @@
 #define GPIO_9_PIN          22
 #define GPIO_9_CLKEN()      (SIM->SCGC5 |= SIM_SCGC5_PORTB_MASK)
 #define GPIO_9_IRQ          PORTB_IRQn
-#define GPIO_9_ISR          _isr_portb_pin_detect
+#define GPIO_9_ISR          isr_portb_pin_detect
 
 /* GPIO channel 10 config */
 /* MC34673 PPR */
@@ -350,7 +357,7 @@
 #define GPIO_10_PIN         9
 #define GPIO_10_CLKEN()     (SIM->SCGC5 |= SIM_SCGC5_PORTB_MASK)
 #define GPIO_10_IRQ         PORTB_IRQn
-#define GPIO_10_ISR         _isr_portb_pin_detect
+#define GPIO_10_ISR         isr_portb_pin_detect
 
 /* GPIO channel 11 config */
 /* MC34673 FAST */
@@ -359,7 +366,7 @@
 #define GPIO_11_PIN         10
 #define GPIO_11_CLKEN()     (SIM->SCGC5 |= SIM_SCGC5_PORTB_MASK)
 #define GPIO_11_IRQ         PORTB_IRQn
-#define GPIO_11_ISR         _isr_portb_pin_detect
+#define GPIO_11_ISR         isr_portb_pin_detect
 
 /* GPIO channel 12 config */
 /* AT86RF212 IRQ */
@@ -368,7 +375,7 @@
 #define GPIO_12_PIN         9
 #define GPIO_12_CLKEN()     (SIM->SCGC5 |= SIM_SCGC5_PORTB_MASK)
 #define GPIO_12_IRQ         PORTB_IRQn
-#define GPIO_12_ISR         _isr_portb_pin_detect
+#define GPIO_12_ISR         isr_portb_pin_detect
 
 /* GPIO channel 13 config */
 /* AT86RF212 SLP_TR */
@@ -377,7 +384,7 @@
 #define GPIO_13_PIN         6
 #define GPIO_13_CLKEN()     (SIM->SCGC5 |= SIM_SCGC5_PORTE_MASK)
 #define GPIO_13_IRQ         PORTB_IRQn
-#define GPIO_13_ISR         _isr_portb_pin_detect
+#define GPIO_13_ISR         isr_portb_pin_detect
 
 /* GPIO channel 14 config */
 /* Not configured */
@@ -386,7 +393,7 @@
 #define GPIO_14_PIN         0
 #define GPIO_14_CLKEN()     (SIM->SCGC5 |= SIM_SCGC5_PORTB_MASK)
 #define GPIO_14_IRQ         PORTB_IRQn
-#define GPIO_14_ISR         _isr_portb_pin_detect
+#define GPIO_14_ISR         isr_portb_pin_detect
 
 /* GPIO channel 15 config */
 /* Not configured */
@@ -395,7 +402,7 @@
 #define GPIO_15_PIN         1
 #define GPIO_15_CLKEN()     (SIM->SCGC5 |= SIM_SCGC5_PORTB_MASK)
 #define GPIO_15_IRQ         PORTB_IRQn
-#define GPIO_15_ISR         _isr_portb_pin_detect
+#define GPIO_15_ISR         isr_portb_pin_detect
 
 /** @} */
 
