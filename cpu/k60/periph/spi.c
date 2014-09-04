@@ -18,13 +18,13 @@
  * @}
  */
 
-#if SPI_NUMOF
-
 #include "cpu.h"
 #include "periph/gpio.h"
 #include "periph/spi.h"
 #include "periph_conf.h"
 #include "board.h"
+
+#if SPI_NUMOF
 
 #define ENABLE_DEBUG (0)
 #include "debug.h"
@@ -83,12 +83,18 @@ static int find_closest_scalers(unsigned int module_clock, unsigned int target_c
         return -1;
     }
 
-    /* Clear old values */
-    settings &= ~(SPI_CTAR_BR_MASK | SPI_CTAR_DT_MASK | SPI_CTAR_ASC_MASK |
+    /* Clear old timing values */
+    (*settings) &= ~(SPI_CTAR_BR_MASK | SPI_CTAR_DT_MASK | SPI_CTAR_ASC_MASK |
         SPI_CTAR_CSSCK_MASK | SPI_CTAR_PBR_MASK | SPI_CTAR_PDT_MASK |
         SPI_CTAR_PASC_MASK | SPI_CTAR_PCSSCK_MASK | SPI_CTAR_DBR_MASK);
 
-    /* printf("Mod:\t%u\tTar:\t%u\tPSC:\t%u\tSC:\t%u\tclosest:\t%u\n", module_clock, target_clock, prescalers[closest_prescaler], scalers[closest_scaler], closest_frequency); */
+    /* Set new timings */
+    (*settings) |= SPI_CTAR_BR(closest_scaler) | SPI_CTAR_PBR(closest_prescaler) |
+        SPI_CTAR_ASC(closest_scaler) | SPI_CTAR_PASC(closest_prescaler) |
+        SPI_CTAR_CSSCK(closest_scaler) | SPI_CTAR_PCSSCK(closest_prescaler) |
+        SPI_CTAR_DT(closest_scaler) | SPI_CTAR_PDT(closest_prescaler);
+
+    return 0;
 }
 
 int spi_init_master(spi_t dev, spi_conf_t conf, spi_speed_t speed)
@@ -96,14 +102,10 @@ int spi_init_master(spi_t dev, spi_conf_t conf, spi_speed_t speed)
     SPI_Type *spi;
     int module_clock;
     int target_clock;
-    int baudrate_divider = 0;
-    int baudrate_prescaler = 0;
-    int scaler_scratch[4] = {1,3,5,7};
-    int
-    uint32_t cpol_cpha;
+    uint32_t ctar = 0;
 
     switch(dev) {
-#ifdef SPI_0_EN
+#if SPI_0_EN
         case SPI_0:
             spi = SPI_0_DEV;
             SPI_0_SCLK_PORT_CLKEN();
@@ -119,19 +121,20 @@ int spi_init_master(spi_t dev, spi_conf_t conf, spi_speed_t speed)
             module_clock = SPI_0_FREQ;
             break;
 #endif
-#ifdef SPI_1_EN
+#if SPI_1_EN
         case SPI_1:
             spi = SPI_1_DEV;
             SPI_1_SCLK_PORT_CLKEN();
             SPI_1_MISO_PORT_CLKEN();
             SPI_1_MOSI_PORT_CLKEN();
             SPI_1_CLKEN();
-            port_sck  = SPI_1_SCLK_PORT;
-            port_miso = SPI_1_MISO_PORT;
-            port_mosi = SPI_1_MOSI_PORT;
-            pin_sck   = SPI_1_SCLK_PIN;
-            pin_miso  = SPI_1_MISO_PIN;
-            pin_mosi  = SPI_1_MOSI_PIN;
+            SPI_1_SCLK_PORT->PCR[SPI_1_SCLK_PIN] &= PORT_PCR_MUX_MASK;
+            SPI_1_SCLK_PORT->PCR[SPI_1_SCLK_PIN] |= PORT_PCR_MUX(SPI_1_SCLK_PCR_MUX);
+            SPI_1_MOSI_PORT->PCR[SPI_1_MOSI_PIN] &= PORT_PCR_MUX_MASK;
+            SPI_1_MOSI_PORT->PCR[SPI_1_MOSI_PIN] |= PORT_PCR_MUX(SPI_1_MOSI_PCR_MUX);
+            SPI_1_MISO_PORT->PCR[SPI_1_MISO_PIN] &= PORT_PCR_MUX_MASK;
+            SPI_1_MISO_PORT->PCR[SPI_1_MISO_PIN] |= PORT_PCR_MUX(SPI_1_MISO_PCR_MUX);
+            module_clock = SPI_1_FREQ;
             break;
 #endif
         default:
@@ -162,30 +165,41 @@ int spi_init_master(spi_t dev, spi_conf_t conf, spi_speed_t speed)
         /* Too fast, not possible with current module frequency */
         return -1;
     }
-    /* Brute force closest factorization */
-    while (module_clock > target_clock)
-    {
-
-    }
     /* for simplicity we are using the same values for baud rate, cs->sck delay
      * and sck->cs delay. This can probably be improved on a per slave device
      * basis. */
-    spi->CTAR[0] = SPI_CTAR_FMSZ(7);
+    if (find_closest_scalers(module_clock, target_clock, &ctar) < 0)
+    {
+        /* No solution found for the requested target frequency */
+        return -1;
+    }
 
-    /* set up SPI */
-    SPIx->CR1 = SPI_2_LINES_FULL_DUPLEX \
-                | SPI_MASTER_MODE \
-                | SPI_DATA_SIZE_8B \
-                | (conf & 0x3) \
-                | SPI_NSS_SOFT \
-                | br_div \
-                | SPI_1ST_BIT_MSB;
+    /* 8 bit per transfer, select clock scalers */
+    spi->CTAR[0] = SPI_CTAR_FMSZ(7) | ctar;
 
-    SPIx->I2SCFGR &= 0xF7FF;     /* select SPI mode */
+    switch (conf) {
+        case SPI_CONF_FIRST_RISING:
+            spi->CTAR[0] &= ~(SPI_CTAR_CPHA_MASK | SPI_CTAR_CPOL_MASK);
+            break;
+        case SPI_CONF_SECOND_RISING:
+            spi->CTAR[0] &= ~(SPI_CTAR_CPOL_MASK);
+            spi->CTAR[0] |= SPI_CTAR_CPHA_MASK;
+            break;
+        case SPI_CONF_FIRST_FALLING:
+            spi->CTAR[0] &= ~(SPI_CTAR_CPHA_MASK);
+            spi->CTAR[0] |= SPI_CTAR_CPOL_MASK;
+            break;
+        case SPI_CONF_SECOND_FALLING:
+            spi->CTAR[0] |= SPI_CTAR_CPHA_MASK | SPI_CTAR_CPOL_MASK;
+            break;
+        default:
+            return -2;
+    }
 
-    SPIx->CRCPR = 0x7;           /* reset CRC polynomial */
-
-    SPIx->CR2 |= (uint16_t)(1<<7);
+    /* Switch to master mode */
+    spi->MCR |= SPI_MCR_MSTR_MASK;
+    /* Disable halt, enable module, enable FIFOs */
+    spi->MCR &= ~(SPI_MCR_HALT_MASK | SPI_MCR_MDIS_MASK | SPI_MCR_DIS_RXF_MASK | SPI_MCR_DIS_TXF_MASK);
 
     return 0;
 }
@@ -198,36 +212,50 @@ int spi_init_slave(spi_t dev, spi_conf_t conf, char (*cb)(char))
 
 int spi_transfer_byte(spi_t dev, char out, char *in)
 {
-    SPI_TypeDef *SPI_dev;
+    SPI_Type *spi;
     int transfered = 0;
+    uint32_t pushr = 0;
 
     switch(dev) {
-#ifdef SPI_0_EN
+#if SPI_0_EN
         case SPI_0:
-            SPI_dev = SPI_0_DEV;
+            spi = SPI_0_DEV;
+            break;
+#endif
+#if SPI_1_EN
+        case SPI_1:
+            spi = SPI_1_DEV;
             break;
 #endif
         default:
             return -1;
     }
 
-    while ((SPI_dev->SR & SPI_SR_TXE) == RESET);
-    SPI_dev->DR = out;
+    /** @todo K60 SPI: Support transfer options in PUSHR (CTAS, PCS etc) */
+    pushr = SPI_PUSHR_TXDATA(out);
+
+    /* Wait for FIFO space */
+    while ((spi->SR & SPI_SR_TFFF_MASK) == 0);
+    spi->PUSHR = pushr;
+    /* Clear the TFFF flag */
+    spi->SR |= SPI_SR_TFFF_MASK;
     transfered++;
 
-    while ((SPI_dev->SR & SPI_SR_RXNE) == RESET);
+    /* Wait for RX FIFO to fill */
+    while ((spi->SR & SPI_SR_RFDF_MASK) == 0);
     if (in != NULL) {
-        *in = SPI_dev->DR;
+        /* Write the read byte */
+        *in = spi->POPR;
         transfered++;
     }
     else {
-        SPI_dev->DR;
+        /* Discard FIFO entry */
+        uint32_t tmp;
+        tmp = spi->POPR;
+        (void)tmp;
     }
 
-    /* SPI busy */
-    while ((SPI_dev->SR & 0x80));
-
-    DEBUG("\nout: %x in: %x transfered: %x\n", out, *in, transfered);
+    DEBUG("\nout: 0x%02x in: 0x%02x transfered: %u\n", out, *in, transfered);
 
     return transfered;
 }
@@ -276,12 +304,12 @@ int spi_transfer_regs(spi_t dev, uint8_t reg, char *out, char *in, unsigned int 
 void spi_poweron(spi_t dev)
 {
     switch(dev) {
-#ifdef SPI_0_EN
+#if SPI_0_EN
         case SPI_0:
             SPI_0_CLKEN();
             break;
 #endif
-#ifdef SPI_1_EN
+#if SPI_1_EN
         case SPI_1:
             SPI_1_CLKEN();
             break;
@@ -292,12 +320,12 @@ void spi_poweron(spi_t dev)
 void spi_poweroff(spi_t dev)
 {
     switch(dev) {
-#ifdef SPI_0_EN
+#if SPI_0_EN
         case SPI_0:
             SPI_0_CLKDIS();
             break;
 #endif
-#ifdef SPI_1_EN
+#if SPI_1_EN
         case SPI_1:
             SPI_1_CLKDIS();
             break;

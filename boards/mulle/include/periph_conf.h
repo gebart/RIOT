@@ -264,7 +264,7 @@
  * @name GPIO configuration
  * @{
  */
-#define GPIO_NUMOF          1
+#define GPIO_NUMOF          15
 #define GPIO_0_EN           1
 #define GPIO_1_EN           1
 #define GPIO_2_EN           1
@@ -279,7 +279,7 @@
 #define GPIO_11_EN          1
 #define GPIO_12_EN          1
 #define GPIO_13_EN          1
-#define GPIO_14_EN          0
+#define GPIO_14_EN          1
 #define GPIO_15_EN          0
 #define GPIO_IRQ_PRIO       1
 
@@ -406,17 +406,17 @@
 #define GPIO_13_GPIO        PTE
 #define GPIO_13_PIN         6
 #define GPIO_13_CLKEN()     (SIM->SCGC5 |= SIM_SCGC5_PORTE_MASK)
-#define GPIO_13_IRQ         PORTB_IRQn
-#define GPIO_13_ISR         isr_portb_pin_detect
+#define GPIO_13_IRQ         PORTE_IRQn
+#define GPIO_13_ISR         isr_porte_pin_detect
 
 /* GPIO channel 14 config */
-/* Not configured */
-#define GPIO_14_PORT        PORTB
-#define GPIO_14_GPIO        PTB
-#define GPIO_14_PIN         0
-#define GPIO_14_CLKEN()     (SIM->SCGC5 |= SIM_SCGC5_PORTB_MASK)
-#define GPIO_14_IRQ         PORTB_IRQn
-#define GPIO_14_ISR         isr_portb_pin_detect
+/* AT86RF212 SS */
+#define GPIO_14_PORT        PORTD
+#define GPIO_14_GPIO        PTD
+#define GPIO_14_PIN         4
+#define GPIO_14_CLKEN()     (SIM->SCGC5 |= SIM_SCGC5_PORTD_MASK)
+#define GPIO_14_IRQ         PORTD_IRQn
+#define GPIO_14_ISR         isr_portd_pin_detect
 
 /* GPIO channel 15 config */
 /* Not configured */
@@ -426,6 +426,33 @@
 #define GPIO_15_CLKEN()     (SIM->SCGC5 |= SIM_SCGC5_PORTB_MASK)
 #define GPIO_15_IRQ         PORTB_IRQn
 #define GPIO_15_ISR         isr_portb_pin_detect
+
+/** @} */
+
+/**
+ * @name AT86RF212 configuration
+ * @{
+ */
+
+#define AT86RF231_IRQ_GPIO    GPIO_12
+#define AT86RF231_SLP_TR_GPIO GPIO_13
+#define AT86RF231_SS_GPIO     GPIO_14
+#define AT86RF231_RST_GPIO    (-1)
+#define AT86RF231_SPI         SPI_0
+
+/** @} */
+
+
+/**
+ * @name LIS3DH configuration
+ * @{
+ */
+
+#define LIS3DH_INT1_GPIO   GPIO_12
+#define LIS3DH_INT2_GPIO   GPIO_13
+#define LIS3DH_SS_GPIO     GPIO_14
+#define LIS3DH_RST_GPIO    (-1)
+#define LIS3DH_SPI         SPI_0
 
 /** @} */
 
