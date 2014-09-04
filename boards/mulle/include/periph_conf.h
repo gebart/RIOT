@@ -33,30 +33,48 @@
  * @name Timer configuration
  * @{
  */
-#define TIMER_NUMOF         (1U)
+#define TIMER_NUMOF         (4U)
 #define TIMER_0_EN          1
 #define TIMER_1_EN          1
+#define TIMER_2_EN          1
+#define TIMER_3_EN          1
 #define TIMER_IRQ_PRIO      1
 
 /* Timer 0 configuration */
 #define TIMER_0_DEV         PIT
-#define TIMER_0_PSC_CHANNEL 0 /* Prescaler is implemented through timer chaining */
-#define TIMER_0_CHANNEL     1 /* Channel for the proper timer */
+#define TIMER_0_CHANNEL     0
 #define TIMER_0_MAX_VALUE   (0xffffffff)
 #define TIMER_0_CLKEN()     (SIM->SCGC6 |= SIM_SCGC6_PIT_MASK)
 #define TIMER_0_BASE_FREQ   F_BUS
-#define TIMER_0_ISR         isr_pit1
-#define TIMER_0_IRQ_CHAN    PIT1_IRQn
+#define TIMER_0_ISR         isr_pit0
+#define TIMER_0_IRQ_CHAN    PIT0_IRQn
 
-/* Timer 0 configuration */
+/* Timer 1 configuration */
 #define TIMER_1_DEV         PIT
-#define TIMER_1_PSC_CHANNEL 2 /* Prescaler is implemented through timer chaining */
-#define TIMER_1_CHANNEL     3 /* Channel for the proper timer */
+#define TIMER_1_CHANNEL     1
 #define TIMER_1_MAX_VALUE   (0xffffffff)
 #define TIMER_1_CLKEN()     (SIM->SCGC6 |= SIM_SCGC6_PIT_MASK)
 #define TIMER_1_BASE_FREQ   F_BUS
-#define TIMER_1_ISR         isr_pit3
-#define TIMER_1_IRQ_CHAN    PIT3_IRQn
+#define TIMER_1_ISR         isr_pit1
+#define TIMER_1_IRQ_CHAN    PIT1_IRQn
+
+/* Timer 2 configuration */
+#define TIMER_2_DEV         PIT
+#define TIMER_2_CHANNEL     2
+#define TIMER_2_MAX_VALUE   (0xffffffff)
+#define TIMER_2_CLKEN()     (SIM->SCGC6 |= SIM_SCGC6_PIT_MASK)
+#define TIMER_2_BASE_FREQ   F_BUS
+#define TIMER_2_ISR         isr_pit2
+#define TIMER_2_IRQ_CHAN    PIT2_IRQn
+
+/* Timer 3 configuration */
+#define TIMER_3_DEV         PIT
+#define TIMER_3_CHANNEL     3
+#define TIMER_3_MAX_VALUE   (0xffffffff)
+#define TIMER_3_CLKEN()     (SIM->SCGC6 |= SIM_SCGC6_PIT_MASK)
+#define TIMER_3_BASE_FREQ   F_BUS
+#define TIMER_3_ISR         isr_pit3
+#define TIMER_3_IRQ_CHAN    PIT3_IRQn
 
 
 /** @} */

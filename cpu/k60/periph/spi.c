@@ -43,26 +43,28 @@
  *
  * \note We are not using the DBR bit because it may affect the SCK duty cycle.
  */
-static uint32_t find_closest_scalers(unsigned int module_clock, unsigned int target_clock)
+static int find_closest_scalers(unsigned int module_clock, unsigned int target_clock, uint32_t *settings)
 {
-    static const unsigned int num_scalers = 16;
-    static const unsigned int num_prescalers = 4;
-    static const unsigned int scalers[num_scalers] = {2, 4, 6, 8, 16, 32, 64, 128, 256,
+    static const int num_scalers = 16;
+    static const int num_prescalers = 4;
+    static const unsigned int scalers[] = {2, 4, 6, 8, 16, 32, 64, 128, 256,
         512, 1024, 2048, 4096, 8192, 16384, 32768};
-    static const unsigned int prescalers[num_prescalers] = {2, 3, 5, 7};
+    static const unsigned int prescalers[] = {2, 3, 5, 7};
 
-    int closest_frequency = 0;
-    int best_scaler = 0;
-    int best_prescaler = 0;
+    int closest_frequency = -1;
+    int closest_scaler = -1;
+    int closest_prescaler = -1;
 
     /* Test all combinations until we arrive close to the target clock */
     for (int i = 0; i < num_prescalers; ++i)
     {
         for (int k = 0; k < num_scalers; ++k)
         {
-            unsigned int freq = module_clock / (scaler[k] * prescaler[i]);
+            int freq = module_clock / (scalers[k] * prescalers[i]);
             if (freq <= target_clock)
             {
+                /* Found closest lower frequency at this prescaler setting,
+                 * compare to the best result */
                 if (closest_frequency < freq)
                 {
                     closest_frequency = freq;
@@ -73,6 +75,20 @@ static uint32_t find_closest_scalers(unsigned int module_clock, unsigned int tar
             }
         }
     }
+    if (closest_frequency < 0)
+    {
+        /* Error, no solution found, this line is never reachable with current
+         * hardware settings unless a _very_ low target clock is requested.
+         * (scaler_max * prescaler_max) = 229376 => target_min@100MHz = 435 Hz*/
+        return -1;
+    }
+
+    /* Clear old values */
+    settings &= ~(SPI_CTAR_BR_MASK | SPI_CTAR_DT_MASK | SPI_CTAR_ASC_MASK |
+        SPI_CTAR_CSSCK_MASK | SPI_CTAR_PBR_MASK | SPI_CTAR_PDT_MASK |
+        SPI_CTAR_PASC_MASK | SPI_CTAR_PCSSCK_MASK | SPI_CTAR_DBR_MASK);
+
+    /* printf("Mod:\t%u\tTar:\t%u\tPSC:\t%u\tSC:\t%u\tclosest:\t%u\n", module_clock, target_clock, prescalers[closest_prescaler], scalers[closest_scaler], closest_frequency); */
 }
 
 int spi_init_master(spi_t dev, spi_conf_t conf, spi_speed_t speed)
