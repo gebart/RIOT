@@ -7,7 +7,7 @@
  */
 
 /**
- * @ingroup         cpu_stm32f4
+ * @ingroup         cpu_k60
  * @{
  *
  * @file
@@ -19,12 +19,14 @@
 #ifndef __HWTIMER_CPU_H
 #define __HWTIMER_CPU_H
 
+#include "cpu.h"
+
 /**
  * @name Hardware timer configuration
  * @{
  */
 #define HWTIMER_MAXTIMERS   4               /**< the CPU implementation supports 4 HW timers */
-#define HWTIMER_SPEED       1000000         /**< the HW timer runs with 1MHz */
+#define HWTIMER_SPEED       F_BUS           /**< the HW timer (PIT module) is clocked by the bus clock */
 #define HWTIMER_MAXTICKS    (0xFFFFFFFF)    /**< 32-bit timer */
 /** @} */
 

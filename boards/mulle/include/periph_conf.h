@@ -189,15 +189,20 @@
 #define SPI_0_IRQ           SPI0_IRQn
 #define SPI_0_ISR           isr_spi0
 #define SPI_0_IRQ_PRIO      1
+#define SPI_0_FREQ          F_SYS
 /* SPI 0 pin configuration */
-#define SPI_0_SCLK_PIN      GPIO_8_PIN
+#define SPI_0_SCLK_PIN      1
 #define SPI_0_SCLK_PORT     PORTD
-#define SPI_0_MISO_PIN      GPIO_9_PIN
+#define SPI_0_SCLK_PORT_CLKEN() (SIM->SCGC5 |= SIM_SCGC5_PORTD_MASK)
+#define SPI_0_SCLK_PCR_MUX  2
+#define SPI_0_MISO_PIN      3
 #define SPI_0_MISO_PORT     PORTD
-#define SPI_0_MOSI_PIN      GPIO_10_PIN
+#define SPI_0_MISO_PORT_CLKEN() (SIM->SCGC5 |= SIM_SCGC5_PORTD_MASK)
+#define SPI_0_MISO_PCR_MUX  2
+#define SPI_0_MOSI_PIN      2
 #define SPI_0_MOSI_PORT     PORTD
-#define SPI_0_CS_PIN        GPIO_11_PIN
-#define SPI_0_CS_PORT       PORTD
+#define SPI_0_MOSI_PORT_CLKEN() (SIM->SCGC5 |= SIM_SCGC5_PORTD_MASK)
+#define SPI_0_MOSI_PCR_MUX  2
 /** @} */
 
 

@@ -7,7 +7,7 @@
  */
 
 /**
- * @ingroup     cpu_stm32f1
+ * @ingroup     cpu_k60
  * @{
  *
  * @file        spi.c
@@ -29,44 +29,132 @@
 #define ENABLE_DEBUG (0)
 #include "debug.h"
 
+/** Find the prescaler and scaler settings that will yield a clock frequency
+ * as close as possible (but not above) the target frequency, given the module
+ * runs at module_clock Hz.
+ *
+ * Hardware properties (Baud rate configuration):
+ * Possible prescalers: 2, 3, 5, 7
+ * Possible scalers: 2, 4, 6 (sic!), 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768
+ *
+ * SCK baud rate = (f_SYS/PBR) x [(1+DBR)/BR]
+ *
+ * where PBR is the prescaler, BR is the scaler, DBR is the Double BaudRate bit.
+ *
+ * \note We are not using the DBR bit because it may affect the SCK duty cycle.
+ */
+static uint32_t find_closest_scalers(unsigned int module_clock, unsigned int target_clock)
+{
+    static const unsigned int num_scalers = 16;
+    static const unsigned int num_prescalers = 4;
+    static const unsigned int scalers[num_scalers] = {2, 4, 6, 8, 16, 32, 64, 128, 256,
+        512, 1024, 2048, 4096, 8192, 16384, 32768};
+    static const unsigned int prescalers[num_prescalers] = {2, 3, 5, 7};
+
+    int closest_frequency = 0;
+    int best_scaler = 0;
+    int best_prescaler = 0;
+
+    /* Test all combinations until we arrive close to the target clock */
+    for (int i = 0; i < num_prescalers; ++i)
+    {
+        for (int k = 0; k < num_scalers; ++k)
+        {
+            unsigned int freq = module_clock / (scaler[k] * prescaler[i]);
+            if (freq <= target_clock)
+            {
+                if (closest_frequency < freq)
+                {
+                    closest_frequency = freq;
+                    closest_scaler = k;
+                    closest_prescaler = i;
+                }
+                break;
+            }
+        }
+    }
+}
+
 int spi_init_master(spi_t dev, spi_conf_t conf, spi_speed_t speed)
 {
-    SPI_TypeDef *SPIx;
-    uint16_t br_div = 0;
+    SPI_Type *spi;
+    int module_clock;
+    int target_clock;
+    int baudrate_divider = 0;
+    int baudrate_prescaler = 0;
+    int scaler_scratch[4] = {1,3,5,7};
+    int
+    uint32_t cpol_cpha;
 
     switch(dev) {
 #ifdef SPI_0_EN
         case SPI_0:
-            SPIx = SPI_0_DEV;
+            spi = SPI_0_DEV;
+            SPI_0_SCLK_PORT_CLKEN();
+            SPI_0_MISO_PORT_CLKEN();
+            SPI_0_MOSI_PORT_CLKEN();
             SPI_0_CLKEN();
+            SPI_0_SCLK_PORT->PCR[SPI_0_SCLK_PIN] &= PORT_PCR_MUX_MASK;
+            SPI_0_SCLK_PORT->PCR[SPI_0_SCLK_PIN] |= PORT_PCR_MUX(SPI_0_SCLK_PCR_MUX);
+            SPI_0_MOSI_PORT->PCR[SPI_0_MOSI_PIN] &= PORT_PCR_MUX_MASK;
+            SPI_0_MOSI_PORT->PCR[SPI_0_MOSI_PIN] |= PORT_PCR_MUX(SPI_0_MOSI_PCR_MUX);
+            SPI_0_MISO_PORT->PCR[SPI_0_MISO_PIN] &= PORT_PCR_MUX_MASK;
+            SPI_0_MISO_PORT->PCR[SPI_0_MISO_PIN] |= PORT_PCR_MUX(SPI_0_MISO_PCR_MUX);
+            module_clock = SPI_0_FREQ;
             break;
 #endif
 #ifdef SPI_1_EN
         case SPI_1:
-            SPIx = SPI_1_DEV;
+            spi = SPI_1_DEV;
+            SPI_1_SCLK_PORT_CLKEN();
+            SPI_1_MISO_PORT_CLKEN();
+            SPI_1_MOSI_PORT_CLKEN();
             SPI_1_CLKEN();
+            port_sck  = SPI_1_SCLK_PORT;
+            port_miso = SPI_1_MISO_PORT;
+            port_mosi = SPI_1_MOSI_PORT;
+            pin_sck   = SPI_1_SCLK_PIN;
+            pin_miso  = SPI_1_MISO_PIN;
+            pin_mosi  = SPI_1_MOSI_PIN;
             break;
 #endif
         default:
-            return -1;
+            return -2;
     }
 
     switch(speed) {
         case SPI_SPEED_10MHZ:
-            br_div = SPI_BR_PRESCALER_8;      /* actual speed: 9MHz   */
+            target_clock = 10000000;
             break;
         case SPI_SPEED_5MHZ:
-            br_div = SPI_BR_PRESCALER_16;     /* actual speed: 4.5MHz */
+            target_clock = 5000000;
             break;
         case SPI_SPEED_1MHZ:
-            br_div = SPI_BR_PRESCALER_64;     /* actual speed: 1.1MHz */
+            target_clock = 1000000;
             break;
         case SPI_SPEED_400KHZ:
-            br_div = SPI_BR_PRESCALER_128;    /* actual speed: 500kHz */
+            target_clock = 400000;
             break;
         case SPI_SPEED_100KHZ:
-            br_div = SPI_BR_PRESCALER_256;    /* actual speed: 200kHz */
+            target_clock = 100000;
+            break;
+        default:
+            return -1;
     }
+    if (target_clock > module_clock / 2)
+    {
+        /* Too fast, not possible with current module frequency */
+        return -1;
+    }
+    /* Brute force closest factorization */
+    while (module_clock > target_clock)
+    {
+
+    }
+    /* for simplicity we are using the same values for baud rate, cs->sck delay
+     * and sck->cs delay. This can probably be improved on a per slave device
+     * basis. */
+    spi->CTAR[0] = SPI_CTAR_FMSZ(7);
 
     /* set up SPI */
     SPIx->CR1 = SPI_2_LINES_FULL_DUPLEX \
@@ -131,12 +219,11 @@ int spi_transfer_byte(spi_t dev, char out, char *in)
 int spi_transfer_bytes(spi_t dev, char *out, char *in, unsigned int length)
 {
     int transfered = 0;
-    int ret = 0;
 
     if (out != NULL) {
         DEBUG("out*: %p out: %x length: %x\n", out, *out, length);
         while (length--) {
-            ret = spi_transfer_byte(dev, *(out)++, 0);
+            int ret = spi_transfer_byte(dev, *(out)++, 0);
             if (ret <  0) {
                 return ret;
             }
@@ -145,7 +232,7 @@ int spi_transfer_bytes(spi_t dev, char *out, char *in, unsigned int length)
     }
     if (in != NULL) {
         while (length--) {
-            ret = spi_transfer_byte(dev, 0, in++);
+            int ret = spi_transfer_byte(dev, 0, in++);
             if (ret <  0) {
                 return ret;
             }
