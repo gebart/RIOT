@@ -1337,7 +1337,7 @@ static inline void irq_handler(gpio_t dev)
 /** @todo Template GPIO ISRs */
 
 __attribute__((naked))
-void _isr_porta_pin_detect(void)
+void isr_porta_pin_detect(void)
 {
     ISR_ENTER();
 #if GPIO_0_EN && (GPIO_0_ISR == _isr_porta_pin_detect)
@@ -1456,7 +1456,7 @@ void _isr_porta_pin_detect(void)
 }
 
 __attribute__((naked))
-void _isr_portb_pin_detect(void)
+void isr_portb_pin_detect(void)
 {
     ISR_ENTER();
 #if GPIO_0_EN && (GPIO_0_ISR == _isr_portb_pin_detect)
@@ -1576,7 +1576,7 @@ void _isr_portb_pin_detect(void)
 
 
 __attribute__((naked))
-void _isr_portc_pin_detect(void)
+void isr_portc_pin_detect(void)
 {
     ISR_ENTER();
 #if GPIO_0_EN && (GPIO_0_ISR == _isr_portc_pin_detect)
@@ -1696,7 +1696,7 @@ void _isr_portc_pin_detect(void)
 
 
 __attribute__((naked))
-void _isr_portd_pin_detect(void)
+void isr_portd_pin_detect(void)
 {
     ISR_ENTER();
 #if GPIO_0_EN && (GPIO_0_ISR == _isr_portd_pin_detect)
@@ -1816,7 +1816,7 @@ void _isr_portd_pin_detect(void)
 
 
 __attribute__((naked))
-void _isr_porte_pin_detect(void)
+void isr_porte_pin_detect(void)
 {
     ISR_ENTER();
 #if GPIO_0_EN && (GPIO_0_ISR == _isr_porte_pin_detect)

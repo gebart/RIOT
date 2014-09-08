@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Freie Universität Berlin
+ * Copyright (C) 2014 Eistec AB
  *
  * This file is subject to the terms and conditions of the GNU Lesser General
  * Public License v2.1. See the file LICENSE in the top level directory for more
@@ -7,18 +7,19 @@
  */
 
 /**
- * @ingroup     board_stm32f4discovery
+ * @ingroup     board_k60
  * @{
  *
  * @file
- * @brief       Board specific implementations for the STM32F4Discovery evaluation board
+ * @brief       Board specific implementations for the Mulle board
  *
- * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
+ * @author      Joakim Gebart <joakim.gebart@eistec.se>
  *
  * @}
  */
 
 #include "board.h"
+#include "periph/gpio.h"
 
 static void leds_init(void);
 
@@ -27,39 +28,25 @@ void board_init(void)
     /* initialize the boards LEDs, this is done first for debugging purposes */
     leds_init();
 
+    LED_RED_ON;
+
     /* initialize the CPU */
     cpu_init();
+
+    LED_YELLOW_ON;
 }
 
 /**
- * @brief Initialize the boards on-board LEDs (LD3 and LD4)
+ * @brief Initialize the boards on-board LEDs
  *
- * The LED initialization is hard-coded in this function. As the LEDs are soldered
- * onto the board they are fixed to their CPU pins.
+ * The LEDs are initialized here in order to be able to use them in the early
+ * boot for diagnostics.
  *
- * The LEDs are connected to the following pins:
- * - LD3: PD13
- * - LD4: PD12
- * - LD5: PD14
- * - LD6: PD15
  */
 static void leds_init(void)
 {
-    #if 0
-    /* enable clock for port GPIOD */
-    RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN;
-
-    /* configure pins as general outputs */
-    LED_PORT->MODER &= ~(0xff000000);
-    LED_PORT->MODER |= 0x55000000;
-    /* set output speed high-speed */
-    LED_PORT->OSPEEDR |= 0xff000000;
-    /* set output type to push-pull */
-    LED_PORT->OTYPER &= ~(0xf000);
-    /* disable pull resistors */
-    LED_PORT->PUPDR &= ~(0xff000000);
-
-    /* turn all LEDs off */
-    LED_PORT->BSRRH = 0xf000;
-    #endif
+    /* The pin configuration can be found in board.h and periph_conf.h */
+    gpio_init_out(LED_RED_GPIO, GPIO_NOPULL);
+    gpio_init_out(LED_YELLOW_GPIO, GPIO_NOPULL);
+    gpio_init_out(LED_GREEN_GPIO, GPIO_NOPULL);
 }

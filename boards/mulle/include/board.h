@@ -38,40 +38,35 @@
 /** @} */
 
 /**
- * @name LED pin definitions
+ * @name LEDs configuration
  * @{
  */
-#define LED_PORT            GPIOC
-#define LD3_PIN             (1 << 13)
-#define LD4_PIN             (1 << 12)
-#define LD5_PIN             (1 << 14)
-#define LD6_PIN             (1 << 15)
+
+#define LED_RED_GPIO        GPIO_0
+#define LED_RED_PORT        GPIO_0_GPIO
+#define LED_RED_PIN         GPIO_0_PIN
+#define LED_YELLOW_GPIO     GPIO_1
+#define LED_YELLOW_PORT     GPIO_1_GPIO
+#define LED_YELLOW_PIN      GPIO_1_PIN
+#define LED_GREEN_GPIO      GPIO_2
+#define LED_GREEN_PORT      GPIO_2_GPIO
+#define LED_GREEN_PIN       GPIO_2_PIN
+
 /** @} */
 
 /**
  * @name Macros for controlling the on-board LEDs.
  * @{
  */
-#define LD3_ON              (LED_PORT->BSRRL = LD3_PIN)
-#define LD3_OFF             (LED_PORT->BSRRH = LD3_PIN)
-#define LD3_TOGGLE          (LED_PORT->ODR ^= LD3_PIN)
-#define LD4_ON              (LED_PORT->BSRRL = LD4_PIN)
-#define LD4_OFF             (LED_PORT->BSRRH = LD4_PIN)
-#define LD4_TOGGLE          (LED_PORT->ODR ^= LD4_PIN)
-#define LD5_ON              (LED_PORT->BSRRL = LD5_PIN)
-#define LD5_OFF             (LED_PORT->BSRRH = LD5_PIN)
-#define LD5_TOGGLE          (LED_PORT->ODR ^= LD5_PIN)
-#define LD6_ON              (LED_PORT->BSRRL = LD6_PIN)
-#define LD6_OFF             (LED_PORT->BSRRH = LD6_PIN)
-#define LD6_TOGGLE          (LED_PORT->ODR ^= LD6_PIN)
-
-/* for compatability to other boards */
-#define LED_GREEN_ON        LD4_ON
-#define LED_GREEN_OFF       LD4_OFF
-#define LED_GREEN_TOGGLE    LD4_TOGGLE
-#define LED_RED_ON          LD5_ON
-#define LED_RED_OFF         LD5_OFF
-#define LED_RED_TOGGLE      LD5_TOGGLE
+#define LED_RED_ON          (BITBAND_REG(LED_RED_PORT->PSOR, LED_RED_PIN) = 1)
+#define LED_RED_OFF         (BITBAND_REG(LED_RED_PORT->PCOR, LED_RED_PIN) = 1)
+#define LED_RED_TOGGLE      (BITBAND_REG(LED_RED_PORT->PTOR, LED_RED_PIN) = 1)
+#define LED_YELLOW_ON       (BITBAND_REG(LED_YELLOW_PORT->PSOR, LED_YELLOW_PIN) = 1)
+#define LED_YELLOW_OFF      (BITBAND_REG(LED_YELLOW_PORT->PCOR, LED_YELLOW_PIN) = 1)
+#define LED_YELLOW_TOGGLE   (BITBAND_REG(LED_YELLOW_PORT->PTOR, LED_YELLOW_PIN) = 1)
+#define LED_GREEN_ON        (BITBAND_REG(LED_GREEN_PORT->PSOR, LED_GREEN_PIN) = 1)
+#define LED_GREEN_OFF       (BITBAND_REG(LED_GREEN_PORT->PCOR, LED_GREEN_PIN) = 1)
+#define LED_GREEN_TOGGLE    (BITBAND_REG(LED_GREEN_PORT->PTOR, LED_GREEN_PIN) = 1)
 /** @} */
 
 /**

@@ -429,6 +429,7 @@
 
 /** @} */
 
+
 /**
  * @name AT86RF212 configuration
  * @{
