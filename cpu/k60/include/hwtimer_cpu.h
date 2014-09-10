@@ -25,7 +25,7 @@
  * @name Hardware timer configuration
  * @{
  */
-#define HWTIMER_MAXTIMERS   4               /**< the CPU implementation supports 4 HW timers */
+#define HWTIMER_MAXTIMERS   3               /**< the CPU implementation supports 4 HW timers, but we are dedicating one to serve as a time reference. */
 #define HWTIMER_SPEED       F_BUS           /**< the HW timer (PIT module) is clocked by the bus clock */
 #define HWTIMER_MAXTICKS    (0xFFFFFFFF)    /**< 32-bit timer */
 /** @} */

@@ -145,6 +145,7 @@ int timer_set_absolute(tim_t dev, int channel, unsigned int value)
      * after setting a new value. */
     PIT_Type* pit;
     if (channel != 0) {
+        DEBUGGER_BREAK(BREAK_INVALID_PARAM);
         return -1;
     }
 
@@ -193,45 +194,36 @@ int timer_set_absolute(tim_t dev, int channel, unsigned int value)
 
 int timer_clear(tim_t dev, int channel)
 {
-    PIT_Type* pit;
-
     if (channel != 0) {
+        DEBUGGER_BREAK(BREAK_INVALID_PARAM);
         return -1;
     }
-
-    int real_channel;
 
     switch (dev) {
 #if TIMER_0_EN
         case TIMER_0:
-            pit = TIMER_0_DEV;
-            real_channel = TIMER_0_CHANNEL;
+            TIMER_0_DEV->CHANNEL[TIMER_0_CHANNEL].TCTRL &= ~(PIT_TCTRL_TIE_MASK); /* Disable interrupt */;
             break;
 #endif
 #if TIMER_1_EN
         case TIMER_1:
-            pit = TIMER_1_DEV;
-            real_channel = TIMER_1_CHANNEL;
+            TIMER_1_DEV->CHANNEL[TIMER_1_CHANNEL].TCTRL &= ~(PIT_TCTRL_TIE_MASK); /* Disable interrupt */;
             break;
 #endif
 #if TIMER_2_EN
         case TIMER_2:
-            pit = TIMER_2_DEV;
-            real_channel = TIMER_2_CHANNEL;
+            TIMER_2_DEV->CHANNEL[TIMER_2_CHANNEL].TCTRL &= ~(PIT_TCTRL_TIE_MASK); /* Disable interrupt */;
             break;
 #endif
 #if TIMER_3_EN
         case TIMER_3:
-            pit = TIMER_3_DEV;
-            real_channel = TIMER_3_CHANNEL;
+            TIMER_3_DEV->CHANNEL[TIMER_3_CHANNEL].TCTRL &= ~(PIT_TCTRL_TIE_MASK); /* Disable interrupt */;
             break;
 #endif
         case TIMER_UNDEFINED:
         default:
             return -1;
     }
-
-    pit->CHANNEL[real_channel].TCTRL &= ~(PIT_TCTRL_TIE_MASK); /* Disable interrupt */
 
     return 0;
 }
@@ -454,7 +446,15 @@ static inline void irq_handler(tim_t timer, PIT_Type* pit, int channel)
         pit->CHANNEL[channel].TCTRL &= ~PIT_TCTRL_TIE_MASK;
         /* Clear interrupt flag by writing 1 to it */
         pit->CHANNEL[channel].TFLG |= PIT_TFLG_TIF_MASK;
-        config[timer].cb(0);
+        /* We are kind of abusing the API here, we want to have more than one HW
+         * timer available for the kernel, but each PIT channel is completely
+         * individual and does not work like the timers in the STM32Fxxx's with
+         * multiple timers and multiple channels per timer. When we call the
+         * callback we supply the TIMER ID as the CHANNEL parameter. The reason
+         * for this is that it is necessary in order for the hardware timer
+         * library to be able to distinguish which of its timeouts has occurred.
+         */
+        config[timer].cb(channel);
     }
     if (sched_context_switch_request) {
         thread_yield();

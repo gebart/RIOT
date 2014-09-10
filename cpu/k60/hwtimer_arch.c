@@ -13,7 +13,7 @@
  * @file
  * @brief       Implementation of the kernels hwtimer interface
  *
- * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
+ * @author      Joakim Gebart <joakim.gebart@eistec.se>
  *
  * @}
  */
@@ -39,32 +39,38 @@ void (*timeout_handler)(int);
 void hwtimer_arch_init(void (*handler)(int), uint32_t fcpu)
 {
     timeout_handler = handler;
-    timer_init(HW_TIMER, HWTIMER_SPEED/1000000, &irq_handler);
+    /* Initialize all channels that have been designated for HW timer library use. */
+    for(int i = 0; i < HW_TIMER_COUNT; ++i)
+    {
+        timer_init(i, HWTIMER_SPEED/1000000, &irq_handler);
+    }
 }
 
 void hwtimer_arch_enable_interrupt(void)
 {
-    timer_irq_enable(HW_TIMER);
+    DEBUG("hwtimer_arch_enable_interrupt(): not implemented\n");
+    /* timer_irq_enable(HW_TIMER); */
 }
 
 void hwtimer_arch_disable_interrupt(void)
 {
-    timer_irq_disable(HW_TIMER);
+    DEBUG("hwtimer_arch_disable_interrupt(): not implemented\n");
+    /* timer_irq_disable(HW_TIMER); */
 }
 
 void hwtimer_arch_set(unsigned long offset, short timer)
 {
-    timer_set(HW_TIMER, timer, offset);
+    timer_set(timer, 0, offset);
 }
 
 void hwtimer_arch_set_absolute(unsigned long value, short timer)
 {
-    timer_set_absolute(HW_TIMER, timer, value);
+    timer_set_absolute(timer, 0, value);
 }
 
 void hwtimer_arch_unset(short timer)
 {
-    timer_clear(HW_TIMER, timer);
+    timer_clear(timer, 0);
 }
 
 unsigned long hwtimer_arch_now(void)
