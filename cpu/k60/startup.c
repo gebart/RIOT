@@ -144,14 +144,13 @@ reset_handler(void)
    * breakpoint when debugging the startup code.
    */
 
-  core_clocks_init_early(); /* Start up crystal to let it stabilize while we copy data */
-  /* If the clock is not stable then the UART will have the wrong baud rate for debug prints */
+  __libc_init_array();
 
-  init_data();
+  //~ init_data();
 
   board_init();
 
-  call_init_array(); /* or __libc_init_array() as provided by newlib or other libc */
+  //~ call_init_array(); /* or __libc_init_array() as provided by newlib or other libc */
 
   kernel_init();
 
@@ -182,6 +181,10 @@ extern void(*__preinit_array_end[]) (void) __attribute__((weak));
 extern void(*__init_array_start[]) (void) __attribute__((weak));
 extern void(*__init_array_end[]) (void) __attribute__((weak));
 void _init(void);
+
+/* By default, initialize all C runtime data after preinit */
+void _init(void) __attribute__((weak, alias("init_data")));
+
 
 void
 call_init_array(void)

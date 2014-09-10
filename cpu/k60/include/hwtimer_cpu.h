@@ -20,6 +20,8 @@
 #define __HWTIMER_CPU_H
 
 #include "cpu.h"
+/* For F_BUS, F_SYS etc */
+#include "periph_conf.h"
 
 /**
  * @name Hardware timer configuration

@@ -60,8 +60,9 @@ void core_clocks_init_early(void)
 /*
  * Arrange so that the core_clocks_init_early() function is called during
  * early init.
- */
-//~ void __attribute__((section(".preinit_array"))) (*preinit_core_clocks_init_early[])(void) = {core_clocks_init_early};
+ * Start up crystal to let it stabilize while we copy data */
+/* If the clock is not stable then the UART will have the wrong baud rate for debug prints */
+void __attribute__((section(".preinit_array"))) (*preinit_core_clocks_init_early[])(void) = {core_clocks_init_early};
 
 
 void core_clocks_init(void)
