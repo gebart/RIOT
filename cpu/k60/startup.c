@@ -144,13 +144,13 @@ reset_handler(void)
    * breakpoint when debugging the startup code.
    */
 
-  __libc_init_array();
+  //~ __libc_init_array();
+  call_init_array(); /* or __libc_init_array() as provided by newlib or other libc */
 
   //~ init_data();
 
   board_init();
 
-  //~ call_init_array(); /* or __libc_init_array() as provided by newlib or other libc */
 
   kernel_init();
 
@@ -182,8 +182,8 @@ extern void(*__init_array_start[]) (void) __attribute__((weak));
 extern void(*__init_array_end[]) (void) __attribute__((weak));
 void _init(void);
 
-/* By default, initialize all C runtime data after preinit */
-void _init(void) __attribute__((weak, alias("init_data")));
+/* Initialize all C runtime data after preinit */
+void _init(void) __attribute__((alias("init_data")));
 
 
 void

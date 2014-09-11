@@ -40,13 +40,6 @@
 extern uint32_t _end;                       /* address of last used memory cell */
 caddr_t heap_top = (caddr_t)&_end + 4;
 
-/**
- * @brief Initialize NewLib, called by __libc_init_array() from the startup script
- */
-void _init(void)
-{
-    uart_init_blocking(STDIO, STDIO_BAUDRATE);
-}
 
 /**
  * @brief Free resources on NewLib de-initialization, not used for RIOT

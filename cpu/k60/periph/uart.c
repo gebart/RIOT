@@ -24,6 +24,10 @@
 #include "periph_conf.h"
 #include "periph/uart.h"
 
+#ifdef MODULE_UART0
+#include "board_uart0.h"
+#endif
+
 /* guard file in case no UART device was specified */
 #if UART_NUMOF
 
@@ -280,16 +284,18 @@ void uart_poweroff(uart_t uart)
 }
 
 #if UART_0_EN
-__attribute__((naked)) void UART_0_ISR(void)
+//~ __attribute__((naked))
+void UART_0_ISR(void)
 {
-    ISR_ENTER();
+    //~ ISR_ENTER();
     irq_handler(UART_0, UART_0_DEV);
-    ISR_EXIT();
+    //~ ISR_EXIT();
 }
 #endif
 
 #if UART_1_EN
-__attribute__((naked)) void UART_1_ISR(void)
+__attribute__((naked))
+void UART_1_ISR(void)
 {
     ISR_ENTER();
     irq_handler(UART_1, UART_1_DEV);
@@ -301,7 +307,17 @@ static inline void irq_handler(uint8_t uartnum, UART_Type *dev)
 {
     if (dev->S1 & UART_S1_RDRF_MASK) {
         char data = (char)dev->D;
-        uart_config[uartnum].rx_cb(uart_config[uartnum].arg, data);
+#ifdef MODULE_UART0
+        if (uart0_handler_pid) {
+            uart0_handle_incoming(data);
+
+            uart0_notify_thread();
+        }
+#else
+        if (uart_config[uartnum].rx_cb) {
+            uart_config[uartnum].rx_cb(uart_config[uartnum].arg, data);
+        }
+#endif
     }
     else if (dev->S1 & UART_S1_TDRE_MASK) {
         if (uart_config[uartnum].tx_cb(uart_config[uartnum].arg) == 0) {
