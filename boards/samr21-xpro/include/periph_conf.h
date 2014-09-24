@@ -47,7 +47,6 @@
 #define TIMER_2_ISR         isr_tc5
 /** @} */
 
-
 /**
  * @name UART configuration
  * @{
@@ -78,6 +77,35 @@
 /* UART 1 pin configuration */
 #define UART_1_PORT
 #define UART_1_PINS
+/** @} */
+
+/**
+ * @name PWM configuration
+ * @{
+ */
+#define PWM_NUMOF           (2U)
+#define PWM_0_EN            1
+#define PWM_1_EN            1
+
+/* PWM 0 device configuration */
+#define PWM_0_DEV           TCC0
+#define PWM_0_CHANNELS      4
+/* PWM 0 pin configuration */
+#define PWM_0_PORT          (PORT->GROUP[0])
+#define PWM_0_CH0_PIN       PIN_PA17
+#define PWM_0_CH1_PIN       PIN_PA18
+#define PWM_0_CH2_PIN       PIN_PA19
+#define PWM_0_CH3_PIN       PIN_PA20
+
+/* PWM 1 device configuration */
+#define PWM_1_DEV           TCC1
+#define PWM_1_CHANNELS      2
+/* PWM 1 pin configuration */
+#define PWM_1_PORT          (PORT->GROUP[0])
+#define PWM_1_PIN_CH1       PIN_PA22
+#define PWM_1_PIN_CH1       PIN_PA23
+
+
 /** @} */
 
 /**
