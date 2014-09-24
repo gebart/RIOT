@@ -483,7 +483,7 @@ int spi_transfer_reg(spi_t dev, uint8_t reg, char out, char *in)
     }
 
 
-    trans_ret = spi_transfer_byte(dev, reg, NULL);
+    trans_ret = spi_transfer_byte(dev, reg, in);
 
     if (trans_ret < 0) {
         return -2;
@@ -525,7 +525,7 @@ int spi_transfer_regs(spi_t dev, uint8_t reg, char *out, char *in, unsigned int 
             return -1;
     }
 
-    trans_ret = spi_transfer_byte(dev, reg, NULL);
+    trans_ret = spi_transfer_byte(dev, reg, in);
 
     if (trans_ret < 0) {
         return -2;
@@ -666,4 +666,3 @@ __attribute__((naked)) void SPI_1_IRQ_HANDLER(void)
 #endif
 
 #endif /* SPI_NUMOF */
-
