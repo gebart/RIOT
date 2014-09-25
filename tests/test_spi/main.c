@@ -135,6 +135,11 @@ void cmd_init_slave(int argc, char **argv)
     (void) argc;
     (void) argv;
 
+    /** 
+     * be aware that this takes some time so it will just work correctly for lower 
+     * data rates or with a short delay between CS low and spi_transfer_byte() 
+     * at the master side
+     */
     gpio_init_int(GPIO_3, GPIO_PULLUP, GPIO_FALLING, on_cs, 0);
 
     spi_poweron(TESTPORT_SLAVE);
