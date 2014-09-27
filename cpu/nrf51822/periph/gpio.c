@@ -216,21 +216,21 @@ int gpio_init_int(gpio_t dev, gpio_pp_t pullup, gpio_flank_t flank, gpio_cb_t cb
     gpio_config.arg = arg;
 
     /* reset GPIOTE configuration register to EVENT mode*/
-    NRF_GPIOTE->CONFIG[0] = GPIOTE_CONFIG_MODE_Event;
+    NRF_GPIOTE->CONFIG[GPIO_GPIOTE] = GPIOTE_CONFIG_MODE_Event;
 
     /* select active pin for external interrupt */
-    NRF_GPIOTE->CONFIG[0] |= (pin << GPIOTE_CONFIG_PSEL_Pos);
+    NRF_GPIOTE->CONFIG[GPIO_GPIOTE] |= (pin << GPIOTE_CONFIG_PSEL_Pos);
 
     /* set active flank */
     switch (flank) {
         case GPIO_FALLING:
-            NRF_GPIOTE->CONFIG[0] |= (1 << GPIOTE_CONFIG_POLARITY_Pos);
+            NRF_GPIOTE->CONFIG[GPIO_GPIOTE] |= (1 << GPIOTE_CONFIG_POLARITY_Pos);
             break;
         case GPIO_RISING:
-            NRF_GPIOTE->CONFIG[0] |= (2 << GPIOTE_CONFIG_POLARITY_Pos);
+            NRF_GPIOTE->CONFIG[GPIO_GPIOTE] |= (2 << GPIOTE_CONFIG_POLARITY_Pos);
             break;
         case GPIO_BOTH:
-            NRF_GPIOTE->CONFIG[0] |= (3 << GPIOTE_CONFIG_POLARITY_Pos);
+            NRF_GPIOTE->CONFIG[GPIO_GPIOTE] |= (3 << GPIOTE_CONFIG_POLARITY_Pos);
             break;
     }
 
