@@ -95,6 +95,25 @@
 /** @} */
 
 /**
+ * @name PWM configuration
+ * @{
+ */
+#define PWM_NUMOF           (1U)
+#define PWM_0               1
+#define PWM_MAX_CHANNELS    3
+
+/* PWM 0 device configuration */
+#define PWM_0_DEV           TIMER_2
+#define PWM_0_CHANNELS      3
+#define PWM_0_PIN_CH0       10
+#define PWM_0_PIN_CH1       11
+#define PWM_0_PIN_CH2       12
+#define PWM_0_GPIOTE_CH0    1
+#define PWM_0_GPIOTE_CH1    2
+#define PWM_0_GPIOTE_CH2    3
+/** @} */
+
+/**
  * @name GPIO configuration
  * @{
  */
@@ -115,6 +134,7 @@
 #define GPIO_13_EN          1
 #define GPIO_14_EN          1
 #define GPIO_15_EN          1
+#define GPIO_GPIOTE         0
 #define GPIO_IRQ_PRIO       1
 
 /* GPIO pin configuration */

@@ -103,6 +103,7 @@
 #define GPIO_5_EN           1
 #define GPIO_6_EN           1
 #define GPIO_7_EN           1
+#define GPIO_GPIOTE         0
 #define GPIO_IRQ_PRIO       1
 
 /* GPIO pin configuration */
