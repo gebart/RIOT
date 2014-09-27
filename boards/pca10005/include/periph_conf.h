@@ -96,6 +96,26 @@ extern "C" {
 /** @} */
 
 /**
+ * @name I2C configuration
+ * @{
+ */
+#define I2C_NUMOF           (2U)
+#define I2C_0_EN            1
+#define I2C_1_EN            1
+#define I2C_IRQ_PRIO        1
+
+/* I2C 0 device configuration */
+#define I2C_0_DEV           NRF_TWI
+#define I2C_0_PIN_SCL       13
+#define I2C_0_PIN_SDA       14
+
+/* I2C 1 device configuration */
+#define I2C_0_DEV           NRF_TWI
+#define I2C_0_PIN_SCL       15
+#define I2C_0_PIN_SDA       16
+/** @} */
+
+/**
  * @name GPIO configuration
  * @{
  */
