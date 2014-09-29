@@ -67,7 +67,7 @@ static void cmd_prxbuf(int argc, char **argv);
 static void cmd_clearbuf(int argc, char **argv);
 
 char test_buf[BUF_SEND_LEN] = {0};
-char buf_count = 0;
+int buf_count = 0;
 
 char on_data(char data)
 {
@@ -135,9 +135,9 @@ void cmd_init_slave(int argc, char **argv)
     (void) argc;
     (void) argv;
 
-    /** 
-     * be aware that this takes some time so it will just work correctly for lower 
-     * data rates or with a short delay between CS low and spi_transfer_byte() 
+    /**
+     * be aware that this takes some time so it will just work correctly for lower
+     * data rates or with a short delay between CS low and spi_transfer_byte()
      * at the master side
      */
     gpio_init_int(GPIO_3, GPIO_PULLUP, GPIO_FALLING, on_cs, 0);
@@ -242,7 +242,7 @@ void cmd_transfer_string(int argc, char **argv)
     (void) argv;
 
     int res;
-    char buffer[256]; 
+    char buffer[256];
 
     char *hello = "Hello";
 
