@@ -543,33 +543,29 @@ int spi_transfer_regs(spi_t dev, uint8_t reg, char *out, char *in, unsigned int 
 void spi_transmission_begin(spi_t dev, char reset_val)
 {
 
-    SPI_TypeDef *spi_port = 0;
-
     switch (dev) {
 #if SPI_0_EN
 
         case SPI_0:
-            spi_port = SPI_0_DEV;
+            SPI_0_DEV->DR = reset_val;
             break;
 #endif
 
 #if SPI_1_EN
 
         case SPI_1:
-            spi_port = SPI_1_DEV;
+            SPI_1_DEV->DR = reset_val;
             break;
 #endif
 
 #if SPI_2_EN
 
         case SPI_2:
-            spi_port = SPI_2_DEV;
+            SPI_2_DEV->DR = reset_val;
             break;
 #endif
 
     }
-
-    spi_port->DR = reset_val;
 }
 
 
@@ -628,7 +624,7 @@ void spi_poweroff(spi_t dev)
 
 static inline void irq_handler_transfer(SPI_TypeDef *spi, spi_t dev)
 {
-    char data = 0;
+    char data;
 
     if (spi->SR & SPI_SR_RXNE) {
 
@@ -647,9 +643,7 @@ static inline void irq_handler_transfer(SPI_TypeDef *spi, spi_t dev)
 __attribute__((naked)) void SPI_0_IRQ_HANDLER(void)
 {
     ISR_ENTER();
-    LD4_TOGGLE;
     irq_handler_transfer(SPI_0_DEV, SPI_0);
-    LD4_TOGGLE;
     ISR_EXIT();
 }
 #endif
@@ -658,9 +652,7 @@ __attribute__((naked)) void SPI_0_IRQ_HANDLER(void)
 __attribute__((naked)) void SPI_1_IRQ_HANDLER(void)
 {
     ISR_ENTER();
-    LD4_ON;
     irq_handler_transfer(SPI_1_DEV, SPI_1);
-    LD4_OFF;
     ISR_EXIT();
 }
 #endif
