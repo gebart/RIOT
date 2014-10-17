@@ -204,6 +204,22 @@ static inline uint32_t _tim_ms_to_fticks(uint32_t ms)
     return (ms * 1000 * 1000);
 }
 
+static inline uint32_t _tim_us_to_ticks(uint32_t us, uint32_t &fticks)
+{
+    if (TIM_ARCH_FTICKS == 1000) {      /* should be compiled to constant expression?! */
+        *fticks =
+    }
+    else if (TIM_ARCH_FTICKS < 1000) {
+        *fticks = (1000 / TIM_ARCH_FTICKS) * us;
+        if (*fticks > TIM_ARCH_FTICK_MAX) {
+            *fticks = *fticks & TIM_ARCH_FTICK_MAX;
+        }
+    }
+    else {
+
+    }
+}
+
 /* all of these are run in interrupt context! */
 void _tim_cb_unlock(void *arg)
 {

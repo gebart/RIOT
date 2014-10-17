@@ -41,6 +41,14 @@ extern "C" {
 #define TIM_ARCH_IRQ_DELAY                  (500U)
 #endif
 
+#ifndef TIM_ARCH_FTICKS
+#error "TIM_ARCH_FTICKS not defined for your platform!"
+#endif
+
+#ifndef TIM_ARCH_FTICK_MAX
+#error "TIM_ARCH_FTICK_MAX not defined for your platform!"
+#endif
+
 #ifdef __cplusplus
 }
 #endif
