@@ -52,8 +52,8 @@ static inline void leds_init(void)
     LED_PORT->DIR |= ((1 << LED_RED_PIN) | (1 << LED_GREEN_PIN) |
                       (1 << LED_YELLOW_PIN) | (1 << LED_ORANGE_PIN));
     /* configure io-mux for used pins */
-    IOC->PC_OVER[LED_RED_PIN] = IOC_OVERRIDE_OE;
-    IOC->PC_OVER[LED_GREEN_PIN] = IOC_OVERRIDE_OE;
-    IOC->PC_OVER[LED_YELLOW_PIN] = IOC_OVERRIDE_OE;
-    IOC->PC_OVER[LED_ORANGE_PIN] = IOC_OVERRIDE_OE;
+    IOC->PC_OVER[LED_RED_PIN] = IOC_OVER_OE;
+    IOC->PC_OVER[LED_GREEN_PIN] = IOC_OVER_OE;
+    IOC->PC_OVER[LED_YELLOW_PIN] = IOC_OVER_OE;
+    IOC->PC_OVER[LED_ORANGE_PIN] = IOC_OVER_OE;
 }
