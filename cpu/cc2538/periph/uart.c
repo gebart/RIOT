@@ -225,7 +225,7 @@ int uart_init_blocking(uart_t uart, uint32_t baudrate)
             /*
              * Select the UARTx RX pin by writing to the IOC_UARTRXD_UARTn register
              */
-            IOC_UARTRXD_UART0 = UART_0_RX_PIN;
+            IOC->UARTRXD_UART0 = UART_0_RX_PIN;
 
             /*
              * Pad Control for the TX pin:
@@ -233,7 +233,7 @@ int uart_init_blocking(uart_t uart, uint32_t baudrate)
              * - Output Enable
              */
             IOC_PXX_SEL[UART_0_TX_PIN] = UART0_TXD;
-            IOC_PXX_OVER[UART_0_TX_PIN] = IOC_OVERRIDE_OE;
+            IOC_PXX_OVER[UART_0_TX_PIN] = IOC_OVER_OE;
 
             /* Set RX and TX pins to peripheral mode */
             gpio_hardware_control(UART_0_TX_PIN);
@@ -287,9 +287,9 @@ int uart_init_blocking(uart_t uart, uint32_t baudrate)
 
     /* Enable clock for the UART while Running, in Sleep and Deep Sleep */
     uart_num = ( (uintptr_t)u - (uintptr_t)UART0 ) / 0x1000;
-    SYS_CTRL_RCGCUART |= (1 << uart_num);
-    SYS_CTRL_SCGCUART |= (1 << uart_num);
-    SYS_CTRL_DCGCUART |= (1 << uart_num);
+    SYS_CTRL->RCGCUART |= (1 << uart_num);
+    SYS_CTRL->SCGCUART |= (1 << uart_num);
+    SYS_CTRL->DCGCUART |= (1 << uart_num);
 
     /*
      * UART Interrupt Masks:
@@ -315,7 +315,7 @@ int uart_init_blocking(uart_t uart, uint32_t baudrate)
     u->CTLbits.HSE = UART_CTL_HSE_VALUE;
 
     /* Set the divisor for the baud rate generator */
-    divisor = sys_clock_freq();
+    divisor = F_CPU;
     divisor <<= UART_CTL_HSE_VALUE + 2;
     divisor /= baudrate;
     u->IBRD = divisor >> DIVFRAC_NUM_BITS;

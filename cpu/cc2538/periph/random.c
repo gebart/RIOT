@@ -33,19 +33,19 @@ void random_init(void)
     int i;
 
     /* Make sure the RNG is on */
-    SOC_ADC->ADCCON1bits.RCTRL = 0;
+    SOC_ADC->ADCCON1_BITS.RCTRL = 0;
 
     /* Enable clock for the RF Core */
-    SYS_CTRL_RCGCRFC = 1;
+    SYS_CTRL->RCGCRFC = 1;
 
     /* Wait for the clock ungating to take effect */
-    while (SYS_CTRL_RCGCRFC != 1);
+    while (SYS_CTRL->RCGCRFC != 1);
 
     /* Infinite RX - FRMCTRL0[3:2] = 10. This will mess with radio operation */
-    RFCORE_XREG_FRMCTRL0 = 0x00000008;
+    RFCORE_XREG->FRMCTRL0 = 0x00000008;
 
     /* Turn RF on */
-    RFCORE_SFR_RFST = ISRXON;
+    RFCORE_SFR->RFST = ISRXON;
 
     /*
      * Wait until "the chip has been in RX long enough for the transients to
@@ -66,11 +66,11 @@ void random_init(void)
     }
 
     /* Seed the high byte first: */
-    SOC_ADC_RNDL = (seed >> 8) & 0xff;
-    SOC_ADC_RNDL = seed & 0xff;
+    SOC_ADC->RNDL = (seed >> 8) & 0xff;
+    SOC_ADC->RNDL = seed & 0xff;
 
     /* Turn RF off: */
-    RFCORE_SFR_RFST = ISRFOFF;
+    RFCORE_SFR->RFST = ISRFOFF;
 
     random_poweron();
 }
@@ -81,12 +81,12 @@ int random_read(char *buf, unsigned int num)
 
     for (count = 0; count < num; ) {
         /* Clock the RNG LSFR once: */
-        SOC_ADC->ADCCON1bits.RCTRL = 1;
+        SOC_ADC->ADCCON1_BITS.RCTRL = 1;
 
         /* Read up to 2 bytes of random data: */
-        buf[count++] = SOC_ADC_RNDL;
+        buf[count++] = SOC_ADC->RNDL;
         if (count >= num) break;
-        buf[count++] = SOC_ADC_RNDH;
+        buf[count++] = SOC_ADC->RNDH;
     }
 
     return count;

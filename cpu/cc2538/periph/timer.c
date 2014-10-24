@@ -83,7 +83,7 @@ int timer_init(tim_t dev, unsigned int ticks_per_us, void (*callback)(int))
     config[dev].cb = callback;
 
     /* Enable the clock for this timer: */
-    SYS_CTRL_RCGCGPT |= (1 << gptimer_num);
+    SYS_CTRL->RCGCGPT |= (1 << gptimer_num);
 
     /* Disable this timer before configuring it: */
     gptimer->CTL = 0;

@@ -67,11 +67,11 @@ enum {
 /** @name Values for IOC_PXX_OVER
  * @{
  */
-#define IOC_OVERRIDE_OE   0x00000008    /**< Output Enable */
-#define IOC_OVERRIDE_PUE  0x00000004    /**< Pull Up Enable */
-#define IOC_OVERRIDE_PDE  0x00000002    /**< Pull Down Enable */
-#define IOC_OVERRIDE_ANA  0x00000001    /**< Analog Enable */
-#define IOC_OVERRIDE_DIS  0x00000000    /**< Override Disabled */
+// #define IOC_OVERRIDE_OE   0x00000008    /**< Output Enable */
+// #define IOC_OVERRIDE_PUE  0x00000004    /**< Pull Up Enable */
+// #define IOC_OVERRIDE_PDE  0x00000002    /**< Pull Down Enable */
+// #define IOC_OVERRIDE_ANA  0x00000001    /**< Analog Enable */
+// #define IOC_OVERRIDE_DIS  0x00000000    /**< Override Disabled */
 /** @} */
 
 #ifdef __cplusplus

@@ -352,9 +352,9 @@ static const uint8_t reverse_pin_lut[] = {
 };
 
 static const uint32_t ioc_mask_lut[] = {
-    [GPIO_NOPULL  ] = IOC_OVERRIDE_OE,
-    [GPIO_PULLUP  ] = IOC_OVERRIDE_OE | IOC_OVERRIDE_PUE,
-    [GPIO_PULLDOWN] = IOC_OVERRIDE_OE | IOC_OVERRIDE_PDE,
+    [GPIO_NOPULL  ] = IOC_OVER_OE,
+    [GPIO_PULLUP  ] = IOC_OVER_OE | IOC_OVER_PUE,
+    [GPIO_PULLDOWN] = IOC_OVER_OE | IOC_OVER_PDE,
 };
 
 int gpio_init_out(gpio_t dev, gpio_pp_t pushpull)
@@ -415,7 +415,7 @@ int gpio_init_int(gpio_t dev, gpio_pp_t pullup, gpio_flank_t flank, gpio_cb_t cb
     instance = GPIO_NUM_TO_DEV(pin);
 
     /* Enable power-up interrupts for this GPIO port: */
-    SYS_CTRL_IWE |= BIT(GPIO_NUM_TO_PORT_NUM(pin));
+    SYS_CTRL->IWE |= BIT(GPIO_NUM_TO_PORT_NUM(pin));
 
     switch(flank) {
         case GPIO_FALLING:
