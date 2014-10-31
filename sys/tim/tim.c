@@ -15,107 +15,173 @@
 
 
 typedef struct {
-    tim_t timer;
-    int channel;
+    uint8_t timer;
+    uint8_t chan;
 } tim_ch_t;
 
-typedef struct {
-    int ch;
-    tim_time_t val;
-    kernel_pid_t target;
-    void *arg;
-} tim_t;
 
-typedef struct {
-    uint32_t nsec;
-    uint32_t sec;
-} tim_time_t;
-
-static tim_t tim_base_timer;
-
-static tim_ch_t *tim_channels = TIM_ARCH_CHANNELS;
+static tim_ch_t tim_inst[] = TIM_ARCH_MAP;
 static int tim_lifo[TIM_ARCH_CHANNELS + 1];
 
 
 int tim_init(void)
 {
-    /* what type of timers are available on this platform? */
-    /* we need at least one TIMER */
-    tim_base_timer = TIMER_0;
+    uint32_t timers = 0;
 
-    timer_init(tim_base_timer, 1);
-
-    /* initialize channel pointer */
-    tim_next_ch = &tim_channels;
-    tim_last_ch = &(tim_channels[TIM_ARCH_NUMOF_CHANNELS]);
+    for (int i = 0; i < TIM_ARCH_CHANNELS; i++) {
+        /* see if timer was already initialized */
+        if (timers & (1 << tim_inst[i]->timer)) {
+            timers |= (1 << tim_inst[i]->timer);
+            timer_init(tim_inst[i]->timer);
+        }
+    }
 }
 
-
-int tim_sleep(tim_time_t val)
+int tim_usleep(tim_sleep_t *tim, uint32_t usec)
 {
-    tim_t timer;
-    mutex_t lock = MUTEX_INIT;
-    int32_t ticks = _tim_to_ticks(val);
+    unsigned state;
+    uint32_t fticks;
+    uint32_t now;
+    uint8_t chan;
 
-    if (ticks < TIM_ARCH_SPIN_BARRIER) {
-        _tim_spin(ticks);
+    /* save current time for higher precision */
+    now = timer_read(timer_inst[0]);
+    /* compute fticks from given time */
+    fticks = _tim_us_to_fticks(usec);
+
+    /* see if we can go to sleep */
+    if (fticks < TIM_ARCH_SPIN_BARRIER) {
+        _tim_spin(fticks);
         return;
     }
     else {
-        mutex_lock(&lock);
-        timer.val = val;
-        timer.arg = &lock;
-        if (_tim_set(&timer, _tim_cb_unlock) < 0) {
-            return -1;
-        }
-        mutex_lock(&lock);
+        state = disableIRQ();
+        chan = lifo_get(&tim_lifo);
+        restoreIRQ(state);
+
+        tim->chan = chan;
+        tim->lock = MUTEX_INIT;
+        mutex_lock(&(tim->lock));
+
+        fticks = (now + fticks) & TIM_ARCH_TIMER_MAX_VALUE;
+        timer_set_cb(tim_inst[chan]->timer, tim_inst[chan]->chan, _tim_cb_sleep, tim);
+        timer_set_abs(tim_inst[tim->chan]->timer, tim->inst[tim->chan], fticks);
+        mutex_lock(&(tim->lock));
     }
     return 0;
 }
 
-
-int tim_timeout(tim_t *tim, tim_time_t val, kernel_pid_t pid, void *data)
+static void _tim_spin(uint32_t fticks)
 {
-    int32_t ticks = _tim_to_ticks(val);
+    uint32_t now = timer_read(tim_inst[0]->timer);
+    while (timer_read(tim_inst[0]) != ((now + fticks) & TIM_ARCH_TIMER_MAX_VALUE));
+}
 
-    if (ticks < TIM_ARCH_SPIN_BARRIER) {
+static void _tim_cb_sleep(void *arg)
+{
+    tim_sleep_t *tim = (tim_sleep_t *)arg;
+    lifo_insert(&tim_lifo, tim->chan);
+    mutex_unlock(&tim->lock);
+}
+
+int tim_timeout(tim_timeout_t *tim, uint32_t usec, kernel_pid_t pid)
+{
+    unsigned state;
+    uint32_t fticks;
+    uint32_t now
+
+    /* save current time for higher precision */
+    now = timer_read(timer_inst[0]);
+
+    /* compute timer FTICKS */
+    fticks = _tim_us_to_fticks(usec);
+    if (fticks < TIM_ARCH_SPIN_BARRIER) {
         return -1;
     }
 
-    tim->val = val;
-    tim->target = pid;
-    tim->arg = data;
-
-    return _tim_set(tim, val, _tim_cb_msg);
-
-
-    ticks = _tim_us_to_ticks(usec);
-    return _tim_set(ticks, _tim_cb_msg);
-}
-
-int tim_periodic(uint32_t usec, mst_t *msg)
-{
-    int32_t ticks = _tim_to_ticks(val);
-
-    if (ticks < TIM_ARCH_SPIN_BARRIER) {
+    state = disableIRQ();
+    chan = lifo_get(&tim_lifo);
+    restoreIRQ(state);
+    if (chan < 0) {
         return -1;
     }
 
-    return _tim_set(ticks, _tim_cb_periodic, (void *)msg);
+    tim->chan = chan;
+    tim->pid = pid;
+
+    fticks = (now + fticks) & TIM_ARCH_TIMER_MAX_VALUE;
+    timer_set_cb(tim_inst[chan]->timer, tim_inst[chan]->chan, _tim_cb_timeout, tim);
+    timer_set_abs(tim_inst[chan]->timer, tim_inst[chan]->chan, fticks);
+    return 0;
 }
 
-int tim_remove(int channel)
+void _tim_cb_msg(void *arg)
 {
-    tim_ch_t *ch = tim_channels[channel];
-    timer_clear(ch->timer, ch->channel);
+    tim_timeout_t *tim = (tim_timeout_t *)arg;
+    msg_t msg;
+    unsigned state;
+
+    msg.type = MSG_TIM_TIMEOUT;
+    msg_send(&msg, tim->pid);
+
+    state = disableIRQ();
+    lifo_insert(tim_lifo, tim->chan);
+    restoreIRQ(state);
 }
 
-
-
-int tim_core_spin()
+int tim_periodic(tim_periodic_t *tim, uint32_t usec, kernel_pid_t pid)
 {
+    int chan;
+    unsigned state;
 
+    /* compute timer FTICKS */
+    tim->period = _tim_us_to_fticks(usec);
+    if (tim->period < TIM_ARCH_SPIN_BARRIER) {
+        return -2;
+    }
+
+    state = disableIRQ();
+    chan = lifo_get(&tim_lifo);
+    restoreIRQ(state);
+    if (chan < 0) {
+        return -1;
+    }
+
+    tim->chan = (uint8_t)chan;
+    tim->last = (timer_read(tim_inst[0]) + tim->period) & TIM_ARCH_TIMER_MAX_VALUE;
+
+    timer_set_cb(tim_inst[chan]->timer, tim_inst[chan]->chan);
+    timer_set_abs(tim_inst[chan]->timer, tim_inst[chan]->chan, tim->last);
+    return 0;
 }
+
+void _tim_cb_periodic(void *arg)
+{
+    tim_periodic_t *tim = (tim_periodic_t *)arg;
+    mst_t msg;
+
+    msg.type = MSG_TIM_PERIODIC;
+    msg_send_int(&msg, tim->pid);
+
+    tim->last = (tim->last + tim->period) & TIM_ARCH_TIMER_MAX_VALUE;
+    timer_set_abs(tim_inst[tim->chan]->timer, tim_inst[tim->chan]->chan, tim->last);
+}
+
+int tim_clear(uint8_t chan)
+{
+    unsigned state;
+
+    if (chan < TIM_ARCH_CHANNELS) {
+        return timer_clear(tim_inst[chan]->timer, tim_inst[chan]->chan);
+    }
+
+    state = disableIRQ();
+    lifo_insert(&tim_lifo, chan);
+    restoreIRQ(state);
+}
+
+
+
 
 
 int _tim_set(tim_t *tim, void(*cb)(void *))
@@ -137,7 +203,7 @@ int _tim_set(tim_t *tim, void(*cb)(void *))
     }
 #if RTT_NUMOF
     /* else we use some slower running timer, the RTT */
-    else if (ticks < TIM_ARCH_RTT_BARRIER) {
+    else if (fticks < TIM_ARCH_RTT_BARRIER) {
         if (rtt_is_set()) {
             val = rtt_get_alarm();
 
@@ -152,12 +218,6 @@ int _tim_set(tim_t *tim, void(*cb)(void *))
     }
 #endif
 
-}
-
-void _tim_spin(uint32_t ticks)
-{
-    uint32_t now = timer_read(tim_timer_base);
-    while (timer_read(tim_timer_base != (now + ticks)));    /* TODO: will fail if timer_read returns 16bit value */
 }
 
 int _tim_get_ch(tim_ch_t *ch)
@@ -228,29 +288,3 @@ void _tim_cb_unlock(void *arg)
     mutex_unlock(ch->data->lock);
     lifo_insert(tim_lifo, ch->index);
 }
-
-void _tim_cb_msg(void *arg)
-{
-    tim_ch_t *ch = (tim_ch_t *)arg;
-    mst_t msg;
-    msg.type = TIM_MSG_TIMEOUT;
-    msg.content.ptr = ch->data->msg->ptr;
-
-    msg_send_int(&msg, ch->data->msg->target);
-    lifo_insert(tim_lifo, ch->index);
-}
-
-
-
-void _tim_cb_periodic(void *arg)
-{
-    tim_ch_t *ch = (tim_ch_t *)arg;
-    mst_t msg;
-
-    timer_set(ch->timer, ch->channel, ch->ticks);
-
-    msg.type = TIM_MSG_TIMEOUT;
-    msg.content.ptr = ch->data->msg->ptr;
-    msg_send_int(&msg, ch->data->msg->target);
-}
-
