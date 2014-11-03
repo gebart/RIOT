@@ -300,6 +300,15 @@ extern "C" {
 #define I2C_0_CLKDIS()      (RCC->APB1ENR &= ~(RCC_APB1ENR_I2C1EN))
 #define I2C_0_IRQ           I2C1_EV_IRQn
 #define I2C_0_ISR           isr_i2c1
+/* I2C 0 DMA configuration */
+#define I2C_0_DMA_DEV       DMA1
+#define I2C_0_DMA_CLKEN()   (RCC->AHBENR |= RCC_AHBENR_DMA1EN)
+#define I2C_0_DMA_RX_CH     DMA1_Channel7
+#define I2C_0_DMA_RX_OFF    24
+#define I2C_0_DMA_RX_ISR    isr_dma1_ch7
+#define I2C_0_DMA_TX_CH     DMA1_Channel6
+#define I2C_0_DMA_TX_OFF    20
+#define I2C_0_DMA_TX_ISR    isr_dma1_ch6
 /* I2C 0 pin configuration */
 #define I2C_0_SCL_PORT      GPIOB
 #define I2C_0_SCL_PIN       6
