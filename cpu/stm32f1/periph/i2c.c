@@ -71,8 +71,11 @@ int i2c_init_master(i2c_t dev, i2c_speed_t speed)
             port_sda = I2C_0_SDA_PORT;
             pin_sda = I2C_0_SDA_PIN;
             I2C_0_CLKEN();
+            I2C_0_DMA_CLKEN();
             I2C_0_SCL_CLKEN();
             I2C_0_SDA_CLKEN();
+            /* configure DMA channels */
+            I2C_0_DMA_RX_
             break;
 #endif
         default:
@@ -391,5 +394,24 @@ static inline void _stop(I2C_TypeDef *dev)
     /* send STOP condition */
     dev->CR1 |= I2C_CR1_STOP;
 }
+
+#if I2C_0_EN
+void I2C_0_DMA_RX_ISR(void)
+{
+}
+
+void I2C_0_DMA_TX_ISR(void)
+{
+    uint32_t state = I2C_0_DMA_DEV->ISR;
+    /* transfer complete */
+    if (state & (DMA_ISR_TCIF1 << I2C_0_DMA_TX_OFF)) {
+        /* disable DMA channel */
+        I2C_0_DMA_TX_CH->CCR &= ~(DMA_CCR1_EN);
+        /* clear channel interrupts */
+        I2C_0_DMA_DEV->IFCR |= 0xf << I2C_0_DMA_TX_OFF;
+        mutex_unlock(&(config[I2C_0].lock));
+    }
+}
+#endif
 
 #endif /* I2C_0_EN */
