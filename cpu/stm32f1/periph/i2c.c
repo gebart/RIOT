@@ -183,12 +183,14 @@ int i2c_read_bytes(i2c_t dev, uint8_t address, char *data, int length)
 
 int i2c_read_reg(i2c_t dev, uint8_t address, uint8_t reg, char *data)
 {
+    DEBUG("BLAH\n");
     return i2c_read_regs(dev, address, reg, data, 1);
 
 }
 
 int i2c_read_regs(i2c_t dev, uint8_t address, uint8_t reg, char *data, int length)
 {
+    DEBUG("FOO\n");
     if (dev >= I2C_NUMOF) {
         return -1;
     }
@@ -316,6 +318,7 @@ static inline void _stop(I2C_TypeDef *dev)
 #if I2C_0_EN
 void I2C_0_DMA_RX_ISR(void)
 {
+    puts("RX_ISR");
     /* disable DMA channel */
     I2C_0_DMA_RX_CH->CCR &= ~(DMA_CCR1_EN);
     /* clear interrupt flag */
@@ -326,6 +329,7 @@ void I2C_0_DMA_RX_ISR(void)
 
 void I2C_0_DMA_TX_ISR(void)
 {
+    puts("TX_ISR");
     /* disable DMA channel */
     I2C_0_DMA_TX_CH->CCR &= ~(DMA_CCR1_EN);
     /* clear interrupt flags */
