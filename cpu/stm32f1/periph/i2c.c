@@ -74,8 +74,14 @@ int i2c_init_master(i2c_t dev, i2c_speed_t speed)
             I2C_0_DMA_CLKEN();
             I2C_0_SCL_CLKEN();
             I2C_0_SDA_CLKEN();
-            /* configure DMA channels */
-            I2C_0_DMA_RX_
+            /* configure DMA RX channel: highest priority, 8-bit data,
+               memory increment, write to memory, transfer complete interrupt enable */
+            I2C_0_DMA_RX_CH->CCR = (DMA_CCR1_PL | DMA_CCR1_MINC | DMA_CCR1_TCIE);
+            I2C_0_DMA_RX_CH->CPAR = &(i2c->DR);
+            /* configure DMA TX channel: highest priority, 8-bit data,
+               memory increment, write to peripheral, TC interrupt */
+            I2C_0_DMA_TX_CH->CCR = (DMA_CCR1_PL | DMA_CCR1_MINC | DMA_CCR1_DIR | DMA_CCR1_TCIE);
+            I2C_0_DMA_TX_CH->CPAR = &(i2c->DR);
             break;
 #endif
         default:
@@ -275,11 +281,16 @@ int i2c_write_bytes(i2c_t dev, uint8_t address, char *data, int length)
 #if I2C_0_EN
         case I2C_0:
             i2c = I2C_0_DEV;
+            /* enable DMA channel */
+            I2C_DMA_TX_CH->CMAR = data;
+            I2C_DMA_TX_CH->CNDTR = length;
             break;
 #endif
         default:
             return -1;
     }
+
+    /*
 
     /* start transmission and send slave address */
     DEBUG("sending start sequence\n");
