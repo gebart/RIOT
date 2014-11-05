@@ -26,7 +26,7 @@
 #include "debug.h"
 
 /* guard file in case no I2C devices are defined */
-#if I2C_NUMOF
+#if I2C_0_EN | I2C_1_EN
 
 int i2c_init_master(i2c_t dev, i2c_speed_t speed)
 {
@@ -64,7 +64,8 @@ int i2c_init_master(i2c_t dev, i2c_speed_t speed)
         case I2C_SPEED_NORMAL:
             i2c->FREQUENCY = TWI_FREQUENCY_FREQUENCY_K100;
             break;
-        case I2C_SPEED_FAST = TWI_FREQUENCY_FREQUENCY_K400;
+        case I2C_SPEED_FAST:
+            i2c->FREQUENCY = TWI_FREQUENCY_FREQUENCY_K400;
             break;
         default:
             i2c->POWER = 0;
@@ -77,7 +78,13 @@ int i2c_init_master(i2c_t dev, i2c_speed_t speed)
     return 0;
 }
 
-int i2c_read_byte(i2c_t dev, uint8_t address. char *data)
+int i2c_init_slave(i2c_t dev, uint8_t address)
+{
+    /* slave mode not supported for this CPU */
+    return -1;
+}
+
+int i2c_read_byte(i2c_t dev, uint8_t address, char *data)
 {
     NRF_TWI_Type *i2c;
 
@@ -97,14 +104,29 @@ int i2c_read_byte(i2c_t dev, uint8_t address. char *data)
     /* start transfer */
     i2c->TASKS_STARTRX = 1;
     /* wait for transfer to be complete */
-    while (i2c->EVENTS_RXDRDY == 0);
-    i2c->EVENTS_RXDRDY = 0;
+    while (i2c->EVENTS_RXDREADY == 0);
+    i2c->EVENTS_RXDREADY = 0;
     /* stop transfer after on byte */
     i2c->TASKS_STOP = 1;
     /* read received byte */
     *data = (char)i2c->RXD;
 
     return 1;
+}
+
+int i2c_read_bytes(i2c_t dev, uint8_t address, char *data, int length)
+{
+    return 0;
+}
+
+int i2c_read_reg(i2c_t dev, uint8_t address, uint8_t reg, char *data)
+{
+    return 0;
+}
+
+int i2c_read_regs(i2c_t dev, uint8_t address, uint8_t reg, char *data, int length)
+{
+    return 0;
 }
 
 int i2c_write_byte(i2c_t dev, uint8_t address, char data)
@@ -137,6 +159,21 @@ int i2c_write_byte(i2c_t dev, uint8_t address, char data)
     return 1;
 }
 
+int i2c_write_bytes(i2c_t dev, uint8_t address, char *data, int length)
+{
+    return 0;
+}
+
+int i2c_write_reg(i2c_t dev, uint8_t address, uint8_t reg, char data)
+{
+    return 0;
+}
+
+int i2c_write_regs(i2c_t dev, uint8_t address, uint8_t reg, char *data, int length)
+{
+    return 0;
+}
+
 void i2c_poweron(i2c_t dev) {
     switch (dev) {
         case I2C_0:
@@ -158,23 +195,5 @@ void i2c_poweroff(i2c_t dev) {
             break;
     }
 }
-
-#if I2C_0_EN
-__attribute__((naked)) void I2C_0_ISR(void)
-{
-    ISR_ENTER();
-
-    ISR_EXIT();
-}
-#endif
-
-#if I2C_1_EN
-__attribute__((naked)) void I2C_0_ISR(void)
-{
-    ISR_ENTER();
-    if (I2C_DEV->)
-    ISR_EXIT();
-}
-#endif
 
 #endif /* I2C_NUMOF */
