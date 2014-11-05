@@ -110,9 +110,9 @@ extern "C" {
 #define I2C_0_PIN_SDA       14
 
 /* I2C 1 device configuration */
-#define I2C_0_DEV           NRF_TWI
-#define I2C_0_PIN_SCL       15
-#define I2C_0_PIN_SDA       16
+#define I2C_1_DEV           NRF_TWI
+#define I2C_1_PIN_SCL       15
+#define I2C_1_PIN_SDA       16
 /** @} */
 
 /**
