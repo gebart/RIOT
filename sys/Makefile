@@ -116,5 +116,8 @@ endif
 ifneq (,$(filter pipe,$(USEMODULE)))
     DIRS += pipe
 endif
+ifneq (,$(filter tim,$(USEMODULE)))
+    DIRS += tim
+endif
 
 include $(RIOTBASE)/Makefile.base

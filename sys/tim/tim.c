@@ -1,15 +1,14 @@
 
-
+#include <stdint.h>
 
 #include "tim.h"
-#include "arch/tim_arch.h"
 #include "periph/timer.h"
 #include "thread.h"
 #include "mutex.h"
 #include "msg.h"
 #include "kernel_types.h"
 
-#define ENABLE_DEBUG (0)
+#define ENABLE_DEBUG (1)
 #include "debug.h"
 
 
