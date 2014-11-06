@@ -20,20 +20,22 @@
  * @}
  */
 
+#include <stdint.h>
+
 #include "arch/hwtimer_arch.h"
 #include "board.h"
 #include "periph/timer.h"
 #include "thread.h"
 
 
-void irq_handler(int channel);
-void (*timeout_handler)(int);
+static void irq_handler(void *arg);
+static void(*timeout_handler)(int channel);
 
 
 void hwtimer_arch_init(void (*handler)(int), uint32_t fcpu)
 {
     timeout_handler = handler;
-    timer_init(HW_TIMER, 1, &irq_handler);
+    timer_init(HW_TIMER);
 }
 
 void hwtimer_arch_enable_interrupt(void)
@@ -48,12 +50,14 @@ void hwtimer_arch_disable_interrupt(void)
 
 void hwtimer_arch_set(unsigned long offset, short timer)
 {
-    timer_set(HW_TIMER, timer, offset);
+    int chan = (int)timer;
+    timer_set_rel(HW_TIMER, timer, offset, &irq_handler, (void*)chan);
 }
 
 void hwtimer_arch_set_absolute(unsigned long value, short timer)
 {
-    timer_set_absolute(HW_TIMER, timer, value);
+    int chan = (int)timer;
+    timer_set_abs(HW_TIMER, timer, value, &irq_handler, (void*)chan);
 }
 
 void hwtimer_arch_unset(short timer)
@@ -63,10 +67,13 @@ void hwtimer_arch_unset(short timer)
 
 unsigned long hwtimer_arch_now(void)
 {
-    return timer_read(HW_TIMER);
+    uint32_t now;
+    timer_read(HW_TIMER, &now);
+    return (unsigned int)now;
 }
 
-void irq_handler(int channel)
+void irq_handler(void *arg)
 {
-    timeout_handler((short)(channel));
+    int res = (int)arg;
+    timeout_handler((short)res);
 }

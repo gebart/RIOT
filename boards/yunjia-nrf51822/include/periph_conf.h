@@ -36,6 +36,7 @@ extern "C" {
 /* Timer 0 configuration */
 #define TIMER_0_DEV         NRF_TIMER0
 #define TIMER_0_CHANNELS    3
+#define TIMER_0_PRESCALER   4
 #define TIMER_0_MAX_VALUE   (0xffffffff)
 #define TIMER_0_BITMODE     TIMER_BITMODE_BITMODE_32Bit
 #define TIMER_0_ISR         isr_timer0
@@ -44,6 +45,7 @@ extern "C" {
 /* Timer 1 configuration */
 #define TIMER_1_DEV         NRF_TIMER1
 #define TIMER_1_CHANNELS    3
+#define TIMER_1_PRESCALER   4
 #define TIMER_1_MAX_VALUE   (0xffff)
 #define TIEMR_1_BITMODE     TIMER_BITMODE_BITMODE_16Bit
 #define TIMER_1_ISR         isr_timer1
@@ -52,6 +54,7 @@ extern "C" {
 /* Timer 2 configuration */
 #define TIMER_2_DEV         NRF_TIMER2
 #define TIMER_2_CHANNELS    3
+#define TIMER_2_PRESCALER   4
 #define TIMER_2_MAX_VALUE   (0xffff)
 #define TIMER_2_BITMODE     TIMER_BITMODE_BITMODE_16Bit
 #define TIMER_2_ISR         isr_timer2

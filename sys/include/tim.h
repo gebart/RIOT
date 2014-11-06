@@ -22,11 +22,15 @@
 #ifndef __TIM_H
 #define __TIM_H
 
+#include <stdint.h>
+
+#include "tim_arch.h"
+#include "kernel_types.h"
+#include "mutex.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include "tim_arch.h"
 
 /**
  * @brief the number of micro-seconds that are needed to switch between two tasks
@@ -78,47 +82,47 @@ extern "C" {
 #define MSG_TIM_ONESHOT         (0x8001)
 #define MSG_TIM_TIMEOUT         (0x8002)
 
-typedef struct {
-    uint8_t chan;
-    uint32_t last;
-    uint32_t period;
-    kernel_pid_t pid;
-} tim_periodic_t;
+typedef void(*tim_cb_t)(void *);
 
 typedef struct {
-    uint8_t chan;
-    kernel_pid_t pid;
-} tim_timeout_t;
-
-typedef struct {
-    uint8_t chan;
-    mutex_t lock;
-} tim_sleep_t;
+    int chan;
+    uint32_t fticks;
+    uint32_t sticks;
+    tim_cb_t cb;
+    union {
+        mutex_t lock;
+        struct {
+            kernel_pid_t pid;
+            void *arg;
+        } msg;
+    } data;
+    uint32_t last_f;
+    uint32_t last_t;
+} tim_t;
 
 #define TIM_MSG_TIMEOUT             0xf001
 
 int tim_init(void);
 
 int tim_sleep(time_t *sleep);
-int tim_usleep(uint32_t usec);
+int tim_usleep(tim_t *tim, uint32_t usec);
 int tim_msleep(uint32_t msec);
 int tim_ssleep(uint32_t sec);
 
-int tim_timeout();
+int tim_timeout(tim_t *tim, uint32_t usec, void *arg);
 
-int tim_periodic(tim_periodic_t *tim, uint32_t usec, uint16_t msg_type);
-
-#if TIM_TIMEX
-int tim_sleep(timex_t time);
-#endif
+int tim_periodic(tim_t *tim, uint32_t usec, void *arg);
 
 
-int tim_uptime(struct timeval *uptime);
-int tim_now(timex_t *now);
-int tim_get_localtime(struct tm *time);
+// #if TIM_TIMEX
+// int tim_sleep(timex_t time);
+// #endif
+// int tim_uptime(struct timeval *uptime);
+// int tim_now(timex_t *now);
+// int tim_get_localtime(struct tm *time);
 
 
-
+/*
 
     vtimer_init
 vtimer_now
@@ -166,7 +170,7 @@ rtc_set_alarm
 rtc_get_alarm
 rtc_clear_alarm
 
-
+*/
 
 
 #ifdef __cplusplus

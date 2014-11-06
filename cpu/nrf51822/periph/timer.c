@@ -29,19 +29,54 @@
 #include "thread.h"
 #include "periph_conf.h"
 #include "periph/timer.h"
-#include "nrf51.h"
-#include "nrf51_bitfields.h"
+
+/* guard file in case no timer is defined */
+#if TIMER_0_EN | TIMER_1_EN | TIMER_2_EN
 
 typedef struct {
-    void (*cb)(int);
+    timer_cb_t cb;
+    void *arg;
 } timer_conf_t;
 
-/**
- * timer state memory
- */
-static timer_conf_t timer_config[TIMER_NUMOF];
+/** timer state memory allocation */
+#if TIMER_0_EN
+static timer_conf_t t1_conf[TIMER_0_CHANNELS];
+#endif
+#if TIMER_1_EN
+static timer_conf_t t2_conf[TIMER_1_CHANNELS];
+#endif
+#if TIMER_2_EN
+static timer_conf_t t3_conf[TIMER_2_CHANNELS];
+#endif
 
-int timer_init(tim_t dev, unsigned int ticks_per_us, void (*callback)(int))
+/**
+ * @brief timer static configuration
+ */
+static NRF_TIMER_Type *const timer[] = {
+#if TIMER_0_EN
+    TIMER_0_DEV,
+#endif
+#if TIMER_1_EN
+    TIMER_1_DEV,
+#endif
+#if TIMER_2_EN
+    TIMER_2_DEV
+#endif
+};
+
+static timer_conf_t const* config[] = {
+#if TIMER_0_EN
+    t1_conf,
+#endif
+#if TIMER_1_EN
+    t2_conf,
+#endif
+#if TIMER_2_EN
+    t3_conf
+#endif
+};
+
+int timer_init(periph_timer_t dev)
 {
     NRF_TIMER_Type *timer;
 
@@ -51,6 +86,7 @@ int timer_init(tim_t dev, unsigned int ticks_per_us, void (*callback)(int))
             timer = TIMER_0_DEV;
             timer->POWER = 1;
             timer->BITMODE = TIMER_0_BITMODE;
+            timer->PRESCALER = TIMER_0_PRESCALER;
             NVIC_SetPriority(TIMER_0_IRQ, TIMER_IRQ_PRIO);
             NVIC_EnableIRQ(TIMER_0_IRQ);
             break;
@@ -60,6 +96,7 @@ int timer_init(tim_t dev, unsigned int ticks_per_us, void (*callback)(int))
             timer = TIMER_1_DEV;
             timer->POWER = 1;
             timer->BITMODE = TIEMR_1_BITMODE;
+            timer->PRESCALER = TIMER_1_PRESCALER;
             NVIC_SetPriority(TIMER_1_IRQ, TIMER_IRQ_PRIO);
             NVIC_EnableIRQ(TIMER_1_IRQ);
             break;
@@ -69,41 +106,19 @@ int timer_init(tim_t dev, unsigned int ticks_per_us, void (*callback)(int))
             timer = TIMER_2_DEV;
             timer->POWER = 1;
             timer->BITMODE = TIMER_2_BITMODE;
+            timer->PRESCALER = TIMER_2_PRESCALER;
             NVIC_SetPriority(TIMER_2_IRQ, TIMER_IRQ_PRIO);
             NVIC_EnableIRQ(TIMER_2_IRQ);
             break;
 #endif
-    case TIMER_UNDEFINED:
-        return -1;
+        default:
+            return -1;
     }
-
-    /* save callback */
-    timer_config[dev].cb = callback;
 
     timer->TASKS_STOP = 1;
 
     timer->MODE = TIMER_MODE_MODE_Timer;        /* set the timer in Timer Mode. */
     timer->TASKS_CLEAR    = 1;                  /* clear the task first to be usable for later. */
-
-    switch (ticks_per_us) {
-        case 1:
-            timer->PRESCALER = 4;
-            break;
-        case 2:
-            timer->PRESCALER = 5;
-            break;
-        case 4:
-            timer->PRESCALER = 6;
-            break;
-        case 8:
-            timer->PRESCALER = 7;
-            break;
-        case 16:
-            timer->PRESCALER = 8;
-            break;
-        default:
-            return -1;
-    }
 
     /* clear all compare channels */
     timer->SHORTS = (TIMER_SHORTS_COMPARE0_CLEAR_Enabled << TIMER_SHORTS_COMPARE0_CLEAR_Pos);
@@ -117,13 +132,14 @@ int timer_init(tim_t dev, unsigned int ticks_per_us, void (*callback)(int))
     return 0;
 }
 
-int timer_set(tim_t dev, int channel, unsigned int timeout)
+int timer_set_rel(periph_timer_t dev, uint8_t chan, unsigned int timeout, timer_cb_t cb, void *arg)
 {
-    uint32_t now = timer_read(dev);
-    return timer_set_absolute(dev, channel, (now + timeout - 1));
+    uint32_t now;
+    timer_read(dev, &now);
+    return timer_set_abs(dev, chan, (now + timeout - 1), cb, arg);
 }
 
-int timer_set_absolute(tim_t dev, int channel, unsigned int value)
+int timer_set_abs(periph_timer_t dev, uint8_t chan, unsigned int value, timer_cb_t cb, void *arg)
 {
     volatile NRF_TIMER_Type * timer;
 
@@ -144,11 +160,11 @@ int timer_set_absolute(tim_t dev, int channel, unsigned int value)
             timer = TIMER_2_DEV;
             break;
 #endif
-    case TIMER_UNDEFINED:
-        return -1;
+        default:
+            return -1;
     }
 
-    switch (channel) {
+    switch (chan) {
         case 0:
             timer->CC[0] = value;
             timer->INTENSET |= TIMER_INTENSET_COMPARE0_Msk;
@@ -168,7 +184,7 @@ int timer_set_absolute(tim_t dev, int channel, unsigned int value)
     return 1;
 }
 
-int timer_clear(tim_t dev, int channel)
+int timer_clear(periph_timer_t dev, int channel)
 {
     NRF_TIMER_Type *timer;
 
@@ -188,7 +204,7 @@ int timer_clear(tim_t dev, int channel)
             timer = TIMER_2_DEV;
             break;
 #endif
-        case TIMER_UNDEFINED:
+        default:
             return -1;
     }
 
@@ -210,31 +226,17 @@ int timer_clear(tim_t dev, int channel)
     return 1;
 }
 
-unsigned int timer_read(tim_t dev)
+int timer_read(periph_timer_t dev, uint32_t *value)
 {
-    switch (dev) {
-#if TIMER_0_EN
-        case TIMER_0:
-            TIMER_0_DEV->TASKS_CAPTURE[3] = 1;
-            return TIMER_0_DEV->CC[3];
-#endif
-#if TIMER_1_EN
-        case TIMER_1:
-            TIMER_1_DEV->TASKS_CAPTURE[3] = 1;
-            return TIMER_1_DEV->CC[3];
-#endif
-#if TIMER_2_EN
-        case TIMER_2:
-            TIMER_2_DEV->TASKS_CAPTURE[3] = 1;
-            return TIMER_2_DEV->CC[3];
-#endif
-        case TIMER_UNDEFINED:
-        default:
-            return 0;
+    if (dev >= TIMER_NUMOF) {
+        return -1;
     }
+    timer[dev]->TASKS_CAPTURE[3] = 1;
+    *value = timer[dev]->CC[3];
+    return 0;
 }
 
-void timer_start(tim_t dev)
+void timer_start(periph_timer_t dev)
 {
     switch (dev) {
 #if TIMER_0_EN
@@ -252,12 +254,10 @@ void timer_start(tim_t dev)
             TIMER_2_DEV->TASKS_START = 1;
             break;
 #endif
-        case TIMER_UNDEFINED:
-            break;
     }
 }
 
-void timer_stop(tim_t dev) {
+void timer_stop(periph_timer_t dev) {
     switch (dev) {
 #if TIMER_0_EN
         case TIMER_0:
@@ -274,12 +274,10 @@ void timer_stop(tim_t dev) {
             TIMER_2_DEV->TASKS_STOP = 1;
             break;
 #endif
-        case TIMER_UNDEFINED:
-            break;
     }
 }
 
-void timer_irq_enable(tim_t dev)
+void timer_irq_enable(periph_timer_t dev)
 {
     switch (dev) {
 #if TIMER_0_EN
@@ -297,12 +295,10 @@ void timer_irq_enable(tim_t dev)
             NVIC_EnableIRQ(TIMER_2_IRQ);
             break;
 #endif
-        case TIMER_UNDEFINED:
-            break;
     }
 }
 
-void timer_irq_disable(tim_t dev)
+void timer_irq_disable(periph_timer_t dev)
 {
     switch (dev) {
 #if TIMER_0_EN
@@ -320,12 +316,10 @@ void timer_irq_disable(tim_t dev)
             NVIC_DisableIRQ(TIMER_2_IRQ);
             break;
 #endif
-        case TIMER_UNDEFINED:
-            break;
     }
 }
 
-void timer_reset(tim_t dev)
+void timer_reset(periph_timer_t dev)
 {
     switch (dev) {
 #if TIMER_0_EN
@@ -343,8 +337,6 @@ void timer_reset(tim_t dev)
             TIMER_2_DEV->TASKS_CLEAR = 1;
             break;
 #endif
-        case TIMER_UNDEFINED:
-            break;
     }
 }
 
@@ -355,7 +347,7 @@ void TIMER_0_ISR(void)
         if(TIMER_0_DEV->EVENTS_COMPARE[i] == 1){
             TIMER_0_DEV->EVENTS_COMPARE[i] = 0;
             TIMER_0_DEV->INTENCLR = (1 << (16 + i));
-            timer_config[TIMER_0].cb(i);
+            config[TIMER_0][i].cb(config[TIMER_0][i].arg);
         }
     }
     if (sched_context_switch_request) {
@@ -371,7 +363,7 @@ void TIMER_1_ISR(void)
         if(TIMER_1_DEV->EVENTS_COMPARE[i] == 1){
             TIMER_1_DEV->EVENTS_COMPARE[i] = 0;
             TIMER_1_DEV->INTENCLR = (1 << (16 + i));
-            timer_config[TIMER_1].cb(i);
+            config[TIMER_1][i]->cb(config[TIMER_1][i].arg);
         }
     }
     if (sched_context_switch_request) {
@@ -387,7 +379,7 @@ void TIMER_2_ISR(void)
         if(TIMER_2_DEV->EVENTS_COMPARE[i] == 1){
             TIMER_2_DEV->EVENTS_COMPARE[i] = 0;
             TIMER_2_DEV->INTENCLR = (1 << (16 + i));
-            timer_config[TIMER_2].cb(i);
+            config[TIMER_2][i]->cb(config[TIMER_2][i].arg);
         }
     }
     if (sched_context_switch_request) {
@@ -395,3 +387,5 @@ void TIMER_2_ISR(void)
     }
 }
 #endif
+
+#endif /* TIMER_0_EN | TIMER_1_EN | TIMER_2_EN */

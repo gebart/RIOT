@@ -5,6 +5,7 @@
 #include "periph/timer.h"
 #include "thread.h"
 #include "mutex.h"
+#include "lifo.h"
 #include "msg.h"
 #include "kernel_types.h"
 
@@ -18,8 +19,14 @@ typedef struct {
     uint8_t chan;
 } tim_ch_t;
 
+static void _tim_spin(uint32_t fticks);
 
-static tim_ch_t tim_inst[] = TIM_ARCH_MAP;
+static void _tim_cb_sleep(void *arg);
+static void _tim_cb_msg(void *arg);
+static void _tim_cb_periodic(void *arg);
+
+
+static const tim_ch_t channels[] = TIM_ARCH_MAP;
 static int tim_lifo[TIM_ARCH_CHANNELS + 1];
 
 
@@ -29,14 +36,14 @@ int tim_init(void)
 
     for (int i = 0; i < TIM_ARCH_CHANNELS; i++) {
         /* see if timer was already initialized */
-        if (timers & (1 << tim_inst[i]->timer)) {
-            timers |= (1 << tim_inst[i]->timer);
-            timer_init(tim_inst[i]->timer);
+        if (timers & (1 << channels[i].timer)) {
+            timers |= (1 << channels[i].timer);
+            timer_init(channels[i].timer);
         }
     }
 }
 
-int tim_usleep(tim_sleep_t *tim, uint32_t usec)
+int tim_usleep(tim_t *tim, uint32_t usec)
 {
     unsigned state;
     uint32_t fticks;
@@ -44,14 +51,14 @@ int tim_usleep(tim_sleep_t *tim, uint32_t usec)
     uint8_t chan;
 
     /* save current time for higher precision */
-    now = timer_read(timer_inst[0]);
+    timer_read(channels[0].timer, &now);
     /* compute fticks from given time */
     fticks = _tim_us_to_fticks(usec);
 
     /* see if we can go to sleep */
     if (fticks < TIM_ARCH_SPIN_BARRIER) {
         _tim_spin(fticks);
-        return;
+        return 0;
     }
     else {
         state = disableIRQ();
@@ -59,31 +66,33 @@ int tim_usleep(tim_sleep_t *tim, uint32_t usec)
         restoreIRQ(state);
 
         tim->chan = chan;
-        tim->lock = MUTEX_INIT;
-        mutex_lock(&(tim->lock));
+        tim->data.lock = MUTEX_INIT;
+        mutex_lock(&(tim->data.lock));
 
         fticks = (now + fticks) & TIM_ARCH_TIMER_MAX_VALUE;
-        timer_set_cb(tim_inst[chan]->timer, tim_inst[chan]->chan, _tim_cb_sleep, tim);
-        timer_set_abs(tim_inst[tim->chan]->timer, tim->inst[tim->chan], fticks);
-        mutex_lock(&(tim->lock));
+        timer_set_abs(channels[tim->chan].timer, channels[tim->chan].chan, fticks, _tim_cb_sleep, tim);
+        mutex_lock(&(tim->data.lock));
     }
     return 0;
 }
 
 static void _tim_spin(uint32_t fticks)
 {
-    uint32_t now = timer_read(tim_inst[0]->timer);
-    while (timer_read(tim_inst[0]) != ((now + fticks) & TIM_ARCH_TIMER_MAX_VALUE));
+    uint32_t now;
+
+    do {
+        timer_read(channels[0].timer, &now);
+    } while (now != ((now + fticks) & TIM_ARCH_TIMER_MAX_VALUE));
 }
 
 static void _tim_cb_sleep(void *arg)
 {
-    tim_sleep_t *tim = (tim_sleep_t *)arg;
+    tim_t *tim = (tim_t *)arg;
     lifo_insert(&tim_lifo, tim->chan);
-    mutex_unlock(&tim->lock);
+    mutex_unlock(&tim->data.lock);
 }
 
-int tim_timeout(tim_timeout_t *tim, uint32_t usec, kernel_pid_t pid)
+int tim_timeout(tim_t *tim, uint32_t usec, void *arg)
 {
     unsigned state;
     uint32_t fticks;
@@ -109,8 +118,8 @@ int tim_timeout(tim_timeout_t *tim, uint32_t usec, kernel_pid_t pid)
     tim->pid = pid;
 
     fticks = (now + fticks) & TIM_ARCH_TIMER_MAX_VALUE;
-    timer_set_cb(tim_inst[chan]->timer, tim_inst[chan]->chan, _tim_cb_timeout, tim);
-    timer_set_abs(tim_inst[chan]->timer, tim_inst[chan]->chan, fticks);
+    timer_set_cb(chan[chan]->timer, chan[chan]->chan, _tim_cb_timeout, tim);
+    timer_set_abs(chan[chan]->timer, chan[chan]->chan, fticks);
     return 0;
 }
 
@@ -128,7 +137,7 @@ void _tim_cb_msg(void *arg)
     restoreIRQ(state);
 }
 
-int tim_periodic(tim_periodic_t *tim, uint32_t usec, kernel_pid_t pid)
+int tim_periodic(tim_t *tim, uint32_t usec, void *arg)
 {
     int chan;
     unsigned state;
@@ -147,10 +156,10 @@ int tim_periodic(tim_periodic_t *tim, uint32_t usec, kernel_pid_t pid)
     }
 
     tim->chan = (uint8_t)chan;
-    tim->last = (timer_read(tim_inst[0]) + tim->period) & TIM_ARCH_TIMER_MAX_VALUE;
+    tim->last = (timer_read(chan[0]) + tim->period) & TIM_ARCH_TIMER_MAX_VALUE;
 
-    timer_set_cb(tim_inst[chan]->timer, tim_inst[chan]->chan);
-    timer_set_abs(tim_inst[chan]->timer, tim_inst[chan]->chan, tim->last);
+    timer_set_cb(chan[chan]->timer, chan[chan]->chan);
+    timer_set_abs(chan[chan]->timer, chan[chan]->chan, tim->last);
     return 0;
 }
 
@@ -163,7 +172,7 @@ void _tim_cb_periodic(void *arg)
     msg_send_int(&msg, tim->pid);
 
     tim->last = (tim->last + tim->period) & TIM_ARCH_TIMER_MAX_VALUE;
-    timer_set_abs(tim_inst[tim->chan]->timer, tim_inst[tim->chan]->chan, tim->last);
+    timer_set_abs(chan[tim->chan]->timer, chan[tim->chan]->chan, tim->last);
 }
 
 int tim_clear(uint8_t chan)
@@ -171,7 +180,7 @@ int tim_clear(uint8_t chan)
     unsigned state;
 
     if (chan < TIM_ARCH_CHANNELS) {
-        return timer_clear(tim_inst[chan]->timer, tim_inst[chan]->chan);
+        return timer_clear(chan[chan]->timer, chan[chan]->chan);
     }
 
     state = disableIRQ();

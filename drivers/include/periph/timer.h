@@ -27,6 +27,9 @@
 extern "C" {
 #endif
 
+/* guard file in case no timer is defined */
+#if TIMER_0_EN | TIMER_1_EN | TIMER_2_EN
+
 /**
  * @brief Definition of available timers
  *
@@ -46,8 +49,9 @@ typedef enum {
 #if TIMER_3_EN
     TIMER_3,                /**< 4th timer */
 #endif
-    TIMER_UNDEFINED         /**< fall-back if no timer is defined */
-} tim_t; /* named tim instead of timer to avoid conflicts with vendor libraries */
+} periph_timer_t; /* named tim instead of timer to avoid conflicts with vendor libraries */
+
+typedef void(*timer_cb_t)(void *arg);
 
 /**
  * @brief Initialize the given timer
@@ -59,13 +63,23 @@ typedef enum {
  * The timer will be started automatically after initialization with interrupts enabled.
  *
  * @param[in] dev           the timer to initialize
- * @param[in] ticks_per_us  the timers speed in ticks per us
- * @param[in] callback      this callback is called in interrupt context, the emitting channel is
- *                          passed as argument
  *
- * @return                  returns 0 on success, -1 if speed not applicable of unknown device given
+ * @return                  returns 0 on success,
+ * @return                  -1 on undefined device given
  */
-int timer_init(tim_t dev, unsigned int ticks_per_us, void (*callback)(int));
+int timer_init(periph_timer_t dev);
+
+/**
+ * @brief [brief description]
+ *
+ * @note Call this only after you have called *timer_init*.
+ *
+ * @param dev [description]
+ * @param callback [description]
+ *
+ * @return [description]
+ */
+int timer_on_overflow(periph_timer_t dev, timer_cb_t cb, void *arg);
 
 /**
  * @brief Set a given timer channel for the given timer device. The callback given during
@@ -77,7 +91,7 @@ int timer_init(tim_t dev, unsigned int ticks_per_us, void (*callback)(int));
  *
  * @return                  1 on success, -1 on error
  */
-int timer_set(tim_t dev, int channel, unsigned int timeout);
+int timer_set_rel(periph_timer_t dev, uint8_t chan, unsigned int timeout, timer_cb_t cb, void *arg);
 
 /**
  * @brief Set an absolute timeout value for the given channel of the given timer device
@@ -88,7 +102,7 @@ int timer_set(tim_t dev, int channel, unsigned int timeout);
  *
  * @return                  1 on success, -1 on error
  */
-int timer_set_absolute(tim_t dev, int channel, unsigned int value);
+int timer_set_abs(periph_timer_t dev, uint8_t chan, unsigned int value, timer_cb_t cb, void *arg);
 
 /**
  * @brief Clear the given channel of the given timer device
@@ -98,7 +112,7 @@ int timer_set_absolute(tim_t dev, int channel, unsigned int value);
  *
  * @return                  1 on success, -1 on error
  */
-int timer_clear(tim_t dev, int channel);
+int timer_clear(periph_timer_t dev, int channel);
 
 /**
  * @brief Read the current value of the given timer device
@@ -107,35 +121,35 @@ int timer_clear(tim_t dev, int channel);
  *
  * @return                  the timers current value
  */
-unsigned int timer_read(tim_t dev);
+int timer_read(periph_timer_t dev, uint32_t *value);
 
 /**
  * @brief Start the given timer. This function is only needed if the timer was stopped manually before
  *
  * @param[in] dev           the timer device to stop
  */
-void timer_start(tim_t dev);
+void timer_start(periph_timer_t dev);
 
 /**
  * @brief Stop the given timer - this will effect all of the timer's channels
  *
  * @param[in] dev           the timer to stop
  */
-void timer_stop(tim_t dev);
+void timer_stop(periph_timer_t dev);
 
 /**
  * @brief Enable the interrupts for the given timer
  *
  * @param[in] dev           timer to enable interrupts for
  */
-void timer_irq_enable(tim_t dev);
+void timer_irq_enable(periph_timer_t dev);
 
 /**
  * @brief Disable interrupts for the given timer
  *
  * @param[in] dev           the timer to disable interrupts for
  */
-void timer_irq_disable(tim_t dev);
+void timer_irq_disable(periph_timer_t dev);
 
 /**
  * @brief Reset the up-counting value to zero for the given timer
@@ -145,7 +159,9 @@ void timer_irq_disable(tim_t dev);
  *
  * @param[in] dev           the timer to reset
  */
-void timer_reset(tim_t dev);
+void timer_reset(periph_timer_t dev);
+
+#endif /* TIMER_0_EN | TIMER_1_EN | TIMER_2_EN */
 
 #ifdef __cplusplus
 }
