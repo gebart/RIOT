@@ -51,5 +51,16 @@
  */
 #define CPUID_ID_LEN                    (8)
 
+/**
+ * @name Definition of different panic modes
+ */
+typedef enum {
+    HARD_FAULT,
+    WATCHDOG,
+    BUS_FAULT,
+    USAGE_FAULT,
+    DUMMY_HANDLER
+} panic_t;
+
 #endif /* __CPU_CONF_H */
 /** @} */

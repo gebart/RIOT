@@ -27,7 +27,11 @@ int main(void)
 {
     puts("tim test application...");
 
+    while (1) {
+        tim_usleep(5 * 1000 * 1000);
 
+        puts("1s ping");
+    }
 
     return 0;
 }

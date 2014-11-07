@@ -78,13 +78,28 @@ extern "C" {
 #define MSG_TIM_ONESHOT         (0x8001)
 #define MSG_TIM_TIMEOUT         (0x8002)
 
+#define TIM_INIT_SLEEP          { 0, -1, _tim_cb_sleep, 0, 0, 0, 0, 0, 0 }
+
 typedef void(*tim_cb_t)(void *);
 
+// typedef struct {
+//     int chan;
+//     uint32_t fticks;
+//     uint32_t sticks;
+//     mutex_t lock;
+// } tim_sleep_t;
+
 typedef struct {
+    uint32_t fast;
+    uint32_t slow;
+} tim_ticks_t;
+
+typedef struct tim_t {
+    void *next;
     int chan;
-    uint32_t fticks;
-    uint32_t sticks;
     tim_cb_t cb;
+    tim_ticks_t ticks;
+    tim_ticks_t last;
     union {
         mutex_t lock;
         struct {
@@ -92,8 +107,6 @@ typedef struct {
             void *arg;
         } msg;
     } data;
-    uint32_t last_f;
-    uint32_t last_t;
 } tim_t;
 
 #define TIM_MSG_TIMEOUT             0xf001
@@ -101,7 +114,7 @@ typedef struct {
 int tim_init(void);
 
 int tim_sleep(time_t *sleep);
-int tim_usleep(tim_t *tim, uint32_t usec);
+int tim_usleep(uint32_t usec);
 int tim_msleep(uint32_t msec);
 int tim_ssleep(uint32_t sec);
 
