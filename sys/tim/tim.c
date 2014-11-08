@@ -34,11 +34,6 @@ static const uint8_t channel[] = TIM_ARCH_CHANNEL_MAP;
 static int tim_lifo[TIM_ARCH_CHANNELS + 1];
 
 /**
- * @brief The task currently scheduled for the slow timer
- */
-static tim_t *stimer_active;
-
-/**
  * @brief Head of pending slow timers
  */
 static tim_t *stimer_pending;
@@ -56,7 +51,7 @@ static unsigned int tim_dino_ticks = 0;
  *
  * @return                  number of fast ticks
  */
-static inline void _tim_us_to_ticks(uint32_t us, tim_ticks_t *ticks);
+static void _tim_us_to_ticks(uint32_t us, tim_ticks_t *ticks);
 
 static int _tim_stimer_set(tim_t *tim);
 static int _tim_ftimer_set(tim_t *tim);
@@ -173,40 +168,40 @@ int tim_clear(tim_t *tim)
 {
     unsigned state;
 
-    if (tim->ticks.slow == 0) {
-        /* clear timer channel */
-        timer_clear(timer[tim->chan], channel[tim->chan]);
-        /* free logical channel */
-        state = disableIRQ();
-        lifo_insert(tim_lifo, tim->chan);
-        restoreIRQ(state);
-    }
-    else {
-        if (tim == stimer_active) {
-#ifdef TIM_ARCH_STIMER_RTT
-            rtt_clear_alarm();
-#else
-            timer_clear(timer[tim->chan], channel[tim->chan]);
-#endif
-            _tim_stimer_next();
-        }
-        else {
-            tim_t *next = stimer_pending;
-            if (stimer_pending == tim) {
-                state = disableIRQ();
-                stimer_pending = tim->next;
-                restoreIRQ(state);
-            }
-            while (next) {
-                if (next->next == tim) {
-                    state = disableIRQ();
-                    next->next = tim->next;
-                    restoreIRQ(state);
-                }
-                next = next->next;
-            }
-        }
-    }
+//     if (tim->ticks.slow == 0) {
+//         /* clear timer channel */
+//         timer_clear(timer[tim->chan], channel[tim->chan]);
+//         /* free logical channel */
+//         state = disableIRQ();
+//         lifo_insert(tim_lifo, tim->chan);
+//         restoreIRQ(state);
+//     }
+//     else {
+//         if (tim == stimer_active) {
+// #ifdef TIM_ARCH_STIMER_RTT
+//             rtt_clear_alarm();
+// #else
+//             timer_clear(timer[tim->chan], channel[tim->chan]);
+// #endif
+//             _tim_stimer_next();
+//         }
+//         else {
+//             tim_t *next = stimer_pending;
+//             if (stimer_pending == tim) {
+//                 state = disableIRQ();
+//                 stimer_pending = tim->next;
+//                 restoreIRQ(state);
+//             }
+//             while (next) {
+//                 if (next->next == tim) {
+//                     state = disableIRQ();
+//                     next->next = tim->next;
+//                     restoreIRQ(state);
+//                 }
+//                 next = next->next;
+//             }
+//         }
+//     }
     return 0;
 }
 
@@ -230,6 +225,14 @@ static int _tim_ftimer_set(tim_t *tim)
 
 static int _tim_stimer_set(tim_t *tim)
 {
+    tim->last.sticks = (tim->last.slow + tim->ticks.slow) & TIM_ARCH_SMAX;
+
+    if (stimer_pending == NULL) {
+        stimer_pending = tim;
+        _tim_stimer_next();
+    } else {
+        if ()
+    }
     return 0;
 }
 
@@ -274,7 +277,7 @@ static void _tim_cb_msg(void *arg)
 
 static void _tim_cb_periodic(void *arg)
 {
-    mst_t msg;
+    msg_t msg;
     tim_t *tim = (tim_t *)arg;
 
     msg.type = MSG_TIM_PERIODIC;
@@ -284,9 +287,9 @@ static void _tim_cb_periodic(void *arg)
     if (tim->ticks.slow == 0) {
         _tim_ftimer_set(tim);
     }
-    else (
+    else {
         _tim_stimer_set(tim);
-    )
+    }
 }
 
 static void _tim_cb_stimer(void *arg)
@@ -316,16 +319,16 @@ static void _tim_cb_stimer_ovf(void *arg)
 
 
 /* convert between different time bases */
-static inline void _tim_us_to_ticks(uint32_t us, tim_ticks_t *ticks)
+static void _tim_us_to_ticks(uint32_t us, tim_ticks_t *ticks)
 {
     uint64_t tmp;
 
 #if TIM_ARCH_FCLK >= (1000000U)
     tmp = us * (TIM_ARCH_FCLK / (1000000UL));
 #else
-    tmp = us / ((1000000U) / TIM_ARCH_FCLK);
+    tmp = us / ((1000000UL) / TIM_ARCH_FCLK);
 #endif
     ticks->fast = tmp & TIM_ARCH_FMAX;
-    /* TODO: calculate sticks */
-    ticks->slow = 0;
+    tmp = ((tmp & ~(TIM_ARCH_FMAX)) * TIM_ARCH_SCLK) / TIM_ARCH_FCLK;
+    ticks->slow = (uint32_t)tmp;
 }

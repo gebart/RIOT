@@ -24,7 +24,7 @@
  */
 #define TIM_ARCH_FCLK           TIMER_0_FREQUENCY
 #define TIM_ARCH_FMAX           TIMER_0_MAX_VALUE
-#define TIM_ARCH_LCLK           RTT_FREQUENCY
+#define TIM_ARCH_SCLK           RTT_FREQUENCY
 #define TIM_ARCH_SMAX           RTT_MAX_VALUE
 /** @} */
 

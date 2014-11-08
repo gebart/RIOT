@@ -77,6 +77,7 @@ extern "C" {
 
 #define MSG_TIM_ONESHOT         (0x8001)
 #define MSG_TIM_TIMEOUT         (0x8002)
+#define MSG_TIM_PERIODIC        (0x8003)
 
 #define TIM_INIT_SLEEP          { 0, -1, _tim_cb_sleep, 0, 0, 0, 0, 0, 0 }
 
@@ -94,8 +95,10 @@ typedef struct {
     uint32_t slow;
 } tim_ticks_t;
 
-typedef struct tim_t {
-    void *next;
+typedef struct tim_t tim_t;
+
+struct tim_t {
+    tim_t *next;
     int chan;
     tim_cb_t cb;
     tim_ticks_t ticks;
@@ -107,7 +110,7 @@ typedef struct tim_t {
             void *arg;
         } msg;
     } data;
-} tim_t;
+};
 
 #define TIM_MSG_TIMEOUT             0xf001
 
