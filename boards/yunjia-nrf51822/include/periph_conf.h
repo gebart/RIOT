@@ -27,10 +27,10 @@ extern "C" {
  * @name Timer configuration
  * @{
  */
-#define TIMER_NUMOF         (1U)
+#define TIMER_NUMOF         (3U)
 #define TIMER_0_EN          1
-#define TIMER_1_EN          0
-#define TIMER_2_EN          0
+#define TIMER_1_EN          1
+#define TIMER_2_EN          1
 #define TIMER_IRQ_PRIO      1
 
 /* Timer 0 configuration */
@@ -39,7 +39,7 @@ extern "C" {
 #define TIMER_0_PRESCALER   3
 #define TIMER_0_FREQUENCY   (2000000UL)
 #define TIMER_0_MAX_VALUE   (0xffffff)
-#define TIMER_0_BITMODE     TIMER_BITMODE_BITMODE_32Bit
+#define TIMER_0_BITMODE     TIMER_BITMODE_BITMODE_24Bit
 #define TIMER_0_ISR         isr_timer0
 #define TIMER_0_IRQ         TIMER0_IRQn
 
@@ -47,6 +47,7 @@ extern "C" {
 #define TIMER_1_DEV         NRF_TIMER1
 #define TIMER_1_CHANNELS    3
 #define TIMER_1_PRESCALER   3
+#define TIMER_1_FREQUENCY   (2000000UL)
 #define TIMER_1_MAX_VALUE   (0xffff)
 #define TIEMR_1_BITMODE     TIMER_BITMODE_BITMODE_16Bit
 #define TIMER_1_ISR         isr_timer1
@@ -56,6 +57,7 @@ extern "C" {
 #define TIMER_2_DEV         NRF_TIMER2
 #define TIMER_2_CHANNELS    3
 #define TIMER_2_PRESCALER   4
+#define TIMER_2_FREQUENCY   (1000000UL)
 #define TIMER_2_MAX_VALUE   (0xffff)
 #define TIMER_2_BITMODE     TIMER_BITMODE_BITMODE_16Bit
 #define TIMER_2_ISR         isr_timer2

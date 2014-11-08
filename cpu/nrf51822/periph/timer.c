@@ -30,7 +30,7 @@
 #include "periph_conf.h"
 #include "periph/timer.h"
 
-#define ENABLE_DEBUG (1)
+#define ENABLE_DEBUG (0)
 #include "debug.h"
 
 /* guard file in case no timer is defined */
@@ -166,7 +166,7 @@ int timer_set_rel(periph_timer_t dev, uint8_t chan, unsigned int timeout, timer_
 
 int timer_set_abs(periph_timer_t dev, uint8_t chan, unsigned int value, timer_cb_t cb, void *arg)
 {
-    DEBUG("timer_set_abs: setting TIMER_%i chan %i to %i value\n", dev, chan, value);
+    DEBUG("timer_set_abs: setting TIMER_%i chan %i to %i\n", dev, chan, value);
     if (dev >= TIMER_NUMOF) {
         DEBUG("timer_set_abs: ERROR - trying to set undefined timer\n");
         return -1;
@@ -341,7 +341,7 @@ void TIMER_1_ISR(void)
             if (flags[TIMER_1] & (1 << i)) {
                 TIMER_1_DEV->EVENTS_COMPARE[i] = 0;
                 TIMER_1_DEV->INTENCLR = (1 << (16 + i));
-                config[TIMER_1][i]->cb(config[TIMER_1][i].arg);
+                config[TIMER_1][i].cb(config[TIMER_1][i].arg);
             }
         }
     }
@@ -359,7 +359,7 @@ void TIMER_2_ISR(void)
             if (flags[TIMER_2] & (1 << i)) {
                 TIMER_2_DEV->EVENTS_COMPARE[i] = 0;
                 TIMER_2_DEV->INTENCLR = (1 << (16 + i));
-                config[TIMER_2][i]->cb(config[TIMER_2][i].arg);
+                config[TIMER_2][i].cb(config[TIMER_2][i].arg);
             }
         }
     }
