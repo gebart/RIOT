@@ -25,8 +25,14 @@
 
 #include <stdint.h>
 
-#include "periph/i2c.h"
+#include "periph_conf.h"
 #include "periph/gpio.h"
+#if I2C_NUMOF
+#include "periph/i2c.h"
+#endif
+#if SPI_NUMOF
+#include "periph/spi.h"
+#endif
 
 #ifdef __cplusplus
  extern "C" {
@@ -41,8 +47,21 @@
  * @brief Device descriptor for L3G4200D sensors
  */
 typedef struct {
-    i2c_t i2c;              /**< I2C device the sensor is connected to */
-    uint8_t addr;           /**< the sensors slave address on the I2C bus */
+    union {
+#if I2C_NUMOF
+        struct {
+            i2c_t dev;      /**< I2C device the sensor is connected to */
+            uint8_t addr;   /**< the sensors slave address on the I2C bus */
+        } i2c;
+#endif
+#if SPI_NUMOF
+        struct {
+            spi_t dev;      /**< SPI device the sensor is connected to */
+            gpio_t cs;      /**< chip select pin used for the device */
+        } spi;
+#endif
+    } bus;
+    int use_spi;            /**< 1 if using SPI bus, 0 for using I2C bus */
     gpio_t int1;            /**< INT1 pin */
     gpio_t int2;            /**< INT2 (DRDY) pin */
     int32_t scale;          /**< scaling factor to normalize results */
@@ -87,7 +106,7 @@ typedef enum {
 } l3g4200d_mode_t;
 
 /**
- * @brief Initialize a gyro
+ * @brief Initialize a gyro for use as I2C device
  *
  * @param[out] dev          device descriptor of sensor to initialize
  * @param[in]  i2c          I2C bus the gyro is connected to
@@ -100,9 +119,31 @@ typedef enum {
  * @return                  0 on success
  * @return                  -1 on error
  */
-int l3g4200d_init(l3g4200d_t *dev, i2c_t i2c, uint8_t address,
+#if I2C_NUMOF
+int l3g4200d_init_i2c(l3g4200d_t *dev, i2c_t i2c, uint8_t address,
                   gpio_t int1_pin, gpio_t int2_pin,
                   l3g4200d_mode_t mode, l3g4200d_scale_t scale);
+#endif
+
+/**
+ * @brief Initialize a gyro for use as SPI device
+ *
+ * @param[out] dev          device descriptor of sensor to initialize
+ * @param[in]  spi          SPI bus the gyro is connected to
+ * @param[in]  cs           CS pin
+ * @param[in]  int1_pin     INT pin the gyro is connected to
+ * @param[in]  int2_pin     DRDY pin the gyro is connected to
+ * @param[in]  mode         bandwidth and sampling rate settings
+ * @param[in]  scale        scaling of results
+ *
+ * @return                  0 on success
+ * @return                  -1 on error
+ */
+#if SPI_NUMOF
+int l3g4200d_init_spi(l3g4200d_t *dev, spi_t spi, gpio_t cs_pin,
+                  gpio_t int1_pin, gpio_t int2_pin,
+                  l3g4200d_mode_t mode, l3g4200d_scale_t scale);
+#endif
 
 /**
  * @brief Read angular speed value in degree per second from gyro

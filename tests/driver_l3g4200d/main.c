@@ -18,17 +18,25 @@
  * @}
  */
 
-#ifndef TEST_L3G4200D_I2C
-#error "TEST_L3G4200D_I2C not defined"
-#endif
-#ifndef TEST_L3G4200D_ADDR
-#error "TEST_L3G4200D_ADDR not defined"
+#ifdef TEST_L3G4200D_SPI
+#define L3G4200D_BUS_SPI
+#  ifndef TEST_L3G4200D_CS
+#    error "TEST_L3G4200D_CS not defined"
+#  endif
+#else
+#define L3G4200D_BUS_I2C
+#  ifndef TEST_L3G4200D_I2C
+#    error "TEST_L3G4200D_I2C not defined"
+#  endif
+#  ifndef TEST_L3G4200D_ADDR
+#    error "TEST_L3G4200D_ADDR not defined"
+#  endif
 #endif
 #ifndef TEST_L3G4200D_INT
-#error "TEST_L3G4200D_INT not defined"
+#  error "TEST_L3G4200D_INT not defined"
 #endif
 #ifndef TEST_L3G4200D_DRDY
-#error "TEST_L3G4200D_DRDY not defined"
+#  error "TEST_L3G4200D_DRDY not defined"
 #endif
 
 #include <stdio.h>
@@ -46,9 +54,16 @@ int main(void)
     l3g4200d_data_t acc_data;
 
     puts("L3G4200 gyroscope driver test application\n");
-    printf("Initializing L3G4200 sensor at I2C_%i... ", TEST_L3G4200D_I2C);
-    if (l3g4200d_init(&dev, TEST_L3G4200D_I2C, TEST_L3G4200D_ADDR,
+#ifdef TEST_L3G4200D_SPI
+    printf("Initializing L3G4200 sensor at SPI_%i... ", TEST_L3G4200D_SPI);
+    if (l3g4200d_init_spi(&dev, TEST_L3G4200D_SPI, TEST_L3G4200D_CS,
                       TEST_L3G4200D_INT, TEST_L3G4200D_DRDY, MODE, SCALE) == 0) {
+#else
+    #error guugugu
+    printf("Initializing L3G4200 sensor at I2C_%i... ", TEST_L3G4200D_I2C);
+    if (l3g4200d_init_i2c(&dev, TEST_L3G4200D_I2C, TEST_L3G4200D_ADDR,
+                      TEST_L3G4200D_INT, TEST_L3G4200D_DRDY, MODE, SCALE) == 0) {
+#endif
         puts("[OK]\n");
     }
     else {

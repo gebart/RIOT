@@ -47,6 +47,16 @@ extern "C" {
 /** @} */
 
 /**
+ * @name Define the interface for the L3GD20 gyroscope
+ * @{
+ */
+#define L3GX20XX_SPI        SPI_0
+#define L3GX20XX_CS         GPIO_3
+#define L3GX20XX_DRDY       GPIO_5
+#define L3GX20XX_INT        GPIO_4
+/** @} */
+
+/**
  * @name LED pin definitions
  * @{
  */

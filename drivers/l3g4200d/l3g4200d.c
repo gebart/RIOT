@@ -28,11 +28,21 @@
 #define ENABLE_DEBUG    (0)
 #include "debug.h"
 
+#if I2C_NUMOF
 #define I2C_SPEED       I2C_SPEED_FAST
+#endif
+#if SPI_NUMOF
+#define SPI_SPEED       SPI_SPEED_1MHZ
+#define SPI_CONF        SPI_CONF_FIRST_RISING
+#endif
 
 #define MAX_VAL         0x7fff
 
-int l3g4200d_init(l3g4200d_t *dev, i2c_t i2c, uint8_t address,
+int _read(l3g4200d_t *dev, uint8_t reg, char *data, int size);
+int _write(l3g4200d_t *dev, uint8_t reg, char *data, int size);
+
+#if I2C_NUMOF
+int l3g4200d_init_i2c(l3g4200d_t *dev, i2c_t i2c, uint8_t address,
                   gpio_t int1_pin, gpio_t int2_pin,
                   l3g4200d_mode_t mode, l3g4200d_scale_t scale)
 {
@@ -44,8 +54,9 @@ int l3g4200d_init(l3g4200d_t *dev, i2c_t i2c, uint8_t address,
     }
 
     /* write device descriptor */
-    dev->i2c = i2c;
-    dev->addr = address;
+    dev->bus.i2c.dev = i2c;
+    dev->bus.i2c.addr = address;
+    dev->use_spi = 0;
     dev->int1 = int1_pin;
     dev->int2 = int2_pin;
 
@@ -76,6 +87,60 @@ int l3g4200d_init(l3g4200d_t *dev, i2c_t i2c, uint8_t address,
     }
     return 0;
 }
+#endif
+
+#if SPI_NUMOF
+int l3g4200d_init_spi(l3g4200d_t *dev, spi_t spi, gpio_t cs_pin,
+                  gpio_t int1_pin, gpio_t int2_pin,
+                  l3g4200d_mode_t mode, l3g4200d_scale_t scale)
+{
+    char tmp;
+
+    /* initialize CS line */
+    if (gpio_init_out(cs_pin, GPIO_NOPULL) < 0) {
+        return -1;
+    }
+    gpio_set(cs_pin);
+    /* initialize the I2C bus */
+    if (spi_init_master(spi, SPI_CONF, SPI_SPEED) < 0) {
+        return -1;
+    }
+
+    /* write device descriptor */
+    dev->bus.spi.dev = spi;
+    dev->bus.spi.cs = cs_pin;
+    dev->use_spi = 1;
+    dev->int1 = int1_pin;
+    dev->int2 = int2_pin;
+
+    /* set scale */
+    switch (scale) {
+        case L3G4200D_SCALE_250DPS:
+            dev->scale = 250;
+            break;
+        case L3G4200D_SCALE_500DPS:
+            dev->scale = 500;
+            break;
+        case L3G4200D_SCALE_2000DPS:
+            dev->scale = 2000;
+            break;
+        default:
+            dev->scale = 500;
+            break;
+    }
+
+    /* configure CTRL_REG1 */
+    tmp = ((mode & 0xf) << L3G4200D_CTRL1_MODE_POS) | L3G4200D_CTRL1_ALLON;
+    if (_write(dev, L3G4200D_REG_CTRL1, &tmp, 1) != 1) {
+        return -1;
+    }
+    tmp = ((scale & 0x3) << L3G4200D_CTRL4_FS_POS) | L3G4200D_CTRL4_BDU;
+    if (_write(dev, L3G4200D_REG_CTRL4, &tmp, 1) != 1) {
+        return -1;
+    }
+    return 0;
+}
+#endif
 
 int l3g4200d_read(l3g4200d_t *dev, l3g4200d_data_t *data)
 {
@@ -83,7 +148,7 @@ int l3g4200d_read(l3g4200d_t *dev, l3g4200d_data_t *data)
     int16_t res;
 
     /* get acceleration in x direction */
-    i2c_read_regs(dev->i2c, dev->addr, L3G4200D_REG_OUT_X_L | L3G4200D_AUTOINC, tmp, 6);
+    _read(dev, L3G4200D_REG_OUT_X_L | L3G4200D_AUTOINC, tmp, 6);
 
     /* parse and normalize data into result vector */
     res = (tmp[1] << 8) | tmp[0];
@@ -100,12 +165,12 @@ int l3g4200d_enable(l3g4200d_t *dev)
     char tmp;
     int res;
 
-    res = i2c_read_reg(dev->i2c, dev->addr, L3G4200D_REG_CTRL1, &tmp);
+    res = _read(dev, L3G4200D_REG_CTRL1, &tmp, 1);
     if (res < 1) {
         return res;
     }
     tmp |= L3G4200D_CTRL1_PD;
-    if (i2c_write_reg(dev->i2c, dev->addr, L3G4200D_REG_CTRL1, tmp) != 1) {
+    if (_write(dev, L3G4200D_REG_CTRL1, &tmp, 1) != 1) {
         return -1;
     }
     return 0;
@@ -116,13 +181,51 @@ int l3g4200d_disable(l3g4200d_t *dev)
     char tmp;
     int res;
 
-    res = i2c_read_reg(dev->i2c, dev->addr, L3G4200D_REG_CTRL1, &tmp);
+    res = _read(dev, L3G4200D_REG_CTRL1, &tmp, 1);
     if (res < 1) {
         return res;
     }
     tmp &= ~L3G4200D_CTRL1_PD;
-    if (i2c_write_reg(dev->i2c, dev->addr, L3G4200D_REG_CTRL1, tmp) != 1) {
+    if (_write(dev, L3G4200D_REG_CTRL1, &tmp, 1) != 1) {
         return -1;
+    }
+    return 0;
+}
+
+int _read(l3g4200d_t *dev, uint8_t reg, char *data, int size)
+{
+    if (dev->use_spi) {
+#if SPI_NUMOF
+        int res;
+        gpio_clear(dev->bus.spi.cs);
+        res = spi_transfer_regs(dev->bus.spi.dev, reg, NULL, data, size);
+        gpio_set(dev->bus.spi.cs);
+        return res;
+#endif
+    }
+    else {
+#if I2C_NUMOF
+        return i2c_read_regs(dev->bus.i2c.dev, dev->bus.i2c.addr, reg, data, size);
+#endif
+    }
+    return 0;
+}
+
+int _write(l3g4200d_t *dev, uint8_t reg, char *data, int size)
+{
+    if (dev->use_spi) {
+#if SPI_NUMOF
+        int res;
+        gpio_clear(dev->bus.spi.cs);
+        res = spi_transfer_regs(dev->bus.spi.dev, reg, data, NULL, size);
+        gpio_set(dev->bus.spi.cs);
+        return res;
+#endif
+    }
+    else {
+#if I2C_NUMOF
+        return i2c_write_regs(dev->bus.i2c.dev, dev->bus.i2c.addr, reg, data, size);
+#endif
     }
     return 0;
 }
