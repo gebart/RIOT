@@ -1,6 +1,4 @@
-MODULE =$(BOARD)_base
-INCLUDES += -I$(RIOTBASE)/drivers/cc110x_legacy_csma
-
-DIRS = $(RIOTBOARD)/msba2-common
+# tell the Makefile.base which module to build
+MODULE = $(BOARD)_base
 
 include $(RIOTBASE)/Makefile.base

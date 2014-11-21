@@ -19,7 +19,8 @@
  */
 
 #include "bitarithm.h"
-#include "lpc2387.h"
+#include "cpu.h"
+#include "board.h"
 #include "periph/pwm.h"
 #include "periph_conf.h"
 

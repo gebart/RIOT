@@ -25,7 +25,6 @@
 #include <stdint.h>
 #include <sys/time.h>
 
-#include "arm_cpu.h"
 #include "board_uart0.h"
 // core
 #include "kernel.h"

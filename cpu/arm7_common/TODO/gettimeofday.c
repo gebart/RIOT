@@ -8,7 +8,7 @@
 
 /**
  * @file
- * @ingroup     arm7_common
+ * @ingroup     arm_common
  * @brief       LPC2387 Newlib gettimeofday() system call glue
  *
  * @author      Michael Baar <michael.baar@fu-berlin.de>

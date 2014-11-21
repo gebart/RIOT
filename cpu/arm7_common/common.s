@@ -43,22 +43,22 @@
   .global  dINT
   .global  eINT
 
-.func
-dINT:
-    mrs     r0,  cpsr
+# .func
+# dINT:
+#     mrs     r0,  cpsr
 
-    orr     r0, r0, #NOINT              /* Disable Int */
-    msr     CPSR_c, r0
-    mov     pc,lr
-.endfunc
+#     orr     r0, r0, #NOINT              /* Disable Int */
+#     msr     CPSR_c, r0
+#     mov     pc,lr
+# .endfunc
 
-.func
-eINT:
-    mrs     r0,  cpsr
-    and     r0, r0, #~NOINT              /* Enable Int */
-    msr     CPSR_c, r0
-    mov     pc,lr
-.endfunc
+# .func
+# eINT:
+#     mrs     r0,  cpsr
+#     and     r0, r0, #~NOINT              /* Enable Int */
+#     msr     CPSR_c, r0
+#     mov     pc,lr
+# .endfunc
 
 ctx_switch:
     /* Save return address on stack */
@@ -92,7 +92,7 @@ ctx_switch2:
     ldr     r1, [r1]                /* r1 = *r1 = sched_active_thread */
 
     str     lr, [r1]                /* store stack pointer in tasks tcb*/
-    /* now the calling task has all its registers saved on its stack and it's SP is saved in its tcb */
+    /* now the calling task has all its registers saved on its stack and its SP is saved in its tcb */
 
 
     /* call scheduler so sched_active_thread points to the next task */

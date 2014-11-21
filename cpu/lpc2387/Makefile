@@ -1,20 +1,32 @@
-MODULE =cpu
+# define the module that is build
+MODULE = cpu
 
-include $(RIOTCPU)/$(CPU)/Makefile.include
-
-DIRS = $(RIOTCPU)/arm7_common $(RIOTCPU)/lpc_common periph
-
-ifneq (,$(filter gpioint,$(USEMODULE)))
-	DIRS += gpioint
-endif
-ifneq (,$(filter mci,$(USEMODULE)))
-	DIRS += mci
-endif
-ifneq (,$(filter rtc,$(USEMODULE)))
-	DIRS += rtc
-endif
-ifneq (,$(filter i2c,$(USEMODULE)))
-	DIRS += i2c
-endif
+# add a list of subdirectories, that should also be build
+DIRS = periph $(ARM7_COMMON)
 
 include $(RIOTBASE)/Makefile.base
+
+
+
+
+
+# MODULE =cpu
+
+# include $(RIOTCPU)/$(CPU)/Makefile.include
+
+# DIRS = $(RIOTCPU)/arm_common $(RIOTCPU)/lpc_common periph
+
+# ifneq (,$(filter gpioint,$(USEMODULE)))
+# 	DIRS += gpioint
+# endif
+# ifneq (,$(filter mci,$(USEMODULE)))
+# 	DIRS += mci
+# endif
+# ifneq (,$(filter rtc,$(USEMODULE)))
+# 	DIRS += rtc
+# endif
+# ifneq (,$(filter i2c,$(USEMODULE)))
+# 	DIRS += i2c
+# endif
+
+# include $(RIOTBASE)/Makefile.base

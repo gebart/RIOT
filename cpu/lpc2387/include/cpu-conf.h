@@ -6,66 +6,62 @@
  * directory for more details.
  */
 
-
-#ifndef CPUCONF_H_
-#define CPUCONF_H_
-
 /**
- * @ingroup     conf
- * @ingroup     lpc2387
- *
+ * @defgroup    cpu_lpc2387 NXP LPC2387
+ * @ingroup     cpu
+ * @brief       NXP LPC2387 specific code
  * @{
- */
-
-/**
+ *
  * @file
- * @brief       LPC2387 CPUconfiguration
+ * @brief       CPU configuration for the LPC2387
  *
- * @author      baar
- * @version     $Revision$
- *
- * @note        $Id$
+ * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
  */
 
-/**
- * @name Stdlib configuration
- * @{
- */
-#define __FOPEN_MAX__       4
-#define __FILENAME_MAX__    12
-/** @} */
+#ifndef __CPU_CONF_H
+#define __CPU_CONF_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include "lpc23xx.h"
+#include "lpc2387.h"
 
 /**
  * @name Kernel configuration
  * @{
  */
-#define KERNEL_CONF_STACKSIZE_PRINTF_FLOAT  (4096)
-#define KERNEL_CONF_STACKSIZE_PRINTF        (2048)
-
+#define KERNEL_CONF_STACKSIZE_PRINTF    (2048)
 #ifndef KERNEL_CONF_STACKSIZE_DEFAULT
 #define KERNEL_CONF_STACKSIZE_DEFAULT   (512)
 #endif
-
 #define KERNEL_CONF_STACKSIZE_IDLE      (160)
 /** @} */
 
 /**
- * @name Compiler specifics
+ * @name UART0 buffer size definition for compatibility reasons
+ *
+ * TODO: remove once the remodeling of the uart0 driver is done
  * @{
  */
-#define CC_CONF_INLINE                  inline
-#define CC_CONF_USED                    __attribute__((used))
-#define CC_CONF_NONNULL(...)            __attribute__((nonnull(__VA_ARGS__)))
-#define CC_CONF_WARN_UNUSED_RESULT      __attribute__((warn_unused_result))
+#ifndef UART0_BUFSIZE
+#define UART0_BUFSIZE                   (64)
+#endif
 /** @} */
 
+/**
+ * @name Define the transceivers buffer size
+ *
+ * TODO: remove once implementations is moved to netdev interface
+ * @{
+ */
 #define TRANSCEIVER_BUFFER_SIZE (10)
-#define RX_BUF_SIZE  (10)
+/** @} */
 
-#ifndef UART0_BUFSIZE
-#define UART0_BUFSIZE                   (128)
+#ifdef __cplusplus
+}
 #endif
 
-
+#endif /* __CPUCONF_H */
 /** @} */
-#endif /* CPUCONF_H_ */

@@ -88,7 +88,7 @@ static void timer0_init(uint32_t cpsr)
     T0CCR = 0;              /* capture is disabled */
     T0EMR = 0;              /* no external match output */
     T0PR = cpsr;            /* set prescaler */
-    install_irq(TIMER0_INT, &timer_irq, 1);
+    irq_install(TIMER0_IRQn, &timer_irq, 1);
     T0TCR = 1;              /* reset counter */
 }
 
@@ -100,7 +100,7 @@ static void timer1_init(uint32_t cpsr)
     T1CCR = 0;              /* capture is disabled */
     T1EMR = 0;              /* no external match output */
     T1PR = cpsr;            /* set prescaler */
-    install_irq(TIMER1_INT, &timer_irq, 1);
+    irq_install(TIMER1_IRQn, &timer_irq, 1);
     T1TCR = 1;              /* reset counter */
 }
 
@@ -112,7 +112,7 @@ static void timer2_init(uint32_t cpsr)
     T2CCR = 0;              /* capture is disabled */
     T2EMR = 0;              /* no external match output */
     T2PR = cpsr;            /* set prescaler */
-    install_irq(TIMER2_INT, &timer_irq, 1);
+    irq_install(TIMER2_IRQn, &timer_irq, 1);
     T2TCR = 1;              /* reset counter */
 }
 
@@ -130,18 +130,18 @@ void hwtimer_arch_init(void (*handler)(int), uint32_t fcpu)
 
 void hwtimer_arch_enable_interrupt(void)
 {
-    VICIntEnable = 1 << TIMER0_INT; /* Enable Interrupt */
-    VICIntEnable = 1 << TIMER1_INT; /* Enable Interrupt */
-    VICIntEnable = 1 << TIMER2_INT; /* Enable Interrupt */
+    VICIntEnable = 1 << TIMER0_IRQn; /* Enable Interrupt */
+    VICIntEnable = 1 << TIMER1_IRQn; /* Enable Interrupt */
+    VICIntEnable = 1 << TIMER2_IRQn; /* Enable Interrupt */
 }
 
 /*---------------------------------------------------------------------------*/
 
 void hwtimer_arch_disable_interrupt(void)
 {
-    VICIntEnClr = 1 << TIMER0_INT;  /* Disable Interrupt */
-    VICIntEnClr = 1 << TIMER1_INT;  /* Disable Interrupt */
-    VICIntEnClr = 1 << TIMER2_INT;  /* Disable Interrupt */
+    VICIntEnClr = 1 << TIMER0_IRQn;  /* Disable Interrupt */
+    VICIntEnClr = 1 << TIMER1_IRQn;  /* Disable Interrupt */
+    VICIntEnClr = 1 << TIMER2_IRQn;  /* Disable Interrupt */
 }
 
 /*---------------------------------------------------------------------------*/

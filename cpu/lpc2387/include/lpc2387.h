@@ -14,21 +14,47 @@
 #include "lpc23xx.h"
 #include "bitarithm.h"
 
-#define F_CCO                   288000000
-#define CL_CPU_DIV              4                                   ///< CPU clock divider
-#define F_CPU                   (F_CCO / CL_CPU_DIV)                ///< CPU target speed in Hz
-#define F_RC_OSCILLATOR         4000000                             ///< Frequency of internal RC oscillator
-#define F_RTC_OSCILLATOR        32767                               ///< Frequency of RTC oscillator
-
-#define VIC_SIZE                32
-
-#define GPIO_INT 17
-#define IRQP_GPIO 4
-
-#define _XTAL       (72000)
+/**
+ * @name Interrupt vector definitions
+ * @{
+ */
+#define WDT_IRQn         0
+#define SWI_IRQn         1
+#define ARM_CORE0_IRQn   2
+#define ARM_CORE1_IRQn   3
+#define TIMER0_IRQn      4
+#define TIMER1_IRQn      5
+#define UART0_IRQn       6
+#define UART1_IRQn       7
+#define PWM0_1_IRQn      8
+#define I2C0_IRQn        9
+#define SPI0_IRQn        10          /* SPI and SSP0 share VIC slot */
+#define SSP0_IRQn        10
+#define SSP1_IRQn        11
+#define PLL_IRQn         12
+#define RTC_IRQn         13
+#define EINT0_IRQn       14
+#define EINT1_IRQn       15
+#define EINT2_IRQn       16
+#define EINT3_IRQn       17
+#define ADC0_IRQn        18
+#define I2C1_IRQn        19
+#define BOD_IRQn         20
+#define EMAC_IRQn        21
+#define USB_IRQn         22
+#define CAN_IRQn         23
+#define MCI_IRQn         24
+#define GPDMA_IRQn       25
+#define TIMER2_IRQn      26
+#define TIMER3_IRQn      27
+#define UART2_IRQn       28
+#define UART3_IRQn       29
+#define I2C2_IRQn        30
+#define I2S_IRQn         31
+/** @} */
 
 /**
- * @name    Timer Symbols
+ * @name Timer Symbols
  * @{
  */
 #define MR0I BIT0

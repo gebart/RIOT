@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 Freie Universität Berlin
+ * Copyright (C) 2014 Freie Universität Berlin
  *
  * This file is subject to the terms and conditions of the GNU Lesser
  * General Public License v2.1. See the file LICENSE in the top level
@@ -15,36 +15,69 @@
  * @file
  * @brief       Basic definitions for the MSB-A2 board
  *
- * @author      unknown
+ * @author      Kaspar Schleiser <kaspar@schleiser.de>
+ * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
  */
 
 #ifndef __BOARD_H
 #define __BOARD_H
 
-#include "msba2_common.h"
+#include <stdint.h>
+
+#include "cpu.h"
 #include "bitarithm.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define LED_RED_PIN (BIT25)
-#define LED_GREEN_PIN (BIT26)
+/**
+ * @name Define the nominal CPU core clock in this board
+ */
+#define F_CPU               (72000000UL)
 
-#define LED_GREEN_OFF (FIO3SET = LED_GREEN_PIN)
-#define LED_GREEN_ON (FIO3CLR = LED_GREEN_PIN)
-#define LED_GREEN_TOGGLE (FIO3PIN ^= LED_GREEN_PIN)
+/**
+ * @name Define the boards stdio
+ * @{
+ */
+#define STDIO               UART_0
+#define STDIO_BAUDRATE      (115200U)
+#define STDIO_RX_BUFSIZE    (64U)
+/** @} */
 
-#define LED_RED_OFF (FIO3SET = LED_RED_PIN)
-#define LED_RED_ON (FIO3CLR = LED_RED_PIN)
-#define LED_RED_TOGGLE (FIO3PIN ^= LED_RED_PIN)
+/**
+ * @name Assign the hardware timer
+ */
+#define HW_TIMER            TIMER_0
 
-void init_clks1(void);
+/**
+ * @name Macros for controlling the on-board LEDs.
+ * @{
+ */
+#define LED_RED_PIN         (BIT25)
+#define LED_GREEN_PIN       (BIT26)
 
+#define LED_GREEN_OFF       (FIO3SET = LED_GREEN_PIN)
+#define LED_GREEN_ON        (FIO3CLR = LED_GREEN_PIN)
+#define LED_GREEN_TOGGLE    (FIO3PIN ^= LED_GREEN_PIN)
+#define LED_RED_OFF         (FIO3SET = LED_RED_PIN)
+#define LED_RED_ON          (FIO3CLR = LED_RED_PIN)
+#define LED_RED_TOGGLE      (FIO3PIN ^= LED_RED_PIN)
+/* @} */
+
+/**
+ * @brief Define the type for specifying a radio packet's length
+ */
 typedef uint8_t radio_packet_length_t;
+
+/**
+ * @brief Initialize board specific hardware, including clock, LEDs and std-IO
+ */
+void board_init(void);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* __BOARD_H */
+#endif /** __BOARD_H */
+/** @} */

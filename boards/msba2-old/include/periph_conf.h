@@ -19,7 +19,7 @@
 #ifndef __PERIPH_CONF_H
 #define __PERIPH_CONF_H
 
-#include "cpu.h"
+#include "lpc2387.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -27,7 +27,6 @@ extern "C" {
 
 /**
  * @brief PWM device and pinout configuration
- * @{
  */
 #define PWM_NUMOF           (1)
 #define PWM_0_EN            (1)
@@ -46,7 +45,6 @@ extern "C" {
 #define PWM_0_CH1_PIN       (3)
 #define PWM_0_CH2_PIN       (4)
 #define PWM_0_FUNC          (1)
-/** @} */
 
 #ifdef __cplusplus
 }
