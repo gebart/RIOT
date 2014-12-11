@@ -16,6 +16,7 @@
 
 #include "embUnit.h"
 
+#include "pkt.h"
 #include "pktbuf.h"
 
 #include "tests-pktbuf.h"
@@ -36,12 +37,37 @@ static void tear_down(void)
     pktbuf_reset();
 }
 
-static void test_pktbuf_alloc_0(void)
+static void test_pktbuf_reset(void)
 {
-    TEST_ASSERT_NULL(pktbuf_alloc(0));
+    TEST_ASSERT(pktbuf_is_empty());
+    TEST_ASSERT_NOT_NULL(pktbuf_alloc(1));
+    TEST_ASSERT_NOT_NULL(pktbuf_alloc(2));
+    TEST_ASSERT_NOT_NULL(pktbuf_alloc(3));
+    TEST_ASSERT(!pktbuf_is_empty());
+    pktbuf_reset();
+    TEST_ASSERT(pktbuf_is_empty());
 }
 
-static void test_pktbuf_alloc_memfull(void)
+static void test_pktbuf_alloc__size_0(void)
+{
+    TEST_ASSERT_NULL(pktbuf_alloc(0));
+    TEST_ASSERT(pktbuf_is_empty());
+}
+
+#if PKTBUF_SIZE > 0
+static void test_pktbuf_alloc__memfull(void)
+{
+    TEST_ASSERT_NULL(pktbuf_alloc(PKTBUF_SIZE + 1));
+    TEST_ASSERT(pktbuf_is_empty());
+}
+
+static void test_pktbuf_alloc__memfull2(void)
+{
+    TEST_ASSERT_NULL(pktbuf_alloc(PKTBUF_SIZE - sizeof(pktsnip_t)));
+    TEST_ASSERT(pktbuf_is_empty());
+}
+
+static void test_pktbuf_alloc__memfull3(void)
 {
     for (int i = 0; i < 9; i++) {
         TEST_ASSERT_NOT_NULL(pktbuf_alloc((PKTBUF_SIZE / 10) + 4));
@@ -50,394 +76,513 @@ static void test_pktbuf_alloc_memfull(void)
 
     TEST_ASSERT_NULL(pktbuf_alloc((PKTBUF_SIZE / 10) + 4));
 }
+#endif
 
-static void test_pktbuf_alloc_success(void)
+static void test_pktbuf_alloc__success(void)
 {
-    void *data, *data_prev = NULL;
+    pktsnip_t *pkt, *pkt_prev = NULL;
 
     for (int i = 0; i < 9; i++) {
-        data = pktbuf_alloc((PKTBUF_SIZE / 10) + 4);
+        pkt = pktbuf_alloc((PKTBUF_SIZE / 10) + 4);
 
-        TEST_ASSERT(data_prev < data);
+        TEST_ASSERT_NOT_NULL(pkt);
+        TEST_ASSERT_NULL(pkt->next);
+        TEST_ASSERT_NOT_NULL(pkt->data);
+        TEST_ASSERT_EQUAL_INT((PKTBUF_SIZE / 10) + 4, pkt->size);
+        TEST_ASSERT_EQUAL_INT(PKT_PROTO_UNKNOWN, pkt->type);
+        TEST_ASSERT_EQUAL_INT(1, pkt->users);
 
-        data_prev = data;
+        if (pkt_prev != NULL) {
+            TEST_ASSERT(pkt_prev < pkt);
+            TEST_ASSERT(pkt_prev->data < pkt->data);
+        }
+
+        pkt_prev = pkt;
     }
 }
 
-static void test_pktbuf_realloc_0(void)
+static void test_pktbuf_realloc_data__pkt_NULL(void)
 {
-    void *data = pktbuf_alloc(512);
-
-    TEST_ASSERT_NULL(pktbuf_realloc(data, 0));
+    TEST_ASSERT_EQUAL_INT(ENOENT, pktbuf_realloc_data(NULL, 0));
+    TEST_ASSERT(pktbuf_is_empty());
 }
 
-static void test_pktbuf_realloc_memfull(void)
+static void test_pktbuf_realloc_data__pkt_wrong(void)
 {
-    void *data = pktbuf_alloc(512);
+    pktsnip_t pkt = { NULL, TEST_STRING8, sizeof(TEST_STRING8), PKT_PROTO_UNKNOWN, 1};
 
-    TEST_ASSERT_NULL(pktbuf_realloc(data, PKTBUF_SIZE + 1));
+    TEST_ASSERT_EQUAL_INT(ENOENT, pktbuf_realloc_data(&pkt, 0));
+    TEST_ASSERT(pktbuf_is_empty());
 }
 
-static void test_pktbuf_realloc_memfull2(void)
+static void test_pktbuf_realloc_data__pkt_data_wrong(void)
 {
-    void *data = pktbuf_alloc(512);
+    pktsnip_t *pkt = pktbuf_alloc(sizeof(TEST_STRING8));
+    void *orig_data = pkt->data;
+    pkt->data = TEST_STRING8;
 
-    TEST_ASSERT_NOT_NULL(data);
-    TEST_ASSERT_NOT_NULL(pktbuf_alloc(512));
-    TEST_ASSERT_NULL(pktbuf_realloc(data, PKTBUF_SIZE - 512));
+    TEST_ASSERT_EQUAL_INT(ENOENT, pktbuf_realloc_data(pkt, 0));
+    pkt->data = orig_data;
+    pktbuf_release(pkt);
+    TEST_ASSERT(pktbuf_is_empty());
 }
 
-static void test_pktbuf_realloc_memfull3(void)
+static void test_pktbuf_realloc_data__pkt_users_gt_1(void)
 {
-    void *data;
+    pktsnip_t *pkt = pktbuf_alloc(sizeof(TEST_STRING8));
+    pktbuf_hold(pkt);
 
+    TEST_ASSERT_EQUAL_INT(EINVAL, pktbuf_realloc_data(pkt, sizeof(TEST_STRING8) - 1));
+    pktbuf_release(pkt);
+    pktbuf_release(pkt);
+    TEST_ASSERT(pktbuf_is_empty());
+}
+
+static void test_pktbuf_realloc_data__pkt_next_neq_NULL(void)
+{
+    pktsnip_t *pkt = pktbuf_alloc(sizeof(TEST_STRING8));
+    pkt->next = pkt;
+
+    TEST_ASSERT_EQUAL_INT(EINVAL, pktbuf_realloc_data(pkt, sizeof(TEST_STRING8) - 1));
+    pktbuf_release(pkt);
+    TEST_ASSERT(pktbuf_is_empty());
+}
+
+static void test_pktbuf_realloc_data__size_0(void)
+{
+    pktsnip_t *pkt = pktbuf_alloc(sizeof(TEST_STRING8));
+
+    TEST_ASSERT_EQUAL_INT(ENOMEM, pktbuf_realloc_data(pkt, 0));
+    pktbuf_release(pkt);
+    TEST_ASSERT(pktbuf_is_empty());
+}
+
+#if PKTBUF_SIZE > 0
+static void test_pktbuf_realloc_data__memfull(void)
+{
+    pktsnip_t *pkt = pktbuf_alloc(sizeof(TEST_STRING8));
+
+    TEST_ASSERT_EQUAL_INT(ENOMEM, pktbuf_realloc_data(pkt, PKTBUF_SIZE + 1));
+    pktbuf_release(pkt);
+    TEST_ASSERT(pktbuf_is_empty());
+}
+
+static void test_pktbuf_realloc_data__memfull2(void)
+{
+    pktsnip_t *pkt = pktbuf_alloc(sizeof(TEST_STRING8));
+
+    TEST_ASSERT_NOT_NULL(pkt);
+    TEST_ASSERT_NOT_NULL(pktbuf_alloc(sizeof(TEST_STRING16)));
+    TEST_ASSERT_EQUAL_INT(ENOMEM, pktbuf_realloc_data(pkt, PKTBUF_SIZE - sizeof(TEST_STRING8)));
+}
+
+static void test_pktbuf_realloc_data__memfull3(void)
+{
+    pktsnip_t *pkt;
+
+    TEST_ASSERT_NOT_NULL(pktbuf_alloc(sizeof(TEST_STRING16)));
+
+    pkt = pktbuf_alloc(TEST_UINT8);
+
+    TEST_ASSERT_NOT_NULL(pkt);
+    TEST_ASSERT_NOT_NULL(pktbuf_alloc(sizeof(TEST_STRING8)));
+    TEST_ASSERT_EQUAL_INT(ENOMEM, pktbuf_realloc_data(pkt, PKTBUF_SIZE - TEST_UINT8));
+}
+
+/* dynamic malloc is a little more unpredictable ;-) */
+static void test_pktbuf_realloc_data__shrink(void)
+{
+    pktsnip_t *pkt;
+    void *exp_data;
+
+    pkt = pktbuf_alloc(sizeof(TEST_STRING16));
+    exp_data = pkt->data;
+
+    TEST_ASSERT_NOT_NULL(pkt);
+    TEST_ASSERT_NOT_NULL(pktbuf_alloc(4));
+
+    TEST_ASSERT_EQUAL_INT(0, pktbuf_realloc_data(pkt, sizeof(TEST_STRING8)));
+    TEST_ASSERT(exp_data == pkt->data);
+    TEST_ASSERT_NULL(pkt->next);
+    TEST_ASSERT_EQUAL_INT(sizeof(TEST_STRING8), pkt->size);
+    TEST_ASSERT_EQUAL_INT(PKT_PROTO_UNKNOWN, pkt->type);
+    TEST_ASSERT_EQUAL_INT(1, pkt->users);
+}
+
+static void test_pktbuf_realloc_data__memenough(void)
+{
+    pktsnip_t *pkt;
+    void *exp_data;
+
+    pkt = pktbuf_alloc(sizeof(TEST_STRING16));
+    exp_data = pkt->data;
+
+    TEST_ASSERT_NOT_NULL(pkt);
+    TEST_ASSERT_EQUAL_INT(0, pktbuf_realloc_data(pkt, sizeof(TEST_STRING8)));
+    TEST_ASSERT(exp_data == pkt->data);
+    TEST_ASSERT_NULL(pkt->next);
+    TEST_ASSERT_EQUAL_INT(sizeof(TEST_STRING8), pkt->size);
+    TEST_ASSERT_EQUAL_INT(PKT_PROTO_UNKNOWN, pkt->type);
+    TEST_ASSERT_EQUAL_INT(1, pkt->users);
+}
+
+static void test_pktbuf_realloc_data__nomemenough(void)
+{
+    pktsnip_t *pkt1, *pkt2;
+    void *exp_data;
+
+    pkt1 = pktbuf_alloc(128);
+    exp_data = pkt1->data;
+
+    TEST_ASSERT_NOT_NULL(pkt1);
+
+    pkt2 = pktbuf_alloc(128);
+
+    TEST_ASSERT_NOT_NULL(pkt2);
     TEST_ASSERT_NOT_NULL(pktbuf_alloc(25));
 
-    data = pktbuf_alloc(512);
+    pktbuf_release(pkt2);
 
-    TEST_ASSERT_NOT_NULL(data);
-    TEST_ASSERT_NOT_NULL(pktbuf_alloc(73));
-
-    TEST_ASSERT_NULL(pktbuf_realloc(data, PKTBUF_SIZE - 512));
-}
-
-static void test_pktbuf_realloc_smaller(void)
-{
-    void *data;
-
-    data = pktbuf_alloc(512);
-
-    TEST_ASSERT_NOT_NULL(data);
-    TEST_ASSERT_NOT_NULL(pktbuf_alloc(25));
-
-    TEST_ASSERT(data == pktbuf_realloc(data, 128));
-}
-
-static void test_pktbuf_realloc_memenough(void)
-{
-    void *data;
-
-    data = pktbuf_alloc(128);
-
-    TEST_ASSERT_NOT_NULL(data);
-
-    TEST_ASSERT(data == pktbuf_realloc(data, 200));
-}
-
-static void test_pktbuf_realloc_memenough2(void)
-{
-    void *data, *data2;
-
-    data = pktbuf_alloc(128);
-
-    TEST_ASSERT_NOT_NULL(data);
-
-    data2 = pktbuf_alloc(128);
-
-    TEST_ASSERT_NOT_NULL(data);
-    TEST_ASSERT_NOT_NULL(pktbuf_alloc(25));
-
-    pktbuf_release(data2);
-
-    TEST_ASSERT(data == pktbuf_realloc(data, 200));
-}
-
-static void test_pktbuf_realloc_nomemenough(void)
-{
-    void *data, *data2;
-
-    data = pktbuf_alloc(128);
-
-    TEST_ASSERT_NOT_NULL(data);
-
-    data2 = pktbuf_alloc(128);
-
-    TEST_ASSERT_NOT_NULL(data);
-    TEST_ASSERT_NOT_NULL(pktbuf_alloc(25));
-
-    pktbuf_release(data2);
-
-    TEST_ASSERT(data != pktbuf_realloc(data, 512));
-}
-
-static void test_pktbuf_realloc_unknown_ptr(void)
-{
-    char *data = "abcd", *new_data = pktbuf_realloc(data, 5);
-
-    TEST_ASSERT_NOT_NULL(new_data);
-    TEST_ASSERT(data != new_data);
-    TEST_ASSERT_EQUAL_STRING(data, new_data);
-}
-
-static void test_pktbuf_insert_size_0(void)
-{
-    TEST_ASSERT_NULL(pktbuf_insert("", 0));
-}
-
-static void test_pktbuf_insert_data_NULL(void)
-{
-    TEST_ASSERT_NULL(pktbuf_insert(NULL, 4));
-}
-
-static void test_pktbuf_insert_memfull(void)
-{
-    while (pktbuf_insert("abc", 4));
-
-    TEST_ASSERT_NULL(pktbuf_insert("abc", 4));
-}
-
-static void test_pktbuf_insert_success(void)
-{
-    char *data, *data_prev = NULL;
-
-    for (int i = 0; i < 10; i++) {
-        data = (char *)pktbuf_insert("abc", 4);
-
-        TEST_ASSERT(data_prev < data);
-        TEST_ASSERT_EQUAL_STRING("abc", data);
-
-        data_prev = data;
-    }
-}
-
-#ifdef DEVELHELP
-static void test_pktbuf_copy_efault(void)
-{
-    char *data = (char *)pktbuf_insert("abcd", 5);
-
-    TEST_ASSERT_NOT_NULL(data);
-    TEST_ASSERT_EQUAL_INT(-EFAULT, pktbuf_copy(data, NULL, 3));
-    TEST_ASSERT_EQUAL_STRING("abcd", data);
+    TEST_ASSERT_EQUAL_INT(0, pktbuf_realloc_data(pkt1, 130));
+    TEST_ASSERT(exp_data != pkt1->data);
+    TEST_ASSERT_NULL(pkt1->next);
+    TEST_ASSERT_EQUAL_INT(130, pkt1->size);
+    TEST_ASSERT_EQUAL_INT(PKT_PROTO_UNKNOWN, pkt1->type);
+    TEST_ASSERT_EQUAL_INT(1, pkt1->users);
 }
 #endif
 
-static void test_pktbuf_copy_data_len_too_long(void)
+static void test_pktbuf_realloc_data__success(void)
 {
-    char *data = (char *)pktbuf_insert("ab", 3);
+    pktsnip_t *pkt;
 
-    TEST_ASSERT_NOT_NULL(data);
-    TEST_ASSERT_EQUAL_INT(-ENOMEM, pktbuf_copy(data, "cdef", 5));
-    TEST_ASSERT_EQUAL_STRING("ab", data);
+    pkt = pktbuf_insert(TEST_STRING8, sizeof(TEST_STRING16));
+
+    TEST_ASSERT_NOT_NULL(pkt);
+
+    TEST_ASSERT_EQUAL_INT(0, pktbuf_realloc_data(pkt, sizeof(TEST_STRING8)));
+    TEST_ASSERT_NULL(pkt->next);
+    TEST_ASSERT_EQUAL_STRING(TEST_STRING8, pkt->data);
+    TEST_ASSERT_EQUAL_INT(sizeof(TEST_STRING8), pkt->size);
+    TEST_ASSERT_EQUAL_INT(PKT_PROTO_UNKNOWN, pkt->type);
+    TEST_ASSERT_EQUAL_INT(1, pkt->users);
 }
 
-static void test_pktbuf_copy_data_len_too_long2(void)
+static void test_pktbuf_realloc_data__success2(void)
 {
-    char *data = (char *)pktbuf_insert("abcd", 5);
+    pktsnip_t *pkt;
 
-    TEST_ASSERT_NOT_NULL(data);
-    TEST_ASSERT_EQUAL_INT(-ENOMEM, pktbuf_copy(data + 2, "efgh", 5));
-    TEST_ASSERT_EQUAL_STRING("abcd", data);
+    pkt = pktbuf_insert(TEST_STRING8, sizeof(TEST_STRING8));
+
+    TEST_ASSERT_NOT_NULL(pkt);
+
+    TEST_ASSERT_EQUAL_INT(0, pktbuf_realloc_data(pkt, sizeof(TEST_STRING16)));
+    TEST_ASSERT_NULL(pkt->next);
+    TEST_ASSERT_EQUAL_STRING(TEST_STRING8, pkt->data);
+    TEST_ASSERT_EQUAL_INT(sizeof(TEST_STRING16), pkt->size);
+    TEST_ASSERT_EQUAL_INT(PKT_PROTO_UNKNOWN, pkt->type);
+    TEST_ASSERT_EQUAL_INT(1, pkt->users);
 }
 
-static void test_pktbuf_copy_data_len_0(void)
+static void test_pktbuf_realloc_data__further_down_the_line(void)
 {
-    char *data = (char *)pktbuf_insert("abcd", 5);
+    pktsnip_t *pkt, *header;
+    void *exp_data;
 
-    TEST_ASSERT_NOT_NULL(data);
-    TEST_ASSERT_EQUAL_INT(0, pktbuf_copy(data, "ef", 0));
-    TEST_ASSERT_EQUAL_STRING("abcd", data);
+    pkt = pktbuf_insert(TEST_STRING16, sizeof(TEST_STRING16));
+    exp_data = pkt->data;
+
+    TEST_ASSERT_NOT_NULL(pkt);
+
+    header = pktbuf_add_header(pkt, pkt->data, 4, PKT_PROTO_UNKNOWN);
+
+    TEST_ASSERT_NOT_NULL(header);
+    TEST_ASSERT(header->next == pkt);
+    TEST_ASSERT_EQUAL_INT(4, header->size);
+    TEST_ASSERT(((uint8_t *)pkt->data) == (((uint8_t *)header->data) + 4));
+    TEST_ASSERT_EQUAL_INT(sizeof(TEST_STRING16) - 4, pkt->size);
+
+    TEST_ASSERT_EQUAL_INT(0, pktbuf_realloc_data(pkt, 20));
+    TEST_ASSERT(exp_data != pkt->data);
+    TEST_ASSERT_NULL(pkt->next);
+    TEST_ASSERT_EQUAL_STRING(TEST_STRING16 + 4, pkt->data);
+    TEST_ASSERT_EQUAL_INT(20, pkt->size);
+    TEST_ASSERT_EQUAL_INT(PKT_PROTO_UNKNOWN, pkt->type);
+    TEST_ASSERT_EQUAL_INT(1, pkt->users);
+    pktbuf_release(pkt);
+    pktbuf_release(header);
+    TEST_ASSERT(pktbuf_is_empty());
 }
 
-static void test_pktbuf_copy_success(void)
+static void test_pktbuf_insert__size_0(void)
 {
-    char *data = (char *)pktbuf_insert("abcd", 5);
-
-    TEST_ASSERT_NOT_NULL(data);
-    TEST_ASSERT_EQUAL_INT(3, pktbuf_copy(data, "ef", 3));
-    TEST_ASSERT_EQUAL_STRING("ef", data);
+    TEST_ASSERT_NULL(pktbuf_insert("", 0));
+    TEST_ASSERT(pktbuf_is_empty());
 }
 
-static void test_pktbuf_copy_success2(void)
+static void test_pktbuf_insert__data_NULL(void)
 {
-    char *data = (char *)pktbuf_insert("abcdef", 7);
+    pktsnip_t *pkt;
 
-    TEST_ASSERT_NOT_NULL(data);
-    TEST_ASSERT_EQUAL_INT(2, pktbuf_copy(data + 3, "gh", 2));
-    TEST_ASSERT_EQUAL_STRING("abcghf", data);
+    TEST_ASSERT_NOT_NULL((pkt = pktbuf_insert(NULL, 4)));
+    TEST_ASSERT_NULL(pkt->next);
+    TEST_ASSERT_NOT_NULL(pkt->data);
+    TEST_ASSERT_EQUAL_INT(4, pkt->size);
+    TEST_ASSERT_EQUAL_INT(PKT_PROTO_UNKNOWN, pkt->type);
+    TEST_ASSERT_EQUAL_INT(1, pkt->users);
+    TEST_ASSERT(!pktbuf_is_empty());
 }
 
-static void test_pktbuf_hold_ptr_null(void)
+static void test_pktbuf_insert__success(void)
 {
-    char *data;
+    pktsnip_t *pkt;
 
-    TEST_ASSERT_NOT_NULL(pktbuf_alloc(25));
-    data = (char *)pktbuf_insert("abcd", 5);
-    TEST_ASSERT_NOT_NULL(data);
-    TEST_ASSERT_NOT_NULL(pktbuf_alloc(16));
+    TEST_ASSERT_NOT_NULL((pkt = pktbuf_insert(TEST_STRING8, sizeof(TEST_STRING8))));
+    TEST_ASSERT_EQUAL_INT(sizeof(TEST_STRING8), pkt->size);
+    TEST_ASSERT_NULL(pkt->next);
+    TEST_ASSERT_EQUAL_STRING(TEST_STRING8, pkt->data);
+    TEST_ASSERT_EQUAL_INT(sizeof(TEST_STRING8), pkt->size);
+    TEST_ASSERT_EQUAL_INT(PKT_PROTO_UNKNOWN, pkt->type);
+    TEST_ASSERT_EQUAL_INT(1, pkt->users);
+    TEST_ASSERT(!pktbuf_is_empty());
+}
 
-    TEST_ASSERT_EQUAL_INT(3, pktbuf_packets_allocated());
+static void test_pktbuf_add_header__pkt_NULL__data_NULL__size_0(void)
+{
+    TEST_ASSERT_NULL(pktbuf_add_header(NULL, NULL, 0, PKT_PROTO_UNKNOWN));
+    TEST_ASSERT(pktbuf_is_empty());
+}
 
+static void test_pktbuf_add_header__pkt_NOT_NULL__data_NULL__size_0(void)
+{
+    pktsnip_t *pkt = pktbuf_alloc(TEST_UINT8);
+
+    TEST_ASSERT_NULL(pktbuf_add_header(pkt, NULL, 0, PKT_PROTO_UNKNOWN));
+    pktbuf_release(pkt);
+    TEST_ASSERT(pktbuf_is_empty());
+}
+
+static void test_pktbuf_add_header__pkt_NULL__data_NOT_NULL__size_0(void)
+{
+    TEST_ASSERT_NULL(pktbuf_add_header(NULL, TEST_STRING8, 0, PKT_PROTO_UNKNOWN));
+    TEST_ASSERT(pktbuf_is_empty());
+}
+
+static void test_pktbuf_add_header__pkt_NOT_NULL__data_NOT_NULL__size_0(void)
+{
+    pktsnip_t *pkt = pktbuf_alloc(TEST_UINT8);
+
+    TEST_ASSERT_NULL(pktbuf_add_header(pkt, TEST_STRING8, 0, PKT_PROTO_UNKNOWN));
+    pktbuf_release(pkt);
+    TEST_ASSERT(pktbuf_is_empty());
+}
+
+static void test_pktbuf_add_header__pkt_NULL__data_NULL__size_not_0(void)
+{
+    pktsnip_t *header;
+
+    TEST_ASSERT_NOT_NULL((header = pktbuf_add_header(NULL, NULL, sizeof(TEST_STRING8),
+                                   PKT_PROTO_UNKNOWN)));
+    TEST_ASSERT_NULL(header->next);
+    TEST_ASSERT_NOT_NULL(header->data);
+    TEST_ASSERT_EQUAL_INT(sizeof(TEST_STRING8), header->size);
+    TEST_ASSERT_EQUAL_INT(PKT_PROTO_UNKNOWN, header->type);
+    TEST_ASSERT_EQUAL_INT(1, header->users);
+    pktbuf_release(header);
+    TEST_ASSERT(pktbuf_is_empty());
+}
+
+static void test_pktbuf_add_header__pkt_NOT_NULL__data_NULL__size_not_0(void)
+{
+    pktsnip_t *pkt = pktbuf_alloc(TEST_UINT8), *header;
+
+    TEST_ASSERT_NOT_NULL((header = pktbuf_add_header(pkt, NULL, sizeof(TEST_STRING8),
+                                   PKT_PROTO_UNKNOWN)));
+    TEST_ASSERT(header->next == pkt);
+    TEST_ASSERT_NOT_NULL(header->data);
+    TEST_ASSERT_EQUAL_INT(sizeof(TEST_STRING8), header->size);
+    TEST_ASSERT_EQUAL_INT(PKT_PROTO_UNKNOWN, header->type);
+    TEST_ASSERT_EQUAL_INT(1, header->users);
+    pktbuf_release(pkt);
+    pktbuf_release(header);
+    TEST_ASSERT(pktbuf_is_empty());
+}
+
+static void test_pktbuf_add_header__pkt_NOT_NULL__data_NOT_NULL__size_not_0(void)
+{
+    pktsnip_t *pkt = pktbuf_alloc(TEST_UINT8), *header;
+
+    TEST_ASSERT_NOT_NULL((header = pktbuf_add_header(pkt, TEST_STRING8, sizeof(TEST_STRING8),
+                                   PKT_PROTO_UNKNOWN)));
+    TEST_ASSERT(header->next == pkt);
+    TEST_ASSERT_EQUAL_STRING(TEST_STRING8, header->data);
+    TEST_ASSERT_EQUAL_INT(sizeof(TEST_STRING8), header->size);
+    TEST_ASSERT_EQUAL_INT(PKT_PROTO_UNKNOWN, header->type);
+    TEST_ASSERT_EQUAL_INT(1, header->users);
+    pktbuf_release(header);
+    pktbuf_release(pkt);
+    TEST_ASSERT(pktbuf_is_empty());
+}
+
+static void test_pktbuf_add_header__in_place(void)
+{
+    pktsnip_t *pkt = pktbuf_insert(TEST_STRING16, sizeof(TEST_STRING16)), *header;
+
+    TEST_ASSERT_NOT_NULL((header = pktbuf_add_header(pkt, pkt->data, 4, PKT_PROTO_UNKNOWN)));
+    TEST_ASSERT(header->next == pkt);
+    TEST_ASSERT_EQUAL_STRING(TEST_STRING16, header->data); /* there is no 0 byte */
+    TEST_ASSERT_EQUAL_INT(4, header->size);
+    TEST_ASSERT_EQUAL_INT(PKT_PROTO_UNKNOWN, header->type);
+    TEST_ASSERT_EQUAL_INT(1, header->users);
+    TEST_ASSERT_EQUAL_STRING(TEST_STRING16 + 4, pkt->data);
+    TEST_ASSERT_EQUAL_INT(sizeof(TEST_STRING16) - 4, pkt->size);
+    TEST_ASSERT_EQUAL_INT(PKT_PROTO_UNKNOWN, pkt->type);
+    TEST_ASSERT_EQUAL_INT(1, pkt->users);
+    pktbuf_release(header);
+    pktbuf_release(pkt);
+    TEST_ASSERT(pktbuf_is_empty());
+}
+
+static void test_pktbuf_hold__pkt_null(void)
+{
     pktbuf_hold(NULL);
-    pktbuf_release(data);
-
-    TEST_ASSERT_EQUAL_INT(2, pktbuf_packets_allocated());
-    TEST_ASSERT_EQUAL_STRING("abcd", data);
+    TEST_ASSERT(pktbuf_is_empty());
 }
 
-static void test_pktbuf_hold_wrong_ptr(void)
+static void test_pktbuf_hold__pkt_external(void)
 {
-    char *data, wrong;
+    pktsnip_t pkt = { NULL, TEST_STRING8, sizeof(TEST_STRING8), PKT_PROTO_UNKNOWN, 1 };
 
-    TEST_ASSERT_NOT_NULL(pktbuf_alloc(25));
-    data = (char *)pktbuf_insert("abcd", 5);
-    TEST_ASSERT_NOT_NULL(data);
-    TEST_ASSERT_NOT_NULL(pktbuf_alloc(16));
-
-    TEST_ASSERT_EQUAL_INT(3, pktbuf_packets_allocated());
-
-    pktbuf_hold(&wrong);
-    pktbuf_release(data);
-
-    TEST_ASSERT_EQUAL_INT(2, pktbuf_packets_allocated());
-    TEST_ASSERT_EQUAL_STRING("abcd", data);
+    pktbuf_hold(&pkt);
+    TEST_ASSERT(pktbuf_is_empty());
 }
 
-static void test_pktbuf_hold_success(void)
+static void test_pktbuf_hold__success(void)
 {
-    char *data;
+    pktsnip_t *pkt = pktbuf_insert(TEST_STRING16, sizeof(TEST_STRING16));
 
-    TEST_ASSERT_NOT_NULL(pktbuf_alloc(25));
-    data = (char *)pktbuf_insert("abcd", 5);
-    TEST_ASSERT_NOT_NULL(data);
-    TEST_ASSERT_NOT_NULL(pktbuf_alloc(16));
-
-    pktbuf_hold(data);
-    pktbuf_release(data);
-
-    TEST_ASSERT_EQUAL_INT(3, pktbuf_copy(data, "ef", 3));
-    TEST_ASSERT_EQUAL_STRING("ef", data);
+    for (uint8_t i = 0; i < TEST_UINT8; i++) {
+        uint8_t prev_users = pkt->users;
+        pktbuf_hold(pkt);
+        TEST_ASSERT_EQUAL_INT(prev_users + 1, pkt->users);
+    }
 }
 
-static void test_pktbuf_hold_success2(void)
-{
-    char *data;
-
-    TEST_ASSERT_NOT_NULL(pktbuf_alloc(25));
-    data = (char *)pktbuf_insert("abcd", 5);
-    TEST_ASSERT_NOT_NULL(data);
-    TEST_ASSERT_NOT_NULL(pktbuf_alloc(16));
-
-    pktbuf_hold(data + 4);
-    pktbuf_release(data + 4);
-
-    TEST_ASSERT_EQUAL_INT(3, pktbuf_copy(data, "ef", 3));
-    TEST_ASSERT_EQUAL_STRING("ef", data);
-}
-
+/*
 static void test_pktbuf_release_ptr_null(void)
 {
-    char *data;
+    pkt_t *pkt;
 
     TEST_ASSERT_NOT_NULL(pktbuf_alloc(25));
-    data = (char *)pktbuf_insert("abcd", 5);
-    TEST_ASSERT_NOT_NULL(data);
+    pkt = pktbuf_insert("abcd", 5);
+    TEST_ASSERT_NOT_NULL(pkt);
     TEST_ASSERT_NOT_NULL(pktbuf_alloc(16));
 
     pktbuf_release(NULL);
 
-    TEST_ASSERT_EQUAL_INT(3, pktbuf_copy(data, "ef", 3));
-    TEST_ASSERT_EQUAL_STRING("ef", data);
+    TEST_ASSERT_EQUAL_INT(3, pktbuf_copy(pkt->payload_data, "ef", 3));
+    TEST_ASSERT_EQUAL_STRING("ef", pkt->payload_data);
 }
 
 static void test_pktbuf_release_wrong_ptr(void)
 {
-    char *data, wrong;
+    pkt_t *pkt, wrong;
 
     TEST_ASSERT_NOT_NULL(pktbuf_alloc(25));
-    data = (char *)pktbuf_insert("abcd", 5);
-    TEST_ASSERT_NOT_NULL(data);
+    pkt = pktbuf_insert("abcd", 5);
+    TEST_ASSERT_NOT_NULL(pkt);
     TEST_ASSERT_NOT_NULL(pktbuf_alloc(16));
 
     pktbuf_release(&wrong);
 
-    TEST_ASSERT_EQUAL_INT(3, pktbuf_copy(data, "ef", 3));
-    TEST_ASSERT_EQUAL_STRING("ef", data);
+    TEST_ASSERT_EQUAL_INT(3, pktbuf_copy(pkt->payload_data, "ef", 3));
+    TEST_ASSERT_EQUAL_STRING("ef", pkt->payload_data);
 }
 
 static void test_pktbuf_release_success(void)
 {
-    char *data;
+    pkt_t *pkt;
 
     TEST_ASSERT_NOT_NULL(pktbuf_alloc(25));
-    data = (char *)pktbuf_insert("abcd", 5);
-    TEST_ASSERT_NOT_NULL(data);
+    pkt = pktbuf_insert("abcd", 5);
+    TEST_ASSERT_NOT_NULL(pkt);
     TEST_ASSERT_NOT_NULL(pktbuf_alloc(16));
 
     TEST_ASSERT_EQUAL_INT(3, pktbuf_packets_allocated());
 
-    pktbuf_hold(data);
-    pktbuf_hold(data);
-    pktbuf_release(data + 3);
-    pktbuf_release(data + 4);
-    pktbuf_release(data + 2);
+    pktbuf_hold(pkt);
+    pktbuf_hold(pkt);
+    pktbuf_release(pkt);
+    pktbuf_release(pkt);
+    pktbuf_release(pkt);
 
     TEST_ASSERT_EQUAL_INT(2, pktbuf_packets_allocated());
 }
 
 static void test_pktbuf_release_success2(void)
 {
-    char *data1, *data2, *data3;
+    pkt_t *pkt1, *pkt2, *pkt3;
 
-    data1 = (char *)pktbuf_insert("abcd", 5);
-    TEST_ASSERT_NOT_NULL(data1);
-    data2 = (char *)pktbuf_insert("ef", 3);
-    TEST_ASSERT_NOT_NULL(data2);
-    data3 = (char *)pktbuf_insert("ghijkl", 7);
-    TEST_ASSERT_NOT_NULL(data3);
+    pkt1 = pktbuf_insert("abcd", 5);
+    TEST_ASSERT_NOT_NULL(pkt1);
+    pkt2 = pktbuf_insert("ef", 3);
+    TEST_ASSERT_NOT_NULL(pkt2);
+    pkt3 = pktbuf_insert("ghijkl", 7);
+    TEST_ASSERT_NOT_NULL(pkt3);
 
     TEST_ASSERT_EQUAL_INT(3, pktbuf_packets_allocated());
 
-    pktbuf_release(data2);
+    pktbuf_release(pkt2);
 
     TEST_ASSERT_EQUAL_INT(2, pktbuf_packets_allocated());
-    TEST_ASSERT_EQUAL_INT(2, pktbuf_copy(data1, "m", 2));
-    TEST_ASSERT_EQUAL_STRING("m", data1);
-    TEST_ASSERT_EQUAL_INT(4, pktbuf_copy(data3, "nop", 4));
-    TEST_ASSERT_EQUAL_STRING("nop", data3);
+    TEST_ASSERT_EQUAL_INT(2, pktbuf_copy(pkt1->payload_data, "m", 2));
+    TEST_ASSERT_EQUAL_STRING("m", pkt1->payload_data);
+    TEST_ASSERT_EQUAL_INT(4, pktbuf_copy(pkt3->payload_data, "nop", 4));
+    TEST_ASSERT_EQUAL_STRING("nop", pkt3->payload_data);
 }
 
 static void test_pktbuf_release_success3(void)
 {
-    char *data1, *data2, *data3;
+    pkt_t *pkt1, *pkt2, *pkt3;
 
-    data1 = (char *)pktbuf_insert("abcd", 5);
-    TEST_ASSERT_NOT_NULL(data1);
-    data2 = (char *)pktbuf_insert("ef", 3);
-    TEST_ASSERT_NOT_NULL(data2);
-    data3 = (char *)pktbuf_insert("ghijkl", 7);
-    TEST_ASSERT_NOT_NULL(data3);
+    pkt1 = pktbuf_insert("abcd", 5);
+    TEST_ASSERT_NOT_NULL(pkt1);
+    pkt2 = pktbuf_insert("ef", 3);
+    TEST_ASSERT_NOT_NULL(pkt2);
+    pkt3 = pktbuf_insert("ghijkl", 7);
+    TEST_ASSERT_NOT_NULL(pkt3);
 
     TEST_ASSERT_EQUAL_INT(3, pktbuf_packets_allocated());
 
-    pktbuf_release(data1);
+    pktbuf_release(pkt1);
 
     TEST_ASSERT_EQUAL_INT(2, pktbuf_packets_allocated());
-    TEST_ASSERT_EQUAL_INT(2, pktbuf_copy(data2, "m", 2));
-    TEST_ASSERT_EQUAL_STRING("m", data2);
-    TEST_ASSERT_EQUAL_INT(4, pktbuf_copy(data3, "nop", 4));
-    TEST_ASSERT_EQUAL_STRING("nop", data3);
+    TEST_ASSERT_EQUAL_INT(2, pktbuf_copy(pkt2->payload_data, "m", 2));
+    TEST_ASSERT_EQUAL_STRING("m", pkt2->payload_data);
+    TEST_ASSERT_EQUAL_INT(4, pktbuf_copy(pkt3->payload_data, "nop", 4));
+    TEST_ASSERT_EQUAL_STRING("nop", pkt3->payload_data);
 }
 
 static void test_pktbuf_release_success4(void)
 {
-    char *data1, *data2, *data3;
+    pkt_t *pkt1, *pkt2, *pkt3;
 
-    data1 = (char *)pktbuf_insert("abcd", 5);
-    TEST_ASSERT_NOT_NULL(data1);
-    data2 = (char *)pktbuf_insert("ef", 3);
-    TEST_ASSERT_NOT_NULL(data2);
-    data3 = (char *)pktbuf_insert("ghijkl", 7);
-    TEST_ASSERT_NOT_NULL(data3);
+    pkt1 = pktbuf_insert("abcd", 5);
+    TEST_ASSERT_NOT_NULL(pkt1);
+    pkt2 = pktbuf_insert("ef", 3);
+    TEST_ASSERT_NOT_NULL(pkt2);
+    pkt3 = pktbuf_insert("ghijkl", 7);
+    TEST_ASSERT_NOT_NULL(pkt3);
 
     TEST_ASSERT_EQUAL_INT(3, pktbuf_packets_allocated());
 
-    pktbuf_release(data3);
+    pktbuf_release(pkt3);
 
     TEST_ASSERT_EQUAL_INT(2, pktbuf_packets_allocated());
-    TEST_ASSERT_EQUAL_INT(2, pktbuf_copy(data1, "m", 2));
-    TEST_ASSERT_EQUAL_STRING("m", data1);
-    TEST_ASSERT_EQUAL_INT(1, pktbuf_copy(data2, "", 1));
-    TEST_ASSERT_EQUAL_STRING("", data2);
+    TEST_ASSERT_EQUAL_INT(2, pktbuf_copy(pkt1->payload_data, "m", 2));
+    TEST_ASSERT_EQUAL_STRING("m", pkt1->payload_data);
+    TEST_ASSERT_EQUAL_INT(1, pktbuf_copy(pkt2->payload_data, "", 1));
+    TEST_ASSERT_EQUAL_STRING("", pkt2->payload_data);
 }
 
 static void test_pktbuf_insert_packed_struct(void)
@@ -446,8 +591,10 @@ static void test_pktbuf_insert_packed_struct(void)
                                   34, -4469, 149699748, -46590430597
                                 };
     test_pktbuf_struct_t *data_cpy;
+    pkt_t *pkt;
 
-    data_cpy = (test_pktbuf_struct_t *)pktbuf_insert(&data, sizeof(test_pktbuf_struct_t));
+    pkt = pktbuf_insert(&data, sizeof(test_pktbuf_struct_t));
+    data_cpy = (test_pktbuf_struct_t *)pkt->payload_data;
 
     TEST_ASSERT_EQUAL_INT(data.u8, data_cpy->u8);
     TEST_ASSERT_EQUAL_INT(data.u16, data_cpy->u16);
@@ -461,61 +608,74 @@ static void test_pktbuf_insert_packed_struct(void)
 
 static void test_pktbuf_alloc_off_by_one1(void)
 {
-    char *data1, *data2, *data3, *data4;
+    pkt_t *pkt1, *pkt2, *pkt3, *pkt4;
 
-    data1 = (char *)pktbuf_insert("1234567890a", 12);
-    TEST_ASSERT_NOT_NULL(data1);
-    data2 = (char *)pktbuf_alloc(44);
-    TEST_ASSERT_NOT_NULL(data2);
-    data4 = (char *)pktbuf_alloc(4);
-    TEST_ASSERT_NOT_NULL(data4);
+    pkt1 = pktbuf_insert("1234567890a", 12);
+    TEST_ASSERT_NOT_NULL(pkt1);
+    pkt2 = pktbuf_alloc(44);
+    TEST_ASSERT_NOT_NULL(pkt2);
+    pkt4 = pktbuf_alloc(4);
+    TEST_ASSERT_NOT_NULL(pkt4);
     TEST_ASSERT_EQUAL_INT(3, pktbuf_packets_allocated());
     TEST_ASSERT_EQUAL_INT(12 + 44 + 4, pktbuf_bytes_allocated());
 
-    pktbuf_release(data1);
+    pktbuf_release(pkt1);
 
     TEST_ASSERT_EQUAL_INT(2, pktbuf_packets_allocated());
     TEST_ASSERT_EQUAL_INT(44 + 4, pktbuf_bytes_allocated());
 
-    data3 = (char *)pktbuf_insert("bcdefghijklm", 13);
-    TEST_ASSERT_NOT_NULL(data3);
-    TEST_ASSERT(data1 != data3);
+    pkt3 = pktbuf_insert("bcdefghijklm", 13);
+    TEST_ASSERT_NOT_NULL(pkt3);
+    TEST_ASSERT(pkt1 != pkt3);
 
     TEST_ASSERT_EQUAL_INT(3, pktbuf_packets_allocated());
     TEST_ASSERT_EQUAL_INT(44 + 4 + 13, pktbuf_bytes_allocated());
 }
+*/
 
 Test *tests_pktbuf_tests(void)
 {
     EMB_UNIT_TESTFIXTURES(fixtures) {
-        new_TestFixture(test_pktbuf_alloc_0),
-        new_TestFixture(test_pktbuf_alloc_memfull),
-        new_TestFixture(test_pktbuf_alloc_success),
-        new_TestFixture(test_pktbuf_realloc_0),
-        new_TestFixture(test_pktbuf_realloc_memfull),
-        new_TestFixture(test_pktbuf_realloc_memfull2),
-        new_TestFixture(test_pktbuf_realloc_memfull3),
-        new_TestFixture(test_pktbuf_realloc_smaller),
-        new_TestFixture(test_pktbuf_realloc_memenough),
-        new_TestFixture(test_pktbuf_realloc_memenough2),
-        new_TestFixture(test_pktbuf_realloc_nomemenough),
-        new_TestFixture(test_pktbuf_realloc_unknown_ptr),
-        new_TestFixture(test_pktbuf_insert_size_0),
-        new_TestFixture(test_pktbuf_insert_data_NULL),
-        new_TestFixture(test_pktbuf_insert_memfull),
-        new_TestFixture(test_pktbuf_insert_success),
-#ifdef DEVELHELP
-        new_TestFixture(test_pktbuf_copy_efault),
+        new_TestFixture(test_pktbuf_reset),
+        new_TestFixture(test_pktbuf_alloc__size_0),
+#if PKTBUF_SIZE > 0
+        new_TestFixture(test_pktbuf_alloc__memfull),
+        new_TestFixture(test_pktbuf_alloc__memfull2),
+        new_TestFixture(test_pktbuf_alloc__memfull3),
 #endif
-        new_TestFixture(test_pktbuf_copy_data_len_too_long),
-        new_TestFixture(test_pktbuf_copy_data_len_too_long2),
-        new_TestFixture(test_pktbuf_copy_data_len_0),
-        new_TestFixture(test_pktbuf_copy_success),
-        new_TestFixture(test_pktbuf_copy_success2),
-        new_TestFixture(test_pktbuf_hold_ptr_null),
-        new_TestFixture(test_pktbuf_hold_wrong_ptr),
-        new_TestFixture(test_pktbuf_hold_success),
-        new_TestFixture(test_pktbuf_hold_success2),
+        new_TestFixture(test_pktbuf_alloc__success),
+        new_TestFixture(test_pktbuf_realloc_data__pkt_NULL),
+        new_TestFixture(test_pktbuf_realloc_data__pkt_wrong),
+        new_TestFixture(test_pktbuf_realloc_data__pkt_data_wrong),
+        new_TestFixture(test_pktbuf_realloc_data__pkt_users_gt_1),
+        new_TestFixture(test_pktbuf_realloc_data__pkt_next_neq_NULL),
+        new_TestFixture(test_pktbuf_realloc_data__size_0),
+#if PKTBUF_SIZE > 0
+        new_TestFixture(test_pktbuf_realloc_data__memfull),
+        new_TestFixture(test_pktbuf_realloc_data__memfull2),
+        new_TestFixture(test_pktbuf_realloc_data__memfull3),
+        new_TestFixture(test_pktbuf_realloc_data__nomemenough),
+        new_TestFixture(test_pktbuf_realloc_data__shrink),
+        new_TestFixture(test_pktbuf_realloc_data__memenough),
+#endif
+        new_TestFixture(test_pktbuf_realloc_data__success),
+        new_TestFixture(test_pktbuf_realloc_data__success2),
+        new_TestFixture(test_pktbuf_realloc_data__further_down_the_line),
+        new_TestFixture(test_pktbuf_insert__size_0),
+        new_TestFixture(test_pktbuf_insert__data_NULL),
+        new_TestFixture(test_pktbuf_insert__success),
+        new_TestFixture(test_pktbuf_add_header__pkt_NULL__data_NULL__size_0),
+        new_TestFixture(test_pktbuf_add_header__pkt_NOT_NULL__data_NULL__size_0),
+        new_TestFixture(test_pktbuf_add_header__pkt_NULL__data_NOT_NULL__size_0),
+        new_TestFixture(test_pktbuf_add_header__pkt_NOT_NULL__data_NOT_NULL__size_0),
+        new_TestFixture(test_pktbuf_add_header__pkt_NULL__data_NULL__size_not_0),
+        new_TestFixture(test_pktbuf_add_header__pkt_NOT_NULL__data_NULL__size_not_0),
+        new_TestFixture(test_pktbuf_add_header__pkt_NOT_NULL__data_NOT_NULL__size_not_0),
+        new_TestFixture(test_pktbuf_add_header__in_place),
+        new_TestFixture(test_pktbuf_hold__pkt_null),
+        new_TestFixture(test_pktbuf_hold__pkt_external),
+        new_TestFixture(test_pktbuf_hold__success),
+            /*
         new_TestFixture(test_pktbuf_release_ptr_null),
         new_TestFixture(test_pktbuf_release_wrong_ptr),
         new_TestFixture(test_pktbuf_release_success),
@@ -524,6 +684,7 @@ Test *tests_pktbuf_tests(void)
         new_TestFixture(test_pktbuf_release_success4),
         new_TestFixture(test_pktbuf_insert_packed_struct),
         new_TestFixture(test_pktbuf_alloc_off_by_one1),
+        */
     };
 
     EMB_UNIT_TESTCALLER(pktbuf_tests, NULL, tear_down, fixtures);

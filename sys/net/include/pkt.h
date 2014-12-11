@@ -38,7 +38,7 @@ extern "C" {
  *          decided not to use ethertype since protocols not supplied by it
  *          might be supported
  */
-typedef enum {
+typedef enum __attribute__((packed)) {
     PKT_PROTO_UNKNOWN       = 0x0000,   /**< Type was not specified */
 
     /**
@@ -137,6 +137,13 @@ typedef struct __attribute__((packed)) pktsnip_t {    /* packed to be aligned
     void *data;                     /**< pointer to the data of the snip */
     pktsize_t size;                 /**< the length of the snip in byte. */
     pkt_proto_t type;               /**< protocol of the packet part. */
+
+    /**
+     * @brief   Counter of threads currently having control over this packet.
+     *
+     * @internal
+     */
+    unsigned int users;
 } pktsnip_t;
 
 

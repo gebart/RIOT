@@ -18,499 +18,548 @@
 #include <inttypes.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
+#include "clist.h"
 #include "mutex.h"
+#include "pkt.h"
 #include "pktbuf.h"
+#include "_pktbuf_static.h"
 
-#if PKTBUF_SIZE < 128
-typedef uint8_t _pktsize_t;
-#elif PKTBUF_SIZE < 65536
-typedef uint16_t _pktsize_t;
+#if PKTBUF_SIZE > 0
+#define ALLOC(size)         _pktbuf_static_alloc(size)
+#define REALLOC(ptr, size)  _pktbuf_static_realloc(ptr, size)
+#define FREE(ptr)           _pktbuf_static_free(ptr)
 #else
-typedef size_t _pktsize_t;
+#define ALLOC(size)         (((size) == 0) ? NULL : malloc(size))
+#define REALLOC(ptr, size)  (((size) == 0) ? NULL : realloc(ptr, size))
+#define FREE(ptr)           free(ptr)
 #endif
 
-typedef struct __attribute__((packed)) _packet_t {
-    volatile struct _packet_t *next;
-    uint8_t processing;
-    _pktsize_t size;
-} _packet_t;
+/* chunk table to allow for FREE(ptr + x)-like behaviour */
+typedef struct __attribute__((packed)) _chunk_list_t {
+    struct _chunk_list_t *next;
+    struct _chunk_list_t *prev;
+    uint8_t *ptr;
+} _chunk_list_t;
 
-static uint8_t _pktbuf[PKTBUF_SIZE];
-static mutex_t _pktbuf_mutex = MUTEX_INIT;
+typedef struct __attribute__((packed)) _chunk_table_t {
+    struct _chunk_table_t *next;
+    uint8_t *range_start;
+    size_t range_len;
+    _chunk_list_t *chunks;
+    uint8_t used;
+} _chunk_table_t;
 
-/**
- * @brief   Get first element in packet buffer.
- */
-static inline _packet_t *_pktbuf_head(void)
+#if defined(TEST_SUITES) && PKTBUF_SIZE == 0 /* for reseting of dynamic pktbuf
+                                              * in testing */
+#include <stdio.h>
+
+#ifndef TEST_MAX_PKT
+#define TEST_MAX_PKT    (10)
+#endif
+
+static pktsnip_t *_allocated_pkts[TEST_MAX_PKT];
+
+static void _test_add_pktsnip(pktsnip_t *pkt)
 {
-    return (_packet_t *)(&(_pktbuf[0]));
-}
-
-/**
- * @brief   Get data part (memory behind `_packet_t` descriptive header) of a packet
- *
- * @param[in] pkt   A packet
- *
- * @return  Data part of the packet.
- */
-static inline void *_pkt_data(_packet_t *pkt)
-{
-    return (void *)(((_packet_t *)pkt) + 1);
-}
-
-/**
- * @brief   Calculates total size (*size* + size of `_packet_t` descriptive header) of a
- *          packet in memory
- *
- * @param[in] size  A given packet size
- *
- * @return  Total size of a packet in memory.
- */
-static inline size_t _pkt_total_sz(size_t size)
-{
-    return sizeof(_packet_t) + size;
-}
-
-/**
- * @brief   Get pointer to the byte after the last byte of a packet.
- *
- * @param[in] pkt   A packet
- *
- * @return  Pointer to the last byte of a packet
- */
-static inline void *_pkt_end(_packet_t *pkt)
-{
-    return (void *)((uint8_t *)pkt + _pkt_total_sz(pkt->size));
-}
-
-/**
- * @brief   Get index in packet buffer of the first byte of a packet's data part
- *
- * @param[in] pkt    A packet
- *
- * @return  Index in packet buffer of the first byte of *pkt*'s data part.
- */
-static inline size_t _pktbuf_start_idx(_packet_t *pkt)
-{
-    return (size_t)(((uint8_t *)pkt) - (&(_pktbuf[0])));
-}
-
-/**
- * @brief   Get index in packet buffer of the last byte of a packet's data part
- *
- * @param[in] pkt    A packet
- *
- * @return  Index in packet buffer of the last byte of *pkt*'s data part.
- */
-static inline size_t _pktbuf_end_idx(_packet_t *pkt)
-{
-    return _pktbuf_start_idx(pkt) + _pkt_total_sz(pkt->size) - 1;
-}
-
-static _packet_t *_pktbuf_find_with_prev(_packet_t **prev_ptr,
-        _packet_t **packet_ptr, const void *pkt)
-{
-    _packet_t *packet = _pktbuf_head(), *prev = NULL;
-
-    while (packet != NULL) {
-
-        if (_pkt_data(packet) == pkt) {
-            *prev_ptr = prev;
-            *packet_ptr = packet;
-            return packet;
+    for (int i = 0; i < TEST_MAX_PKT; i++) {
+        if (_allocated_pkts[i] == NULL) {
+            _allocated_pkts[i] = pkt;
+            return;
         }
-
-        prev = packet;
-        packet = (_packet_t *)packet->next;
     }
 
-    *prev_ptr = NULL;
-    *packet_ptr = NULL;
-
-    return NULL;
+    puts("Number of allowed packets in test mode exceeded, please increase "
+         "TEST_MAX_PKT at compile time");
 }
 
-static _packet_t *_pktbuf_find(const void *pkt)
+static void _test_rem_pktsnip(pktsnip_t *pkt)
 {
-    _packet_t *packet = _pktbuf_head();
+    for (int i = 0; i < TEST_MAX_PKT; i++) {
+        if (_allocated_pkts[i] == pkt) {
+            _allocated_pkts[i] = NULL;
+            return;
+        }
+    }
+}
+#endif
 
-#ifdef DEVELHELP
+static mutex_t _pktbuf_mutex = MUTEX_INIT;
+static _chunk_table_t *_chunk_table = NULL;
+
+/* this organizes chunks, since free(ptr + x) is not possible on most platforms */
+static _chunk_table_t *_create_table_entry(void *pkt, pktsize_t size);
+static _chunk_table_t *_find_chunk(const uint8_t *chunk, _chunk_table_t **prev,
+                                   _chunk_list_t **node_res);
+static void _free_chunk(void *chunk);
+static inline bool _in_range(_chunk_table_t *entry, uint8_t *ptr);
+static bool _add_chunk(uint8_t *ptr);
+
+/* internal pktbuf functions */
+static pktsnip_t *_pktbuf_alloc_unsafe(pktsize_t size);
+static pktsnip_t *_pktbuf_add_header_unsafe(pktsnip_t *pkt, void *data,
+        pktsize_t size, pkt_proto_t type);
+static pktsnip_t *_pktbuf_duplicate(const pktsnip_t *pkt);
+
+pktsnip_t *pktbuf_alloc(pktsize_t size)
+{
+    pktsnip_t *res;
+
+    mutex_lock(&_pktbuf_mutex);
+    res = _pktbuf_alloc_unsafe(size);
+    mutex_unlock(&_pktbuf_mutex);
+
+    return res;
+}
+
+int pktbuf_realloc_data(pktsnip_t *pkt, pktsize_t size)
+{
+    uint8_t *new;
+    _chunk_table_t *entry;
+    _chunk_list_t *node = NULL;
+
+    if (pkt == NULL || !pktbuf_contains(pkt->data)) {
+        return ENOENT;
+    }
+
+    if (pkt->users > 1 || pkt->next != NULL) {
+        return EINVAL;
+    }
+
+    mutex_lock(&_pktbuf_mutex);
+
+    entry = _find_chunk(pkt->data, NULL, &node);
+
+    /* entry can't be NULL since prelimanary pktbuf_contains() check ensures that */
+    if ((pkt->data == entry->range_start) && (entry->chunks == NULL)) {
+        new = REALLOC(entry->range_start, size);
+
+        if (new == NULL) {
+            mutex_unlock(&_pktbuf_mutex);
+
+            return ENOMEM;
+        }
+
+        entry->range_start = new;
+        entry->range_len = size;
+    }
+    else {
+        _chunk_table_t *chunk_entry;
+
+        new = ALLOC(size);
+
+        if (new == NULL) {
+            mutex_unlock(&_pktbuf_mutex);
+
+            return ENOMEM;
+        }
+
+        chunk_entry = _create_table_entry(new, size);
+
+        if (chunk_entry == NULL) {
+            FREE(new);
+            mutex_unlock(&_pktbuf_mutex);
+
+            return ENOMEM;
+        }
+
+        memcpy(new, pkt->data, (size < pkt->size) ? size : pkt->size);
+        _free_chunk(pkt->data);
+    }
+
+    mutex_unlock(&_pktbuf_mutex);
+
+    pkt->data = new;
+    pkt->size = size;
+
+    return 0;
+}
+
+pktsnip_t *pktbuf_add_header(pktsnip_t *pkt, void *data, pktsize_t size,
+                             pkt_proto_t type)
+{
+    pktsnip_t *snip;
+
+    mutex_lock(&_pktbuf_mutex);
+
+    snip = _pktbuf_add_header_unsafe(pkt, data, size, type);
+
+    mutex_unlock(&_pktbuf_mutex);
+
+    return snip;
+}
+
+void pktbuf_release(pktsnip_t *pkt)
+{
+    atomic_set_return(&(pkt->users), pkt->users - 1);
+
+    if (pkt->users == 0 && pktbuf_contains(pkt->data)) {
+        mutex_lock(&_pktbuf_mutex);
+
+        _free_chunk(pkt->data);
+        FREE(pkt);
+
+#if defined(TEST_SUITES) && PKTBUF_SIZE == 0
+        _test_rem_pktsnip(pkt);
+#endif
+
+        mutex_unlock(&_pktbuf_mutex);
+    }
+}
+
+pktsnip_t *pktbuf_start_write(pktsnip_t *pkt)
+{
+    if (pkt->users > 1) {
+        pktsnip_t *res = NULL;
+
+        mutex_lock(&_pktbuf_mutex);
+
+        res = _pktbuf_duplicate(pkt);
+
+        atomic_set_return(&pkt->users, pkt->users - 1);
+
+        mutex_unlock(&_pktbuf_mutex);
+
+        return res;
+    }
+
+    return pkt;
+}
+
+bool pktbuf_contains(const void *ptr)
+{
+#if PKTBUF_SIZE > 0
+    return (bool)_pktbuf_static_contains(ptr);
+#else
+    return (_find_chunk(ptr, NULL, NULL) != NULL);
+#endif
+}
+
+/***********************************
+ * internal pktbuf functions       *
+ ***********************************/
+
+static pktsnip_t *_pktbuf_alloc_unsafe(pktsize_t size)
+{
+    pktsnip_t *pkt;
+    _chunk_table_t *chunk_entry;
+
+    pkt = (pktsnip_t *)ALLOC(sizeof(pktsnip_t));
 
     if (pkt == NULL) {
         return NULL;
     }
 
-#endif /* DEVELHELP */
+    pkt->data = ALLOC(size);
 
-    while (packet != NULL) {
-        if ((_pkt_data(packet) <= pkt) && (pkt < _pkt_end(packet))) {
-            mutex_unlock(&_pktbuf_mutex);
-            return packet;
-        }
+    if (pkt->data == NULL) {
+        FREE(pkt);
 
-        packet = (_packet_t *)packet->next;
-    }
-
-    return NULL;
-}
-
-static _packet_t *_pktbuf_alloc(size_t size)
-{
-    _packet_t *packet = _pktbuf_head(), *old_next;
-
-    if ((size == 0) || (size > PKTBUF_SIZE)) {
         return NULL;
     }
 
-    if ((packet->size == 0)         /* if first packet is currently not initialized
-                                     * but next packet and no space between first
-                                     * and next in its slot */
-        && (packet->processing == 0)
-        && (packet->next != NULL)
-        && ((_pktbuf_start_idx((_packet_t *)(packet->next)) - _pkt_total_sz(packet->size)) < size)) {
-        packet = (_packet_t *)packet->next;
+    chunk_entry = _create_table_entry(pkt->data, size);
+
+    if (chunk_entry == NULL) {
+        FREE(pkt->data);
+        FREE(pkt);
+
+        return NULL;
     }
 
-    /* while packet is not initialized */
-    while ((packet->processing > 0) || (packet->size > size)) {
-        old_next = (_packet_t *)packet->next;
+#if defined(TEST_SUITES) && PKTBUF_SIZE == 0
+    _test_add_pktsnip(pkt);
+#endif
 
-        /* if current packet is the last in buffer, but buffer space is exceeded */
-        if ((old_next == NULL)
-            && ((_pktbuf_end_idx(packet) + _pkt_total_sz(size)) > PKTBUF_SIZE)) {
+    pkt->next = NULL;
+    pkt->size = size;
+    pkt->type = PKT_PROTO_UNKNOWN;
+    pkt->users = 1;
+
+    return pkt;
+}
+
+static pktsnip_t *_pktbuf_add_header_unsafe(pktsnip_t *pkt, void *data,
+        pktsize_t size, pkt_proto_t type)
+{
+    pktsnip_t *snip;
+
+    if (size == 0) {
+        return NULL;
+    }
+
+    snip = (pktsnip_t *)ALLOC(sizeof(pktsnip_t));
+
+    if (snip == NULL) {
+        return NULL;
+    }
+
+    if (pkt == NULL || pkt->data != data) {
+        _chunk_table_t *chunk_entry = NULL;
+
+        snip->data = ALLOC(size);
+
+        if (snip->data == NULL) {
+            FREE(snip);
+
             return NULL;
         }
 
-        /* if current packet is the last in the buffer or if space between
-         * current packet and next packet is big enough */
-        if ((old_next == NULL)
-            || ((_pktbuf_start_idx((_packet_t *)(packet->next)) - _pktbuf_end_idx(packet)) >= _pkt_total_sz(
-                    size))) {
+        chunk_entry = _create_table_entry(snip->data, size);
 
-            _packet_t *new_next = (_packet_t *)(((uint8_t *)packet) + _pkt_total_sz(packet->size));
-            /* jump ahead size of current packet. */
-            packet->next = new_next;
-            packet->next->next = old_next;
+        if (chunk_entry == NULL) {
+            FREE(snip->data);
+            FREE(snip);
 
-            packet = new_next;
-
-            break;
+            return NULL;
         }
 
-        packet = old_next;
-    }
-
-    packet->size = size;
-    packet->processing = 1;
-
-    return packet;
-}
-
-static void _pktbuf_free(_packet_t *prev, _packet_t *packet)
-{
-    if ((packet->processing)-- > 1) { /* `> 1` because packet->processing may already
-                                       * be 0 in which case --(packet->processing)
-                                       * would wrap to 255. */
-        return;
-    }
-
-    if (prev == NULL) {     /* packet is _pktbuf_head() */
-        packet->size = 0;
+        if (data != NULL) {
+            memcpy(snip->data, data, size);
+        }
     }
     else {
-        prev->next = packet->next;
-    }
-}
+        snip->data = data;
+        pkt->size -= size;
+        pkt->data = (void *)(((uint8_t *)pkt->data) + size);
 
-int pktbuf_contains(const void *pkt)
-{
-    return ((&(_pktbuf[0]) < ((uint8_t *)pkt)) && (((uint8_t *)pkt) <= &(_pktbuf[PKTBUF_SIZE - 1])));
-}
+        if (!_add_chunk(pkt->data)) {
+            FREE(snip);
 
-void *pktbuf_alloc(size_t size)
-{
-    _packet_t *packet;
-
-    mutex_lock(&_pktbuf_mutex);
-
-    packet = _pktbuf_alloc(size);
-
-    if (packet == NULL) {
-        mutex_unlock(&_pktbuf_mutex);
-        return NULL;
-    }
-
-    mutex_unlock(&_pktbuf_mutex);
-
-    return _pkt_data(packet);
-}
-
-void *pktbuf_realloc(const void *pkt, size_t size)
-{
-    _packet_t *new, *prev, *orig;
-
-    mutex_lock(&_pktbuf_mutex);
-
-    if ((size == 0) || (size > PKTBUF_SIZE)) {
-        mutex_unlock(&_pktbuf_mutex);
-        return NULL;
-    }
-
-    _pktbuf_find_with_prev(&prev, &orig, pkt);
-
-    if ((orig != NULL) &&
-        ((orig->size >= size)       /* and *orig* is last packet, and space in
-                                     * _pktbuf is sufficient */
-         || ((orig->next == NULL)
-             && ((_pktbuf_start_idx(orig) + _pkt_total_sz(size)) < PKTBUF_SIZE))
-         || ((orig->next != NULL)   /* or space between pointer and the next is big enough: */
-             && ((_pktbuf_start_idx((_packet_t *)(orig->next)) - _pktbuf_start_idx(orig))
-                 >= _pkt_total_sz(size))))) {
-        orig->size = size;
-
-        mutex_unlock(&_pktbuf_mutex);
-        return (void *)pkt;
-    }
-
-    new = _pktbuf_alloc(size);
-
-    if (new == NULL) {
-        mutex_unlock(&_pktbuf_mutex);
-        return NULL;
-    }
-
-    if (orig != NULL) {
-        memcpy(_pkt_data(new), _pkt_data(orig), orig->size);
-
-        _pktbuf_free(prev, orig);
-    }
-    else {
-        memcpy(_pkt_data(new), pkt, size);
-    }
-
-
-    mutex_unlock(&_pktbuf_mutex);
-
-    return _pkt_data(new);
-}
-
-void *pktbuf_insert(const void *data, size_t size)
-{
-    _packet_t *packet;
-
-    if ((data == NULL) || (size == 0)) {
-        return NULL;
-    }
-
-    mutex_lock(&_pktbuf_mutex);
-    packet = _pktbuf_alloc(size);
-
-    if (packet == NULL) {
-        mutex_unlock(&_pktbuf_mutex);
-        return NULL;
-    }
-
-    memcpy(_pkt_data(packet), data, size);
-
-    mutex_unlock(&_pktbuf_mutex);
-    return _pkt_data(packet);
-}
-
-int pktbuf_copy(void *pkt, const void *data, size_t data_len)
-{
-    _packet_t *packet;
-
-    mutex_lock(&_pktbuf_mutex);
-
-#ifdef DEVELHELP
-
-    if (data == NULL) {
-        mutex_unlock(&_pktbuf_mutex);
-        return -EFAULT;
-    }
-
-    if (pkt == NULL) {
-        mutex_unlock(&_pktbuf_mutex);
-        return -EINVAL;
-    }
-
-#endif /* DEVELHELP */
-
-    packet = _pktbuf_find(pkt);
-
-
-    if ((packet != NULL) && (packet->size > 0) && (packet->processing > 0)) {
-        /* packet space not engough? */
-        if (data_len > (size_t)(((uint8_t *)_pkt_end(packet)) - ((uint8_t *)pkt))) {
-            mutex_unlock(&_pktbuf_mutex);
-            return -ENOMEM;
+            return NULL;
         }
     }
 
-
-    memcpy(pkt, data, data_len);
-
-    mutex_unlock(&_pktbuf_mutex);
-    return data_len;
-}
-
-void pktbuf_hold(const void *pkt)
-{
-    _packet_t *packet;
-
-    mutex_lock(&_pktbuf_mutex);
-
-    packet = _pktbuf_find(pkt);
-
-    if (packet != NULL) {
-        packet->processing++;
-    }
-
-    mutex_unlock(&_pktbuf_mutex);
-}
-
-void pktbuf_release(const void *pkt)
-{
-    _packet_t *packet = _pktbuf_head(), *prev = NULL;
-
-    mutex_lock(&_pktbuf_mutex);
-
-    while (packet != NULL) {
-
-        if ((_pkt_data(packet) <= pkt) && (pkt < _pkt_end(packet))) {
-            _pktbuf_free(prev, packet);
-
-            mutex_unlock(&_pktbuf_mutex);
-            return;
-        }
-
-        prev = packet;
-        packet = (_packet_t *)packet->next;
-    }
-
-    mutex_unlock(&_pktbuf_mutex);
-}
-
-#ifdef DEVELHELP
-#include <stdio.h>
-
-void pktbuf_print(void)
-{
-    _packet_t *packet = _pktbuf_head();
-    int i = 0;
-
-    mutex_lock(&_pktbuf_mutex);
-
-    printf("current pktbuf allocations:\n");
-    printf("===================================================\n");
-
-    if (packet->next == NULL && packet->size == 0) {
-        printf("empty\n");
-        printf("===================================================\n");
-        printf("\n");
-        mutex_unlock(&_pktbuf_mutex);
-
-        return;
-    }
-    else if (packet->next != NULL && packet->size == 0) {
-        packet = (_packet_t *)packet->next;
-    }
-
-    while (packet != NULL) {
-        uint8_t *data = (uint8_t *)_pkt_data(packet);
-
-        printf("packet %d (%p):\n", i, (void *)packet);
-        printf("  next: %p\n", (void *)(packet->next));
-        printf("  size: %" PRIu32 "\n", (uint32_t)packet->size);
-        printf("  processing: %" PRIu8 "\n", packet->processing);
-
-        if (packet->next != NULL) {
-            printf("  free data after: %" PRIu32 "\n",
-                   (uint32_t)(_pktbuf_start_idx((_packet_t *)(packet->next)) - _pktbuf_end_idx(packet) - 1));
-        }
-        else {
-            printf("  free data after: %" PRIu32 "\n", (uint32_t)(PKTBUF_SIZE - _pktbuf_end_idx(packet) - 1));
-
-        }
-
-        printf("  data: (start address: %p)\n   ", data);
-
-        if (packet->size > PKTBUF_SIZE) {
-            printf(" We have a problem: packet->size (%" PRIu32 ") > PKTBUF_SIZE (%" PRIu32 ")\n",
-                   (uint32_t)(packet->size), (uint32_t)PKTBUF_SIZE);
-        }
-        else {
-            for (size_t j = 0; j < packet->size; j++) {
-                printf(" %02x", data[j]);
-
-                if (((j + 1) % 16) == 0) {
-                    printf("\n   ");
-                }
-            }
-
-            printf("\n\n");
-        }
-
-        packet = (_packet_t *)packet->next;
-        i++;
-    }
-
-    printf("===================================================\n");
-    printf("\n");
-
-    mutex_unlock(&_pktbuf_mutex);
-
-}
+#if defined(TEST_SUITES) && PKTBUF_SIZE == 0
+    _test_add_pktsnip(snip);
 #endif
 
-#ifdef TEST_SUITES
-size_t pktbuf_bytes_allocated(void)
-{
-    _packet_t *packet = _pktbuf_head();
-    size_t bytes = 0;
+    snip->next = NULL;
+    snip->size = size;
+    snip->type = type;
+    snip->users = 1;
 
-    mutex_lock(&_pktbuf_mutex);
+    pktsnip_add(&snip, pkt);
 
-    while (packet != NULL) {
-        bytes += packet->size;
-        packet = (_packet_t *)(packet->next);
-    }
-
-    mutex_unlock(&_pktbuf_mutex);
-
-    return bytes;
+    return snip;
 }
 
-unsigned int pktbuf_packets_allocated(void)
+static pktsnip_t *_pktbuf_duplicate(const pktsnip_t *pkt)
 {
-    _packet_t *packet = _pktbuf_head();
-    unsigned int packets = 0;
+    pktsnip_t *res = NULL;
 
-    mutex_lock(&_pktbuf_mutex);
+    res = _pktbuf_alloc_unsafe(pkt->size);
 
-    while (packet != NULL) {
-        if ((packet != _pktbuf_head()) || (packet->size > 0)) { /* ignore head if head->size == 0 */
-            packets++;
+    if (res == NULL) {
+        return NULL;
+    }
+
+    memcpy(res->data, pkt->data, pkt->size);
+    res->type = pkt->type;
+
+    while (pkt->next) {
+        pktsnip_t *header = NULL;
+
+        pkt = pkt->next;
+        header = _pktbuf_add_header_unsafe(res, pkt->data, pkt->size, pkt->type);
+
+        if (header == NULL) {
+            do {
+                pktsnip_t *next = res->next;
+
+                _free_chunk(res->data);
+                FREE(res);
+
+                res = next;
+            } while (res);
+
+            return NULL;
+        }
+    }
+
+    return res;
+}
+
+/**********************************
+ * chunk management functions     *
+ **********************************/
+static _chunk_table_t *_find_chunk(const uint8_t *chunk, _chunk_table_t **prev,
+                                   _chunk_list_t **node_res)
+{
+    _chunk_table_t *entry = _chunk_table;
+
+    if (prev != NULL) {
+        *prev = NULL;
+    }
+
+    while (entry != NULL) {
+        _chunk_list_t *node = entry->chunks;
+
+        if (entry->range_start == chunk) {
+            if (node_res != NULL) {
+                *node_res = NULL;
+            }
+
+            return entry;
         }
 
-        packet = (_packet_t *)(packet->next);
+        if (node != NULL) {
+            do {
+                if (node->ptr == chunk) {
+                    if (node_res != NULL) {
+                        *node_res = node;
+                    }
+
+                    return entry;
+                }
+
+                clist_advance((clist_node_t **)&node);
+            } while (node != entry->chunks);
+        }
+
+        if (prev != NULL) {
+            *prev = entry;
+        }
+
+        entry = entry->next;
     }
 
-    mutex_unlock(&_pktbuf_mutex);
-
-    return packets;
+    return NULL;
 }
 
-int pktbuf_is_empty(void)
+static void _free_chunk(void *chunk)
 {
-    return ((_pktbuf_head()->next == NULL) && (_pktbuf_head()->size == 0));
+    _chunk_list_t *node = NULL;
+    _chunk_table_t *prev = NULL, *entry = _find_chunk(chunk, &prev, &node);
+
+    if (node != NULL) {
+        clist_remove((clist_node_t **)&entry->chunks, (clist_node_t *)node);
+        FREE(node);
+    }
+    else if (entry->range_start == chunk) {
+        entry->used = 0;
+    }
+
+    if (entry->chunks == NULL && entry->used == 0) {
+        if (prev == NULL) {
+            if (entry->next == NULL) {
+                _chunk_table = NULL;
+            }
+            else {
+                _chunk_table = entry->next;
+            }
+        }
+        else {
+            prev->next = entry->next;
+        }
+
+        FREE(entry->range_start);
+        FREE(entry);
+    }
+}
+
+static inline bool _in_range(_chunk_table_t *entry, uint8_t *ptr)
+{
+    return (entry != NULL) &&
+           ((ptr >= entry->range_start) ||
+            (ptr < (entry->range_start + entry->range_len)));
+}
+
+static bool _add_chunk(uint8_t *ptr)
+{
+    _chunk_table_t *entry = _chunk_table;
+
+    while (entry != NULL) {
+        if (_in_range(entry, ptr)) {
+            _chunk_list_t *node = ALLOC(sizeof(_chunk_list_t));
+
+            if (node == NULL) {
+                return 0;
+            }
+
+            node->ptr = ptr;
+            clist_add((clist_node_t **)&entry->chunks, (clist_node_t *)node);
+
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+static _chunk_table_t *_create_table_entry(void *data, pktsize_t size)
+{
+    _chunk_table_t *chunk_entry = (_chunk_table_t *)ALLOC(sizeof(_chunk_table_t));
+
+    if (chunk_entry == NULL) {
+        return NULL;
+    }
+
+    if (_chunk_table == NULL) {
+        chunk_entry->next = NULL;
+        _chunk_table = chunk_entry;
+    }
+    else {
+        chunk_entry->next = _chunk_table;
+        _chunk_table = chunk_entry;
+    }
+
+    chunk_entry->range_start = data;
+    chunk_entry->range_len = size;
+    chunk_entry->chunks = NULL;
+    chunk_entry->used = 1;
+
+    return chunk_entry;
+}
+
+#ifdef TEST_SUITES
+bool pktbuf_is_empty(void)
+{
+#if PKTBUF_SIZE > 0
+    return _pktbuf_static_is_empty() && _chunk_table == NULL;
+#else
+
+    for (int i = 0; i < TEST_MAX_PKT; i++) {
+        if (_allocated_pkts[i] != NULL) {
+            return false;
+        }
+    }
+
+    return (_chunk_table == NULL);
+#endif
 }
 
 void pktbuf_reset(void)
 {
-    memset(_pktbuf, 0, PKTBUF_SIZE);
-    mutex_init(&_pktbuf_mutex);
+#if PKTBUF_SIZE > 0
+    _pktbuf_static_reset();
+#else
+    _chunk_table_t *entry = _chunk_table;
+
+    for (int i = 0; i < TEST_MAX_PKT; i++) {
+        if (_allocated_pkts[i] != NULL) {
+            FREE(_allocated_pkts[i]->data);
+            FREE(_allocated_pkts[i]);
+            _allocated_pkts[i] = NULL;
+        }
+    }
+
+    while (entry != NULL) {
+        _chunk_table_t *next = entry->next;
+        _chunk_list_t *node = entry->chunks;
+
+        while (entry->chunks != NULL) {
+            clist_remove((clist_node_t **)&entry->chunks, (clist_node_t *)node);
+            FREE(node);
+        }
+
+        FREE(entry);
+        entry = next;
+    }
+
+#endif
+    _chunk_table = NULL;
 }
 #endif
 

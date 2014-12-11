@@ -10,179 +10,215 @@
  * @defgroup    pktbuf   Packet buffer
  * @ingroup     net
  * @brief       A global network packet buffer.
+ *
+ * @note    **WARNING!!** Do not store data structures that are not packed
+ *          (defined with `__attribute__((packed))`) or enforce alignment in
+ *          in any way in here if @ref PKTBUF_SIZE > 0. On some RISC architectures
+ *          this *will* lead to alignment problems and can potentially result
+ *          in segmentation/hard faults and other unexpected behaviour.
+ *
  * @{
  *
  * @file    pktbuf.h
  * @brief   Interface definition for the global network buffer. Network devices
  *          and layers can allocate space for packets here.
  *
- * @note    **WARNING!!** Do not store data structures that are not packed
- *          (defined with `__attribute__((packed))`) or enforce alignment in
- *          in any way in here. On some RISC architectures this *will* lead to
- *          alignment problems and can potentially result in segmentation/hard
- *          faults and other unexpected behaviour.
- *
  * @author  Martine Lenders <mlenders@inf.fu-berlin.de>
  */
-#ifndef __PKTBUF_H_
-#define __PKTBUF_H_
+#ifndef PKTBUF_H_
+#define PKTBUF_H_
 
+#include <stdbool.h>
 #include <stdlib.h>
+#include <string.h>
 
+#include "atomic.h"
 #include "cpu-conf.h"
+#include "pkt.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#ifndef PKTBUF_SIZE
 /**
- * @brief   Maximum size of the packet buffer.
+ * @def     PKTBUF_SIZE
+ * @brief   Maximum size of the static packet buffer.
  *
  * @details The rational here is to have at least space for 4 full-MTU IPv6
  *          packages (2 incoming, 2 outgoing; 2 * 2 * 1280 B = 5 KiB) +
- *          Meta-Data (roughly estimated to 1 KiB; might be smaller)
+ *          Meta-Data (roughly estimated to 1 KiB; might be smaller). If
+ *          @ref PKTBUF_SIZE is 0 the packet buffer will use dynamic memory
+ *          management to allocate packets.
  */
+#ifndef PKTBUF_SIZE
 #define PKTBUF_SIZE  (6144)
 #endif  /* PKTBUF_SIZE */
 
-/**
- * @brief   Allocates new packet data in the packet buffer. This also marks the
- *          allocated data as processed.
- *
- * @see @ref pktbuf_hold()
- *
- * @param[in] size  The length of the packet you want to allocate
- *
- * @return  Pointer to the start of the data in the packet buffer, on success.
- * @return  NULL, if no space is left in the packet buffer or size was 0.
- */
-void *pktbuf_alloc(size_t size);
 
 /**
- * @brief   Reallocates new space in the packet buffer, without changing the
- *          content.
+ * @var     pktbuf_max_bytes
+ * @brief   All-over maximum number of bytes allocated in packet buffer during
+ *          runtime
  *
- * @details If enough memory is available behind it or *size* is smaller than
- *          the original size the packet will not be moved. Otherwise, it will
- *          be moved. If no space is available nothing happens.
- *
- * @param[in] pkt   Old position of the packet in the packet buffer
- * @param[in] size  New amount of data you want to allocate
- *
- * @return  Pointer to the (maybe new) position of the packet in the packet buffer,
- *          on success.
- * @return  NULL, if no space is left in the packet buffer or size was 0.
- *          The packet will remain at *ptr*.
+ * @detail  This variable is only available if @ref DEVELHELP is active and
+ *          @ref PKTBUF_SIZE > 0.
  */
-void *pktbuf_realloc(const void *pkt, size_t size);
-
-/**
- * @brief   Allocates and copies new packet data into the packet buffer.
- *          This also marks the allocated data as processed for the current
- *          thread.
- *
- * @see @ref pktbuf_hold()
- *
- * @param[in] data  Data you want to copy into the new packet.
- * @param[in] size  The length of the packet you want to allocate
- *
- * @return  Pointer to the start of the data in the packet buffer, on success.
- * @return  NULL, if no space is left in the packet buffer.
- */
-void *pktbuf_insert(const void *data, size_t size);
-
-/**
- * @brief   Copies packet data into the packet buffer, safely.
- *
- * @details Use this instead of memcpy, since it is thread-safe and checks if
- *          *pkt* is
- *
- *          -# in the buffer at all
- *          -# its *size* is smaller or equal to the data allocated at *pkt*
- *
- *          If the *pkt* is not in the buffer the data is just copied as
- *          memcpy would do.
- *
- * @param[in,out] pkt   The packet you want to set the data for.
- * @param[in] data      The data you want to copy into the packet.
- * @param[in] data_len  The length of the data you want to copy.
- *
- * @return  *data_len*, on success.
- * @return  -EFAULT, if *data* is NULL and DEVELHELP is defined.
- * @return  -EINVAL, if *pkt* is NULL and DEVELHELP is defined.
- * @return  -ENOBUFS, if *data_len* was greater than the packet size of *pkt*.
- */
-int pktbuf_copy(void *pkt, const void *data, size_t data_len);
-
-/**
- * @brief   Marks the data as being processed.
- *
- * @details Internally this increments just a counter on the data.
- *          @ref pktbuf_release() decrements it. If the counter is <=0 the
- *          reserved data block in the buffer will be made available again.
- *
- * @param[in] pkt   The packet you want mark as being processed.
- */
-void pktbuf_hold(const void *pkt);
-
-/**
- * @brief   Marks the data as not being processed.
- *
- * @param[in] pkt   The packet you want mark as not being processed anymore.
- *
- * @details Internally this decrements just a counter on the data.
- *          @ref pktbuf_hold() increments and any allocation
- *          operation initializes it. If the counter is <=0 the reserved data
- *          block in the buffer will be made available again.
- */
-void pktbuf_release(const void *pkt);
-
-/**
- * @brief   Prints current packet buffer to stdout if DEVELHELP is defined.
- */
-#ifdef DEVELHELP
-void pktbuf_print(void);
-#else
-#define pktbuf_print()  ;
+#if defined(DEVELHELP) && (PKTBUF_SIZE > 0)
+extern unsigned int pktbuf_max_bytes;
 #endif
+
+/**
+ * @brief   Allocates new packet part in the packet buffer.
+ *
+ * @details pktsnip_t::type of the result will be set to @ref PKT_PROTO_UNKNOWN
+ *          and pktsnip_t::users to 1.
+ *
+ * @param[in] size  The length of the packet you want to allocate.
+ *
+ * @return  Pointer to the packet in the packet buffer, on success.
+ * @return  NULL, if no space is left in the packet buffer or size was 0.
+ */
+pktsnip_t *pktbuf_alloc(pktsize_t size);
+
+/**
+ * @brief   Reallocates pktsnip_t::data of @p pkt in the packet buffer, without
+ *          changing the content.
+ *
+ * @pre `pkt->users == 1 && pkt->next == NULL`
+ *
+ * @details If enough memory is available behind it or @p size is smaller than
+ *          the original size the packet then pktsnip_t::data of @p pkt will
+ *          not be moved. Otherwise, it will be moved. If no space is available
+ *          nothing happens.
+ *
+ * @param[in] pkt           A packet part.
+ * @param[in] size          The size for @p pkt.
+ *
+ * @return  0, on success
+ * @return  EINVAL, if precondition is not met
+ * @return  ENOENT, if pktsnip_t::data of @p pkt was not from the packet buffer.
+ * @return  ENOMEM, if no space is left in the packet buffer or size was 0.
+ */
+int pktbuf_realloc_data(pktsnip_t *pkt, pktsize_t size);
+
+/**
+ * @brief   Allocates new packet part in the packet buffer and sets the data
+ *          for it.
+ *
+ * @details pktsnip_t::type of the result will be set to @ref PKT_PROTO_UNKNOWN
+ *          and pktsnip_t::users to 1.
+ *
+ * @param[in] data  Data you want to insert into the packet.
+ *                  If @p data is NULL, the call is equivalent to
+ *                  `pktbuf_alloc(size)`
+ * @param[in] size  The length of the packet you want to allocate.
+ *
+ * @return  Pointer to the packet in the packet buffer, on success.
+ * @return  NULL, if no space is left in the packet buffer or size was 0.
+ */
+static inline pktsnip_t *pktbuf_insert(const void *data, pktsize_t size)
+{
+    pktsnip_t *pkt;
+
+    pkt = pktbuf_alloc(size);
+
+    /* currently only I own a pointer to that so copying can be done without
+     * locking */
+    if (pkt != NULL && data != NULL) {
+        memcpy(pkt->data, data, size);
+    }
+
+    return pkt;
+}
+
+/**
+ * @brief   Prepends a header to a packet.
+ *
+ * @details It is ill-advised to add a header simply by using
+ *
+ *     pkt = pkt_alloc(size);
+ *     header = pkt_alloc(header_size);
+ *
+ *     header->next = pkt;
+ *     pkt->data = pkt->data + header_size;
+ *
+ * Since @p data can be in the range of the data allocated on
+ * pktsnip_t::data of @p pkt, it would be impossible to free
+ * pktsnip_t::data of @p pkt, after @p pkt was released and the
+ * generated header not or vice versa. This function ensures that this
+ * can't happen.
+ *
+ * @param[in] pkt   The packet you want to add the header to. If pktsnip_t::data
+ *                  field of @p pkt is equal to data it will be set to
+ *                  `pkt->data + size`. If @p pkt is NULL it will the
+ *                  pktsnip_t::next field of the result will be also set to NULL.
+ * @param[in] data  Data of the header. If @p data is NULL no data will be
+ *                  inserted into the result.
+ * @param[in] size  Size of the header.
+ * @param[in] type  Protocol type of the header.
+ *
+ * @return  Pointer to the packet part that represents the new header.
+ * @return  NULL, if no space is left in the packet buffer or size was 0.
+ */
+pktsnip_t *pktbuf_add_header(pktsnip_t *pkt, void *data, pktsize_t size,
+                             pkt_proto_t type);
+
+/**
+ * @brief   Increases pktsnip_t::users of @pkt atomically.
+ *
+ * @param[in] A packet.
+ */
+static inline void pktbuf_hold(pktsnip_t *pkt)
+{
+    if (pkt != NULL) {
+        atomic_set_return(&(pkt->users), pkt->users + 1);
+    }
+}
+
+/**
+ * @brief   Decreases pktsnip_t::users of @pkt atomically and removes it if it
+ *          reaches 0.
+ *
+ * @param[in] pkt   A packet.
+ */
+void pktbuf_release(pktsnip_t *pkt);
+
+/**
+ * @brief   Must be called once before there is a write operation in a thread.
+ *
+ * @details This function duplicates a packet in the packet buffer if
+ *          pktsnip_t::users of @p pkt > 1.
+ *
+ * @param[in] pkt   The packet you want to write into.
+ *
+ * @return  The (new) pointer to the pkt.
+ * @return  NULL, if pktsnip_t::users of @p pkt > 1 and if there is not anough
+ *          space in the packet buffer.
+ */
+pktsnip_t *pktbuf_start_write(pktsnip_t *pkt);
+
+/**
+ * @brief   Checks if a given data pointer is stored in the packet buffer.
+ *
+ * @param[in] ptr   Pointer to be checked
+ *
+ * @return  true, if @p ptr is in packet buffer
+ * @return  false, otherwise
+ */
+bool pktbuf_contains(const void *ptr);
 
 /* for testing */
 #ifdef TEST_SUITES
 /**
- * @brief   Counts the number of allocated bytes
- *
- * @return  Number of allocated bytes
- */
-size_t pktbuf_bytes_allocated(void);
-
-/**
- * @brief   Counts the number of allocated packets
- *
- * @return  Number of allocated packets
- */
-size_t pktbuf_packets_allocated(void);
-
-/**
  * @brief   Checks if packet buffer is empty
  *
- * @return  1, if packet buffer is empty
- * @return  0, if packet buffer is not empty
+ * @return  true, if packet buffer is empty
+ * @return  false, if packet buffer is not empty
  */
-int pktbuf_is_empty(void);
+bool pktbuf_is_empty(void);
 
 /**
- * @brief   Checks if a given pointer is stored in the packet buffer
- *
- * @param[in] pkt   Pointer to be checked
- *
- * @return  1, if *pkt* is in packet buffer
- * @return  0, otherwise
- */
-int pktbuf_contains(const void *pkt);
-
-/**
- * @brief   Sets the whole packet buffer to 0
+ * @brief   Resets the whole packet buffer
  */
 void pktbuf_reset(void);
 #endif
@@ -191,5 +227,5 @@ void pktbuf_reset(void);
 }
 #endif
 
-#endif /* __PKTBUF_H_ */
+#endif /* PKTBUF_H_ */
 /** @} */
