@@ -1,0 +1,1 @@
+FEATURES_PROVIDED = periph_uart periph_rtc periph_i2c periph_cpuid periph_gpio 
