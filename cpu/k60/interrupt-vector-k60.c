@@ -9,14 +9,9 @@
 
 #define ISR_VECTOR_SECTION __attribute__ ((used,section(".vector_table")))
 void reset_handler(void) __attribute__((naked));
-void _isr_nmi(void) __attribute__((interrupt));
-void _isr_hardfault(void) __attribute__((interrupt));
-void _isr_memmanage(void) __attribute__((interrupt));
-void _isr_busfault(void) __attribute__((interrupt));
-void _isr_usagefault(void) __attribute__((interrupt));
 
 /* Default handler for interrupts, infinite loop */
-static void unhandled_interrupt(void) __attribute__((interrupt, unused));
+static void unhandled_interrupt(void) __attribute__((unused));
 
 #define UNHANDLED_ALIAS __attribute__((weak, alias("unhandled_interrupt")));
 
@@ -28,10 +23,11 @@ static void dHardFault_handler(void) __attribute__((naked, unused));
 static void dMemManage_handler(void) __attribute__((unused));
 static void dUsageFault_handler(void) __attribute__((unused));
 static void dBusFault_handler(void) __attribute__((unused));
+static void dNMI_handler(void) __attribute__((unused));
 
 /* ARM Cortex defined interrupt vectors */
 void reset_handler(void) __attribute__((naked));
-void isr_nmi(void) __attribute__((interrupt));
+void isr_nmi(void) __attribute__((weak, alias("dNMI_handler")));
 void isr_hard_fault(void) __attribute__((weak, alias("dHardFault_handler")));
 void isr_mem_manage(void) __attribute__((weak, alias("dMemManage_handler")));
 void isr_bus_fault(void) __attribute__((weak, alias("dBusFault_handler")));
@@ -132,7 +128,7 @@ void isr_dac0(void) UNHANDLED_ALIAS;
 /* void isr_reserved(void) UNHANDLED_ALIAS; */
 void isr_tsi(void) UNHANDLED_ALIAS;
 void isr_mcg(void) UNHANDLED_ALIAS;
-void isr_lpt(void) UNHANDLED_ALIAS;
+void isr_lptmr0(void) UNHANDLED_ALIAS;
 /* void isr_reserved(void) UNHANDLED_ALIAS; */
 void isr_porta_pin_detect(void) UNHANDLED_ALIAS;
 void isr_portb_pin_detect(void) UNHANDLED_ALIAS;
@@ -143,14 +139,14 @@ void isr_porte_pin_detect(void) UNHANDLED_ALIAS;
 /* void isr_reserved(void) UNHANDLED_ALIAS; */
 void isr_software(void) UNHANDLED_ALIAS;
 
-extern void* __stack_top[];
+extern void* _estack[];
 
 typedef void (*ISR_func)(void);
 
 const ISR_func isr_vector[111] ISR_VECTOR_SECTION =
 {
   /* ARM Cortex defined interrupt vectors */
-  (ISR_func)__stack_top,
+  (ISR_func)_estack,
   reset_handler,
   isr_nmi,
   isr_hard_fault,
@@ -253,7 +249,7 @@ const ISR_func isr_vector[111] ISR_VECTOR_SECTION =
   isr_reserved,
   isr_tsi,
   isr_mcg,
-  isr_lpt,
+  isr_lptmr0,
   isr_reserved,
   isr_porta_pin_detect,
   isr_portb_pin_detect,
@@ -266,7 +262,7 @@ const ISR_func isr_vector[111] ISR_VECTOR_SECTION =
 };
 
 void
-isr_nmi(void)
+dNMI_handler(void)
 {
   while(1);
 }
