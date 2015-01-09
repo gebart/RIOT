@@ -3,11 +3,11 @@ OUTPUT_ARCH(arm)
 
 MEMORY
 {
-    flash (rx)  : ORIGIN = 0x0,     LENGTH = 256K
-    sram_l (rwx)    : ORIGIN = 0x1fff8000,  LENGTH = 32K /* Only accessible via code bus. */
-    /* sram_u is split into two separate regions to detect situations where there is too little ram left for the stack during linking. */
-    sram_u (rwx)    : ORIGIN = 0x20000000,  LENGTH = 32K - 2K /* Only accessible via system bus. */
-    stack  (rw)    : ORIGIN = 0x20000000 + 32K - 2K,  LENGTH = 2K /* Only accessible via system bus. */
+    vectors (rx)   : ORIGIN = 0x0,        LENGTH = 0x400
+    flashsec (rx)  : ORIGIN = 0x400,      LENGTH = 0x10
+    flash (rx)     : ORIGIN = 0x410,      LENGTH = 256K - 0x410
+    sram_l (rwx)   : ORIGIN = 0x20000000 - 32K, LENGTH = 32K /* Only accessible via code bus. */
+    sram_u (rwx)   : ORIGIN = 0x20000000, LENGTH = 32K /* Only accessible via system bus. */
 }
 
 /* RAM limits */
@@ -34,9 +34,6 @@ SECTIONS
 
     /* .data and .bss sections */
     INCLUDE data.ld
-
-    /* .stack section */
-    INCLUDE stack.ld
 
     /* Any debugging sections */
     INCLUDE debugging-sections.ld
