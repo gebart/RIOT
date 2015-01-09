@@ -1,5 +1,5 @@
     /* Flash security 0x400-0x40f. */
-    .security 0x400 :
+    .security :
     {
         /* Backdoor key. */
         LONG (0x01234567) LONG (0x89abcdef)
@@ -18,6 +18,6 @@
 
         /* FDPROT: default. */
         BYTE (0xff)
-    } >flash
+    } >flashsec
     ASSERT (SIZEOF(.security) == 0x10, "Flash security sector of invalid size (linker-script error?).")
     ASSERT (. == 0x410, "Flash security sector of invalid size or position (linker-script error?).")
