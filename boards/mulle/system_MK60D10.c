@@ -42,7 +42,6 @@
 
 #include <stdint.h>
 #include "cpu.h"
-#include "rtc.h"
 #include "config-clocks.h"
 
 uint32_t SystemCoreClock = DEFAULT_SYSTEM_CLOCK; /* Current core clock frequency*/
@@ -51,18 +50,6 @@ uint32_t SystemBusClock = DEFAULT_SYSTEM_CLOCK; /* Current bus clock frequency *
 uint32_t SystemFlexBusClock = DEFAULT_SYSTEM_CLOCK; /* Current FlexBus clock frequency */
 uint32_t SystemFlashClock = DEFAULT_SYSTEM_CLOCK; /* Current flash clock frequency */
 uint32_t PIT_ticks_per_usec = DEFAULT_SYSTEM_CLOCK / 1000000;
-
-/* Initialize RTC oscillator as early as possible since we are using it as a
- * base clock for the FLL.
- * It takes a while to stabilize the oscillator, therefore we do this as soon as
- * possible during boot in order to let it stabilize while other stuff is
- * initializing. */
-/*
- * Arrange so that the rtc_init() function is called during early init.
- * Start up crystal to let it stabilize while we copy data */
-/* If the clock is not stable then the UART will have the wrong baud rate for debug prints */
-void __attribute__((section(".preinit_array"))) (*preinit_rtc_init[])(void) = {rtc_init};
-
 
 /* System clock initialization */
 void SystemInit(void)
@@ -85,6 +72,14 @@ void SystemInit(void)
     DEBUGGER_BREAK(BREAK_WRONG_K60_CPU_REV);
     while(1);
   }
+
+  /* Initialize RTC oscillator as early as possible since we are using it as a
+   * base clock for the FLL.
+   * It takes a while to stabilize the oscillator, therefore we do this as soon as
+   * possible during boot in order to let it stabilize while other stuff is
+   * initializing. */
+  /* If the clock is not stable then the UART will have the wrong baud rate for debug prints */
+  rtc_init();
 
   /* Set clock prescalers to safe values */
   /*
