@@ -50,7 +50,6 @@ void board_init(void)
     stdio_init();
 
     LED_GREEN_ON;
-
 }
 
 /**
