@@ -429,9 +429,9 @@
  * @{
  */
 #define RANDOM_NUMOF            (1U)
-#define RANDOM_CLKEN()          (SIM->SCGC6 |= (1 << 9))
-#define RANDOM_CLKDIS()         (SIM->SCGC6 &= ~(1 << 9))
-#define RANDOM_RNGA_BASE        (0x40029000u)
+#define RANDOM_CLKEN()          (BITBAND_REG(SIM->SCGC3, SIM_SCGC3_RNGA_SHIFT) = 1)
+#define RANDOM_CLKDIS()         (BITBAND_REG(SIM->SCGC3, SIM_SCGC3_RNGA_SHIFT) = 0)
+#define RANDOM_RNGA_BASE        (RNG)
 
 /** @} */
 
