@@ -61,12 +61,13 @@ void rtc_init(void)
     }
 
     /* Enable RTC oscillator and non-supervisor mode accesses. */
-    rtc->CR = RTC_CR_OSCE_MASK | RTC_CR_SUP_MASK;
+    /* Enable load capacitance as configured by periph_conf.h */
+    rtc->CR = RTC_CR_OSCE_MASK | RTC_CR_SUP_MASK | RTC_LOAD_CAP_BITS;
 
     /* Clear TAF by writing TAR. */
     rtc->TAR = 0xffffff42;
 
-    /* Disale all RTC interrupts. */
+    /* Disable all RTC interrupts. */
     rtc->IER = 0;
 
     rtc_poweron();
