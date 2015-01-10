@@ -7,7 +7,6 @@ export CPU = k60
 # so it is safe to use the same linker script for both version 1.x and version
 # 2.x silicon.
 # The linker script needs to know the flash and RAM sizes of the device.
-export CPU_MODEL ?= K60DN512VLL10
 
 export GDBPORT ?= 3333
 
@@ -15,8 +14,24 @@ export GDBPORT ?= 3333
 # This was called MULLE_BOARD_SERIAL_NUMBER previously, renamed because
 # MULLE_BOARD_SERIAL_NUMBER is too long to type.
 ifdef MULLE_SERIAL
+  ifeq "200" "$(word 1, $(sort 200 $(MULLE_SERIAL)))"
+    # >= 100
+    ifneq "220" "$(word 1, $(sort 220 $(MULLE_SERIAL)))"
+      # < 220
+      CPU_MODEL = K60DN256ZVLL10
+    else
+      # >= 220
+      CPU_MODEL = K60DN512VLL10
+    endif
+  endif
   CFLAGS += -DMULLE_SERIAL=$(MULLE_SERIAL)
 endif
+
+ifeq ($(CPU_MODEL),)
+  CPU_MODEL = K60DN512VLL10
+endif
+
+export CPU_MODEL
 
 # Host OS name
 OS := $(shell uname)
