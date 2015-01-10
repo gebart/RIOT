@@ -164,10 +164,14 @@ reset_handler(void)
    */
 #endif /* DISABLE_WDOG */
 
-  call_init_array(); /* or __libc_init_array() as provided by newlib or other libc */
-
+  /* initialize the CPU clocks and the board */
   board_init();
 
+  /* initialize std-c library (this should be done after board_init) */
+  __libc_init_array();
+
+  /* startup the kernel */
+  kernel_init();
 #if DISABLE_WDOG
   puts("WARNING: Debug build, Hardware Watchdog disabled, do not use in production installations!\n");
 #endif
