@@ -1,22 +1,79 @@
 # define the cpu used by the Mulle board
 export CPU = k60
-export CPU_MODEL = K60DN512VLL10
+
+### CPU part number (must have a specific linker script for each part)
+# Note that MK60DN256ZVLL10 (version 1.x) and MK60DN256VLL10 (version 2.x, no Z)
+# only differ in some register locations etc, not in the actual memory layout,
+# so it is safe to use the same linker script for both version 1.x and version
+# 2.x silicon.
+# The linker script needs to know the flash and RAM sizes of the device.
+export CPU_MODEL ?= K60DN512VLL10
 
 export GDBPORT ?= 3333
 
-#define the default port depending on the host OS
-OS := $(shell uname)
-ifeq ($(OS),Linux)
-  PORT ?= /dev/ttyUSB0
-else ifeq ($(OS),Darwin)
-  PORT ?= $(shell ls -1 /dev/tty.SLAB_USBtoUART* | head -n 1)
+# MULLE_SERIAL is used to select which specific Mulle board we are compiling for.
+# This was called MULLE_BOARD_SERIAL_NUMBER previously, renamed because
+# MULLE_BOARD_SERIAL_NUMBER is too long to type.
+ifdef MULLE_SERIAL
+  CFLAGS += -DMULLE_SERIAL=$(MULLE_SERIAL)
 endif
+
+# Host OS name
+OS := $(shell uname)
+
+# OpenOCD settings for Mulle board.
+# Try to determine which version of the OpenOCD config file we should use.
+# Specify PROGRAMMER_VERSION or PROGRAMMER_SERIAL to choose a specific programmer board.
+ifeq ($(PROGRAMMER_VERSION),)
+  ifneq ($(PROGRAMMER_SERIAL),)
+    # Makefile-way of comparing numbers, using lexicographical sorting since we don't have any arithmetic comparisons.
+    # Programmers with serial 100 -- 148 are version 0.60
+    # Programmers with serial 301 -- 330 are version 0.70
+    ifeq "100" "$(word 1, $(sort 100 $(PROGRAMMER_SERIAL)))"
+      # >= 100
+      ifneq "149" "$(word 1, $(sort 149 $(PROGRAMMER_SERIAL)))"
+        # < 149
+        PROGRAMMER_VERSION = 0.60
+      else
+        # >= 149
+        PROGRAMMER_VERSION = 0.70
+      endif
+    endif
+  endif
+  # Default to version 0.60 programmer for now.
+  PROGRAMMER_VERSION ?= 0.60
+endif
+
+OOCD_BOARD_FLAGS = -f '$(RIOTBOARD)/$(BOARD)/dist/openocd/mulle-programmer-$(PROGRAMMER_VERSION).conf'
+
+# Add serial matching command
+ifneq ($(PROGRAMMER_SERIAL),)
+  OOCD_BOARD_FLAGS += -c 'ftdi_serial $(PROGRAMMER_SERIAL)'
+
+  ifeq ($(PORT),)
+    # try to find tty name by serial number, only works on Linux currently.
+    ifeq ($(OS),Linux)
+      PORT :=$(shell $(RIOTBOARD)/$(BOARD)/dist/find-tty.sh $(PROGRAMMER_SERIAL))
+    endif
+  endif
+endif
+
+ifeq ($(PORT),)
+    ifeq ($(OS),Linux)
+      PORT := /dev/ttyUSB0
+    else ifeq ($(OS),Darwin)
+      PORT := $(shell ls -1 /dev/tty.SLAB_USBtoUART* | head -n 1)
+    endif
+endif
+
 # TODO: add support for windows as host platform
 ifeq ($(PORT),)
   $(info CAUTION: No terminal port for your host system found!)
 endif
 export PORT
 
+# Default optimization level, possible to override from command line.
+OPTIMIZATION ?= -Os
 
 # define tools used for building the project
 export PREFIX ?= arm-none-eabi-
@@ -39,18 +96,13 @@ export RESET ?= $(OPENOCD)
 # define build specific options
 CPU_USAGE = -mcpu=cortex-m4
 FPU_USAGE = -mfloat-abi=soft -msoft-float
-export CFLAGS += -ggdb -g3 -std=gnu99 -Os -Wall -Wstrict-prototypes -Werror=implicit-function-declaration $(CPU_USAGE) $(FPU_USAGE) -mlittle-endian -mthumb -nostartfiles
+export CFLAGS += -ggdb -g3 -std=gnu99 $(OPTIMIZATION) -Wall -Wstrict-prototypes -Werror=implicit-function-declaration $(CPU_USAGE) $(FPU_USAGE) -mlittle-endian -mthumb -mno-thumb-interwork -nostartfiles
 export CFLAGS += -ffunction-sections -fdata-sections -fno-builtin
 export CXXFLAGS += -ffunction-sections -fdata-sections -fno-builtin
 export ASFLAGS += -ggdb -g3 $(CPU_USAGE) $(FPU_USAGE) -mlittle-endian
 export LINKFLAGS += -g3 -ggdb -std=gnu99 $(CPU_USAGE) $(FPU_USAGE) -mlittle-endian -static -mthumb -nostartfiles -Wl,--fatal-warnings
 export LINKFLAGS += -L$(LINKERSCRIPTPATH) -T$(LINKERSCRIPT)
 export OFLAGS ?= -O binary
-
-OOCD_BOARD_FLAGS ?= -f $(RIOTBOARD)/$(BOARD)/dist/openocd.conf
-ifneq ($(PROGRAMMER_SERIAL),)
-  OOCD_BOARD_FLAGS += -c 'ftdi_serial $(PROGRAMMER_SERIAL)'
-endif
 
 FFLAGS ?= $(OOCD_BOARD_FLAGS)
 FFLAGS += \
@@ -99,9 +151,9 @@ export DEBUGGER_FLAGS
 export TERMFLAGS += -p "$(PORT)"
 
 # use newLib nano-specs if available
-#~ ifeq ($(shell $(LINK) -specs=nano.specs -E - 2>/dev/null >/dev/null </dev/null ; echo $$?),0)
-#~ export LINKFLAGS += -specs=nano.specs -lc -lnosys
-#~ endif
+ifeq ($(shell $(LINK) -specs=nano.specs -E - 2>/dev/null >/dev/null </dev/null ; echo $$?),0)
+export LINKFLAGS += -specs=nano.specs -lc -lnosys
+endif
 
 # export board specific includes to the global includes-listing
 export INCLUDES += -I$(RIOTBOARD)/$(BOARD)/include
