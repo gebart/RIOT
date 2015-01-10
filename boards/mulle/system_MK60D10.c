@@ -43,6 +43,7 @@
 #include <stdint.h>
 #include "cpu.h"
 #include "config-clocks.h"
+#include "periph/rtc.h"
 
 uint32_t SystemCoreClock = DEFAULT_SYSTEM_CLOCK; /* Current core clock frequency*/
 uint32_t SystemSysClock = DEFAULT_SYSTEM_CLOCK; /* Current system clock frequency */
