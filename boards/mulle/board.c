@@ -27,7 +27,6 @@
 #include "devicemap.h"
 
 static void leds_init(void);
-static void stdio_init(void);
 
 void board_init(void)
 {
@@ -47,9 +46,7 @@ void board_init(void)
 
     LED_YELLOW_ON;
 
-    stdio_init();
-
-    LED_GREEN_ON;
+    devicemap_init();
 }
 
 /**
@@ -65,15 +62,4 @@ static void leds_init(void)
     gpio_init_out(LED_RED_GPIO, GPIO_NOPULL);
     gpio_init_out(LED_YELLOW_GPIO, GPIO_NOPULL);
     gpio_init_out(LED_GREEN_GPIO, GPIO_NOPULL);
-}
-
-static void stdio_init(void)
-{
-#ifdef MODULE_UART0
-    /* Enable interrupts for UART0 */
-    uart_init(STDIO, STDIO_BAUDRATE, NULL, NULL, NULL);
-#else
-    uart_init_blocking(STDIO, STDIO_BAUDRATE);
-#endif
-  devicemap_init();
 }
