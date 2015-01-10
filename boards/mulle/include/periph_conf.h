@@ -411,6 +411,31 @@
 
 
 /**
+* @name RTC configuration
+* @{
+*/
+#define RTC_NUMOF           (1U)
+#define RTC_DEV             RTC
+#define RTC_UNLOCK()        (BITBAND_REG(SIM->SCGC6, SIM_SCGC6_RTC_SHIFT) = 1)
+/**
+ * RTC crystal load capacitance configuration bits.
+ */
+/* enable 12pF load capacitance, might need adjusting.. */
+#define RTC_LOAD_CAP_BITS   (RTC_CR_SC8P_MASK | RTC_CR_SC4P_MASK)
+/** @} */
+
+/**
+ * @name Random Number Generator configuration
+ * @{
+ */
+#define RANDOM_NUMOF            (1U)
+#define RANDOM_CLKEN()          (SIM->SCGC6 |= (1 << 9))
+#define RANDOM_CLKDIS()         (SIM->SCGC6 &= ~(1 << 9))
+#define RANDOM_RNGA_BASE        (0x40029000u)
+
+/** @} */
+
+/**
  * @name AT86RF212 configuration
  * @{
  */
