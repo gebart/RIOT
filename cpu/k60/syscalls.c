@@ -51,11 +51,17 @@
 //~ extern int errno;
 
 #include "cpu.h"
+#include "board.h"
 #include "devopttab.h"
 #include "devicemap.h"
 #include "thread.h"
 //~ #include "cfs.h"
 #include "mutex.h"
+#include "ringbuffer.h"
+#include "periph/uart.h"
+#ifdef MODULE_UART0
+#include "board_uart0.h"
+#endif
 
 /* Empty environment definition */
 char *__env[1] = { 0 };
@@ -67,6 +73,57 @@ static mutex_t sbrk_mutex = MUTEX_INIT;
 
 /* Align all sbrk arguments to this many bytes */
 #define DYNAMIC_MEMORY_ALIGN 4
+
+#ifndef MODULE_UART0
+/**
+ * @brief use mutex for waiting on incoming UART chars
+ */
+static mutex_t uart_rx_mutex;
+static char rx_buf_mem[STDIO_RX_BUFSIZE];
+static ringbuffer_t rx_buf;
+#endif
+
+/**
+ * @brief Receive a new character from the UART and put it into the receive buffer
+ */
+static void stdio_rx_cb(void *arg, char data)
+{
+#ifndef MODULE_UART0
+    (void)arg;
+
+    ringbuffer_add_one(&rx_buf, data);
+    mutex_unlock(&uart_rx_mutex);
+#else
+
+    if (uart0_handler_pid) {
+        uart0_handle_incoming(data);
+
+        uart0_notify_thread();
+    }
+
+#endif
+}
+
+/**
+ * @brief Initialize NewLib, called by __libc_init_array() from the startup script
+ */
+void _init(void)
+{
+#ifndef MODULE_UART0
+    mutex_init(&uart_rx_mutex);
+    ringbuffer_init(&rx_buf, rx_buf_mem, STDIO_RX_BUFSIZE);
+#endif
+    uart_init(STDIO, STDIO_BAUDRATE, stdio_rx_cb, 0, 0);
+}
+
+/**
+ * @brief Free resources on NewLib de-initialization, not used for RIOT
+ */
+void _fini(void)
+{
+    /* nothing to do here */
+}
+
 
 /* ************************ */
 /* Process control syscalls */

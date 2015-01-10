@@ -44,7 +44,7 @@ extern uint32_t _data_load[];
  * Copy all initialized variables in .data from flash to RAM.
  * .data must be 4-byte aligned!
  */
-static void
+static inline void
 copy_initialized(void)
 {
   uint32_t *ram = _data_start;
@@ -62,7 +62,7 @@ extern uint32_t __bss_end[];
  * Clear out .bss section.
  * .bss must be 4-byte aligned!
  */
-static void
+static inline void
 clear_bss(void)
 {
   uint32_t *p = __bss_start;
@@ -80,7 +80,7 @@ extern uint32_t _ramcode_load[];
 /*
  * Copy the ramcode section to RAM.
  */
-static void
+static inline void
 copy_ramcode(void)
 {
   uint32_t *ram = _ramcode_start;
@@ -103,7 +103,7 @@ extern void *_vector_rom[];
 /*
  * Copy the interrupt vector table to RAM.
  */
-static void
+static inline void
 copy_isr_vector(void)
 {
   void **ram = _vector_ram_start;
@@ -115,7 +115,7 @@ copy_isr_vector(void)
 
 
 /* Initialize all data used by the C runtime. */
-static void __attribute__((unused))
+static inline void
 init_data(void)
 {
   copy_initialized();
@@ -164,6 +164,9 @@ reset_handler(void)
    */
 #endif /* DISABLE_WDOG */
 
+  /* Copy .data and clear .bss */
+  init_data();
+
   /* initialize the CPU clocks and the board */
   board_init();
 
@@ -180,51 +183,4 @@ reset_handler(void)
 
   /* main should never return, but just in case... */
   while(1);
-}
-/* Initialize static C++ objects etc. */
-
-/* The implementation of call_constructors is based on newlib's
- * __libc_init_array() copyright CodeSourcery */
-
-/* The below copyright notice applies only to the function call_constructors,
- * copied from newlib 2.0 */
-/*
- * Copyright (C) 2004 CodeSourcery, LLC
- *
- * Permission to use, copy, modify, and distribute this file
- * for any purpose is hereby granted without fee, provided that
- * the above copyright notice and this notice appears in all
- * copies.
- *
- * This file is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- */
-
-extern void(*__preinit_array_start[]) (void) __attribute__((weak));
-extern void(*__preinit_array_end[]) (void) __attribute__((weak));
-extern void(*__init_array_start[]) (void) __attribute__((weak));
-extern void(*__init_array_end[]) (void) __attribute__((weak));
-void _init(void);
-
-/* Initialize all C runtime data after preinit */
-void _init(void) __attribute__((alias("init_data")));
-
-
-void
-call_init_array(void)
-{
-  size_t count;
-  size_t i;
-
-  count = __preinit_array_end - __preinit_array_start;
-  for(i = 0; i < count; i++) {
-    __preinit_array_start[i]();
-  }
-
-  _init();
-
-  count = __init_array_end - __init_array_start;
-  for(i = 0; i < count; i++) {
-    __init_array_start[i]();
-  }
 }

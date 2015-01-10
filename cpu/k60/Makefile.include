@@ -40,3 +40,4 @@ export INCLUDES += -I$(RIOTCPU)/$(CPU)/include
 export UNDEF += $(BINDIR)cpu/syscalls.o
 export UNDEF += $(BINDIR)cpu/startup.o
 export UNDEF += $(BINDIR)cpu/ssp.o
+export UNDEF += $(BINDIR)cpu/interrupt-vector-k60.o
