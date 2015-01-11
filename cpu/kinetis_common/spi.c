@@ -102,6 +102,32 @@ int spi_init_master(spi_t dev, spi_conf_t conf, spi_speed_t speed)
                        | SPI_CTAR_PBR(0)
                        | SPI_CTAR_BR(1);
 
+    /* Set clock polarity and phase. */
+    switch (conf) {
+        case SPI_CONF_FIRST_RISING:
+            spi_dev->CTAR[0] &= ~(SPI_CTAR_CPHA_MASK | SPI_CTAR_CPOL_MASK);
+            spi_dev->CTAR[1] &= ~(SPI_CTAR_CPHA_MASK | SPI_CTAR_CPOL_MASK);
+            break;
+        case SPI_CONF_SECOND_RISING:
+            spi_dev->CTAR[0] &= ~(SPI_CTAR_CPOL_MASK);
+            spi_dev->CTAR[0] |= SPI_CTAR_CPHA_MASK;
+            spi_dev->CTAR[1] &= ~(SPI_CTAR_CPOL_MASK);
+            spi_dev->CTAR[1] |= SPI_CTAR_CPHA_MASK;
+            break;
+        case SPI_CONF_FIRST_FALLING:
+            spi_dev->CTAR[0] &= ~(SPI_CTAR_CPHA_MASK);
+            spi_dev->CTAR[0] |= SPI_CTAR_CPOL_MASK;
+            spi_dev->CTAR[1] &= ~(SPI_CTAR_CPHA_MASK);
+            spi_dev->CTAR[1] |= SPI_CTAR_CPOL_MASK;
+            break;
+        case SPI_CONF_SECOND_FALLING:
+            spi_dev->CTAR[0] |= SPI_CTAR_CPHA_MASK | SPI_CTAR_CPOL_MASK;
+            spi_dev->CTAR[1] |= SPI_CTAR_CPHA_MASK | SPI_CTAR_CPOL_MASK;
+            break;
+        default:
+            return -2;
+    }
+
     /* enable SPI */
     spi_dev->MCR = SPI_MCR_MSTR_MASK
                    | SPI_MCR_PCSIS(1)
@@ -140,6 +166,32 @@ int spi_init_slave(spi_t dev, spi_conf_t conf, char(*cb)(char data))
 
     /* set speed */
     spi_dev->CTAR[0] = SPI_CTAR_SLAVE_FMSZ(7);
+
+    /* Set clock polarity and phase. */
+    switch (conf) {
+        case SPI_CONF_FIRST_RISING:
+            spi_dev->CTAR[0] &= ~(SPI_CTAR_CPHA_MASK | SPI_CTAR_CPOL_MASK);
+            spi_dev->CTAR[1] &= ~(SPI_CTAR_CPHA_MASK | SPI_CTAR_CPOL_MASK);
+            break;
+        case SPI_CONF_SECOND_RISING:
+            spi_dev->CTAR[0] &= ~(SPI_CTAR_CPOL_MASK);
+            spi_dev->CTAR[0] |= SPI_CTAR_CPHA_MASK;
+            spi_dev->CTAR[1] &= ~(SPI_CTAR_CPOL_MASK);
+            spi_dev->CTAR[1] |= SPI_CTAR_CPHA_MASK;
+            break;
+        case SPI_CONF_FIRST_FALLING:
+            spi_dev->CTAR[0] &= ~(SPI_CTAR_CPHA_MASK);
+            spi_dev->CTAR[0] |= SPI_CTAR_CPOL_MASK;
+            spi_dev->CTAR[1] &= ~(SPI_CTAR_CPHA_MASK);
+            spi_dev->CTAR[1] |= SPI_CTAR_CPOL_MASK;
+            break;
+        case SPI_CONF_SECOND_FALLING:
+            spi_dev->CTAR[0] |= SPI_CTAR_CPHA_MASK | SPI_CTAR_CPOL_MASK;
+            spi_dev->CTAR[1] |= SPI_CTAR_CPHA_MASK | SPI_CTAR_CPOL_MASK;
+            break;
+        default:
+            return -2;
+    }
 
     /* enable SPI */
     spi_dev->MCR = SPI_MCR_DOZE_MASK
