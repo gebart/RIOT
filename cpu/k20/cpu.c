@@ -96,13 +96,13 @@ static void cpu_clock_init(void)
 }
 
 
-#ifndef K20_SUPPRESS_UNSAFE_FLL_FACTOR_WARNING
+#if defined(K20_USE_UNSAFE_FLL_FACTOR_ON_INTERNAL_OSCILLATOR) && defined(K20_SUPPRESS_UNSAFE_FLL_FACTOR_WARNING)
 #warning "This MCU uses an internal oscillator with a frequency very close to the max specified value. If the internal oscillator is not correctly calibrated this MIGHT damage your hardware. Check /cpu/k20/cpu.c:cpu_clock_init() for further details on this matter. Define K20_SUPPRESS_UNSAFE_FLL_FACTOR_WARNING to supress this warning. Undefine K20_USE_UNSAFE_FLL_FACTOR_ON_INTERNAL_OSCILLATOR to use safe defaults."
 #endif
 
 
 /**
- * Flash configuration field
+ * Flash configuration field. Default values for now.
  */
 #ifdef CPU_INCLUDE_FLASH_CONFIG
 NV_Type flash_config __attribute__ ((section(".flash_config"), used, weak)) = {
