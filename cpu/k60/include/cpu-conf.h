@@ -93,15 +93,17 @@
 
 /**
  * @name Kernel configuration
+ *
+ * TODO: Tune this
  * @{
  */
-#define KERNEL_CONF_STACKSIZE_PRINTF    (2500)
+#define KERNEL_CONF_STACKSIZE_PRINTF    (1024)
 
 #ifndef KERNEL_CONF_STACKSIZE_DEFAULT
-#define KERNEL_CONF_STACKSIZE_DEFAULT   (2500)
+#define KERNEL_CONF_STACKSIZE_DEFAULT   (1024)
 #endif
 
-#define KERNEL_CONF_STACKSIZE_IDLE      (512)
+#define KERNEL_CONF_STACKSIZE_IDLE      (256)
 /** @} */
 
 /**
