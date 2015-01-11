@@ -7,7 +7,7 @@
  */
 
 /**
- * @ingroup         cpu_k20
+ * @ingroup         cpu_k20_definitions
  * @{
  *
  * @file

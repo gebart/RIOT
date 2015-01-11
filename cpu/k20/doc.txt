@@ -1,0 +1,15 @@
+/**
+ * @defgroup        cpu_k20 Freescale K20
+ * @ingroup         cpu
+ * @brief           Freescale Kinetis K20 CPU family
+ *
+ * @note    This implementation currently only supports the k20_50 subfamily without FPU
+ *          and a max frequency of 50 Mhz. The newer K20 devices with higher frequencies
+ *          can probably be added easily.
+ */
+
+/**
+ * @defgroup        cpu_k20_definitions CPU definitions
+ * @ingroup         cpu_k20
+ * @brief           Definitions for the k20 CPU
+ */

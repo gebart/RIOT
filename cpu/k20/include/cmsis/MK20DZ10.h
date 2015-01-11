@@ -1,20 +1,32 @@
 /*
 ** ###################################################################
+**     Processors:          MK20DN512ZVLK10
+**                          MK20DX256ZVLK10
+**                          MK20DN512ZVLL10
+**                          MK20DX256ZVLL10
+**                          MK20DN512ZVLQ10
+**                          MK20DX128ZVLQ10
+**                          MK20DX256ZVLQ10
+**                          MK20DN512ZVMB10
+**                          MK20DX256ZVMB10
+**                          MK20DN512ZVMC10
+**                          MK20DX256ZVMC10
+**                          MK20DN512ZVMD10
+**                          MK20DX256ZVMD10
+**                          MK20DX128ZVMD10
+**
 **     Compilers:           ARM Compiler
 **                          Freescale C/C++ for Embedded ARM
 **                          GNU C Compiler
 **                          IAR ANSI C/C++ Compiler for ARM
 **
-**     Reference manuals:   K20P64M50SF0RM Rev. 1, Oct 2011
-**                          K20P32M50SF0RM Rev. 1, Oct 2011
-**                          K20P48M50SF0RM Rev. 1, Oct 2011
-**
-**     Version:             rev. 2.0, 2012-03-19
+**     Reference manual:    K20P144M100SF2RM, Rev. 5, 8 May 2011
+**     Version:             rev. 1.2, 2011-09-08
 **
 **     Abstract:
-**         CMSIS Peripheral Access Layer for MK20D5
+**         CMSIS Peripheral Access Layer for MK20DZ10
 **
-**     Copyright: 1997 - 2012 Freescale Semiconductor, Inc. All Rights Reserved.
+**     Copyright: 1997 - 2011 Freescale Semiconductor, Inc. All Rights Reserved.
 **
 **     Redistribution and use in source and binary forms, with or without modification,
 **     are permitted provided that the following conditions are met:
@@ -45,36 +57,42 @@
 **     mail:                 support@freescale.com
 **
 **     Revisions:
-**     - rev. 1.0 (2011-12-15)
-**         Initial version
-**     - rev. 2.0 (2012-03-19)
-**         PDB Peripheral register structure updated.
-**         DMA Registers and bits for unsupported DMA channels removed.
+**     - rev. 1.0 (2011-06-10)
+**         Initial version.
+**         Changes with respect to the previous MK20NxxxMD100 header files:
+**         RTC  - CCR register removed. Replaced by IER register.
+**         CRC  - added CTRLHU register for 8-bit access to the CTRL register.
+**         FB   - bit FB_CSCR_EXALE renamed to FB_CSCR_EXTS.
+**         SIM  - bit group FSIZE in SIM_FCFG1 split into groups PFSIZE and NVMSIZE.
+**         I2S  - bit SSIEN in I2S_CR register renamed to I2SEN.
+**         SDHC - bit VOLTSEL in SDHC_VENDOR register removed.
+**     - rev. 1.1 (2011-06-29)
+**         Order of declarations changed.
+**     - rev. 1.2 (2011-09-08)
+**         Cortex_Core_Configuration extended with additional parameters.
+**         Gap between end of interrupt vector table and flash configuration field filled by default ISR.
 **
 ** ###################################################################
 */
 
 /**
- * @file MK20D5.h
- * @version 2.0
- * @date 2012-03-19
- * @brief CMSIS Peripheral Access Layer for MK20D5
+ * @file MK20DZ10.h
+ * @version 1.2
+ * @date 2011-09-08
+ * @brief CMSIS Peripheral Access Layer for MK20DZ10
  *
- * CMSIS Peripheral Access Layer for MK20D5
+ * CMSIS Peripheral Access Layer for MK20DZ10
  */
 
 /** @addtogroup CMSIS
   * @{
   */
 
-#if !defined(MK20D5_H_)
-#define MK20D5_H_                                /**< Symbol preventing repeated inclusion */
+#if !defined(MK20DZ10_H_)
+#define MK20DZ10_H_                              /**< Symbol preventing repeated inclusion */
 
-/** Memory map major version (memory maps with equal major version number are
- * compatible) */
-#define MCU_MEM_MAP_VERSION 0x0200u
-/** Memory map minor version */
-#define MCU_MEM_MAP_VERSION_MINOR 0x0000u
+/** Memory map version 1.2 */
+#define MCU_MEM_MAP_VERSION 0x0102u
 
 /**
  * @brief Macro to access a single bit of a peripheral register (bit band region
@@ -107,52 +125,110 @@ typedef enum IRQn {
   SysTick_IRQn                 = -1,               /**< Cortex-M4 System Tick Interrupt */
 
   /* Device specific interrupts */
-  DMA0_IRQn                    = 0,                /**< DMA channel 0 transfer complete interrupt */
-  DMA1_IRQn                    = 1,                /**< DMA channel 1 transfer complete interrupt */
-  DMA2_IRQn                    = 2,                /**< DMA channel 2 transfer complete interrupt */
-  DMA3_IRQn                    = 3,                /**< DMA channel 3 transfer complete interrupt */
-  DMA_Error_IRQn               = 4,                /**< DMA error interrupt */
-  Reserved21_IRQn              = 5,                /**< Reserved interrupt 21 */
-  FTFL_IRQn                    = 6,                /**< FTFL interrupt */
-  Read_Collision_IRQn          = 7,                /**< Read collision interrupt */
-  LVD_LVW_IRQn                 = 8,                /**< Low Voltage Detect, Low Voltage Warning */
-  LLW_IRQn                     = 9,                /**< Low Leakage Wakeup */
-  Watchdog_IRQn                = 10,               /**< WDOG interrupt */
-  I2C0_IRQn                    = 11,               /**< I2C0 interrupt */
-  SPI0_IRQn                    = 12,               /**< SPI0 interrupt */
-  I2S0_Tx_IRQn                 = 13,               /**< I2S0 transmit interrupt */
-  I2S0_Rx_IRQn                 = 14,               /**< I2S0 receive interrupt */
-  UART0_LON_IRQn               = 15,               /**< UART0 LON interrupt */
-  UART0_RX_TX_IRQn             = 16,               /**< UART0 receive/transmit interrupt */
-  UART0_ERR_IRQn               = 17,               /**< UART0 error interrupt */
-  UART1_RX_TX_IRQn             = 18,               /**< UART1 receive/transmit interrupt */
-  UART1_ERR_IRQn               = 19,               /**< UART1 error interrupt */
-  UART2_RX_TX_IRQn             = 20,               /**< UART2 receive/transmit interrupt */
-  UART2_ERR_IRQn               = 21,               /**< UART2 error interrupt */
-  ADC0_IRQn                    = 22,               /**< ADC0 interrupt */
-  CMP0_IRQn                    = 23,               /**< CMP0 interrupt */
-  CMP1_IRQn                    = 24,               /**< CMP1 interrupt */
-  FTM0_IRQn                    = 25,               /**< FTM0 fault, overflow and channels interrupt */
-  FTM1_IRQn                    = 26,               /**< FTM1 fault, overflow and channels interrupt */
-  CMT_IRQn                     = 27,               /**< CMT interrupt */
-  RTC_IRQn                     = 28,               /**< RTC interrupt */
-  RTC_Seconds_IRQn             = 29,               /**< RTC seconds interrupt */
-  PIT0_IRQn                    = 30,               /**< PIT timer channel 0 interrupt */
-  PIT1_IRQn                    = 31,               /**< PIT timer channel 1 interrupt */
-  PIT2_IRQn                    = 32,               /**< PIT timer channel 2 interrupt */
-  PIT3_IRQn                    = 33,               /**< PIT timer channel 3 interrupt */
-  PDB0_IRQn                    = 34,               /**< PDB0 interrupt */
-  USB0_IRQn                    = 35,               /**< USB0 interrupt */
-  USBDCD_IRQn                  = 36,               /**< USBDCD interrupt */
-  TSI0_IRQn                    = 37,               /**< TSI0 interrupt */
-  MCG_IRQn                     = 38,               /**< MCG interrupt */
-  LPTimer_IRQn                 = 39,               /**< LPTimer interrupt */
-  PORTA_IRQn                   = 40,               /**< Port A interrupt */
-  PORTB_IRQn                   = 41,               /**< Port B interrupt */
-  PORTC_IRQn                   = 42,               /**< Port C interrupt */
-  PORTD_IRQn                   = 43,               /**< Port D interrupt */
-  PORTE_IRQn                   = 44,               /**< Port E interrupt */
-  SWI_IRQn                     = 45                /**< Software interrupt */
+  DMA0_IRQn                    = 0,                /**< DMA Channel 0 Transfer Complete */
+  DMA1_IRQn                    = 1,                /**< DMA Channel 1 Transfer Complete */
+  DMA2_IRQn                    = 2,                /**< DMA Channel 2 Transfer Complete */
+  DMA3_IRQn                    = 3,                /**< DMA Channel 3 Transfer Complete */
+  DMA4_IRQn                    = 4,                /**< DMA Channel 4 Transfer Complete */
+  DMA5_IRQn                    = 5,                /**< DMA Channel 5 Transfer Complete */
+  DMA6_IRQn                    = 6,                /**< DMA Channel 6 Transfer Complete */
+  DMA7_IRQn                    = 7,                /**< DMA Channel 7 Transfer Complete */
+  DMA8_IRQn                    = 8,                /**< DMA Channel 8 Transfer Complete */
+  DMA9_IRQn                    = 9,                /**< DMA Channel 9 Transfer Complete */
+  DMA10_IRQn                   = 10,               /**< DMA Channel 10 Transfer Complete */
+  DMA11_IRQn                   = 11,               /**< DMA Channel 11 Transfer Complete */
+  DMA12_IRQn                   = 12,               /**< DMA Channel 12 Transfer Complete */
+  DMA13_IRQn                   = 13,               /**< DMA Channel 13 Transfer Complete */
+  DMA14_IRQn                   = 14,               /**< DMA Channel 14 Transfer Complete */
+  DMA15_IRQn                   = 15,               /**< DMA Channel 15 Transfer Complete */
+  DMA_Error_IRQn               = 16,               /**< DMA Error Interrupt */
+  MCM_IRQn                     = 17,               /**< Normal Interrupt */
+  FTFL_IRQn                    = 18,               /**< FTFL Interrupt */
+  Read_Collision_IRQn          = 19,               /**< Read Collision Interrupt */
+  LVD_LVW_IRQn                 = 20,               /**< Low Voltage Detect, Low Voltage Warning */
+  LLW_IRQn                     = 21,               /**< Low Leakage Wakeup */
+  Watchdog_IRQn                = 22,               /**< WDOG Interrupt */
+  Reserved39_IRQn              = 23,               /**< Reserved interrupt 39 */
+  I2C0_IRQn                    = 24,               /**< I2C0 interrupt */
+  I2C1_IRQn                    = 25,               /**< I2C1 interrupt */
+  SPI0_IRQn                    = 26,               /**< SPI0 Interrupt */
+  SPI1_IRQn                    = 27,               /**< SPI1 Interrupt */
+  SPI2_IRQn                    = 28,               /**< SPI2 Interrupt */
+  CAN0_ORed_Message_buffer_IRQn = 29,              /**< CAN0 OR'd Message Buffers Interrupt */
+  CAN0_Bus_Off_IRQn            = 30,               /**< CAN0 Bus Off Interrupt */
+  CAN0_Error_IRQn              = 31,               /**< CAN0 Error Interrupt */
+  CAN0_Tx_Warning_IRQn         = 32,               /**< CAN0 Tx Warning Interrupt */
+  CAN0_Rx_Warning_IRQn         = 33,               /**< CAN0 Rx Warning Interrupt */
+  CAN0_Wake_Up_IRQn            = 34,               /**< CAN0 Wake Up Interrupt */
+  Reserved51_IRQn              = 35,               /**< Reserved interrupt 51 */
+  Reserved52_IRQn              = 36,               /**< Reserved interrupt 52 */
+  CAN1_ORed_Message_buffer_IRQn = 37,              /**< CAN1 OR'd Message Buffers Interrupt */
+  CAN1_Bus_Off_IRQn            = 38,               /**< CAN1 Bus Off Interrupt */
+  CAN1_Error_IRQn              = 39,               /**< CAN1 Error Interrupt */
+  CAN1_Tx_Warning_IRQn         = 40,               /**< CAN1 Tx Warning Interrupt */
+  CAN1_Rx_Warning_IRQn         = 41,               /**< CAN1 Rx Warning Interrupt */
+  CAN1_Wake_Up_IRQn            = 42,               /**< CAN1 Wake Up Interrupt */
+  Reserved59_IRQn              = 43,               /**< Reserved interrupt 59 */
+  Reserved60_IRQn              = 44,               /**< Reserved interrupt 60 */
+  UART0_RX_TX_IRQn             = 45,               /**< UART0 Receive/Transmit interrupt */
+  UART0_ERR_IRQn               = 46,               /**< UART0 Error interrupt */
+  UART1_RX_TX_IRQn             = 47,               /**< UART1 Receive/Transmit interrupt */
+  UART1_ERR_IRQn               = 48,               /**< UART1 Error interrupt */
+  UART2_RX_TX_IRQn             = 49,               /**< UART2 Receive/Transmit interrupt */
+  UART2_ERR_IRQn               = 50,               /**< UART2 Error interrupt */
+  UART3_RX_TX_IRQn             = 51,               /**< UART3 Receive/Transmit interrupt */
+  UART3_ERR_IRQn               = 52,               /**< UART3 Error interrupt */
+  UART4_RX_TX_IRQn             = 53,               /**< UART4 Receive/Transmit interrupt */
+  UART4_ERR_IRQn               = 54,               /**< UART4 Error interrupt */
+  UART5_RX_TX_IRQn             = 55,               /**< UART5 Receive/Transmit interrupt */
+  UART5_ERR_IRQn               = 56,               /**< UART5 Error interrupt */
+  ADC0_IRQn                    = 57,               /**< ADC0 interrupt */
+  ADC1_IRQn                    = 58,               /**< ADC1 interrupt */
+  CMP0_IRQn                    = 59,               /**< CMP0 interrupt */
+  CMP1_IRQn                    = 60,               /**< CMP1 interrupt */
+  CMP2_IRQn                    = 61,               /**< CMP2 interrupt */
+  FTM0_IRQn                    = 62,               /**< FTM0 fault, overflow and channels interrupt */
+  FTM1_IRQn                    = 63,               /**< FTM1 fault, overflow and channels interrupt */
+  FTM2_IRQn                    = 64,               /**< FTM2 fault, overflow and channels interrupt */
+  CMT_IRQn                     = 65,               /**< CMT interrupt */
+  RTC_IRQn                     = 66,               /**< RTC interrupt */
+  Reserved83_IRQn              = 67,               /**< Reserved interrupt 83 */
+  PIT0_IRQn                    = 68,               /**< PIT timer channel 0 interrupt */
+  PIT1_IRQn                    = 69,               /**< PIT timer channel 1 interrupt */
+  PIT2_IRQn                    = 70,               /**< PIT timer channel 2 interrupt */
+  PIT3_IRQn                    = 71,               /**< PIT timer channel 3 interrupt */
+  PDB0_IRQn                    = 72,               /**< PDB0 Interrupt */
+  USB0_IRQn                    = 73,               /**< USB0 interrupt */
+  USBDCD_IRQn                  = 74,               /**< USBDCD Interrupt */
+  Reserved91_IRQn              = 75,               /**< Reserved interrupt 91 */
+  Reserved92_IRQn              = 76,               /**< Reserved interrupt 92 */
+  Reserved93_IRQn              = 77,               /**< Reserved interrupt 93 */
+  Reserved94_IRQn              = 78,               /**< Reserved interrupt 94 */
+  I2S0_IRQn                    = 79,               /**< I2S0 Interrupt */
+  SDHC_IRQn                    = 80,               /**< SDHC Interrupt */
+  DAC0_IRQn                    = 81,               /**< DAC0 interrupt */
+  DAC1_IRQn                    = 82,               /**< DAC1 interrupt */
+  TSI0_IRQn                    = 83,               /**< TSI0 Interrupt */
+  MCG_IRQn                     = 84,               /**< MCG Interrupt */
+  LPTimer_IRQn                 = 85,               /**< LPTimer interrupt */
+  Reserved102_IRQn             = 86,               /**< Reserved interrupt 102 */
+  PORTA_IRQn                   = 87,               /**< Port A interrupt */
+  PORTB_IRQn                   = 88,               /**< Port B interrupt */
+  PORTC_IRQn                   = 89,               /**< Port C interrupt */
+  PORTD_IRQn                   = 90,               /**< Port D interrupt */
+  PORTE_IRQn                   = 91,               /**< Port E interrupt */
+  Reserved108_IRQn             = 92,               /**< Reserved interrupt 108 */
+  Reserved109_IRQn             = 93,               /**< Reserved interrupt 109 */
+  Reserved110_IRQn             = 94,               /**< Reserved interrupt 110 */
+  Reserved111_IRQn             = 95,               /**< Reserved interrupt 111 */
+  Reserved112_IRQn             = 96,               /**< Reserved interrupt 112 */
+  Reserved113_IRQn             = 97,               /**< Reserved interrupt 113 */
+  Reserved114_IRQn             = 98,               /**< Reserved interrupt 114 */
+  Reserved115_IRQn             = 99,               /**< Reserved interrupt 115 */
+  Reserved116_IRQn             = 100,              /**< Reserved interrupt 116 */
+  Reserved117_IRQn             = 101,              /**< Reserved interrupt 117 */
+  Reserved118_IRQn             = 102,              /**< Reserved interrupt 118 */
+  Reserved119_IRQn             = 103               /**< Reserved interrupt 119 */
 } IRQn_Type;
 
 /**
@@ -161,19 +237,22 @@ typedef enum IRQn {
 
 
 /* ----------------------------------------------------------------------------
-   -- Cortex M4 Core Configuration
+   -- Configuration of the Cortex-M4 Processor and Core Peripherals
    ---------------------------------------------------------------------------- */
 
 /**
- * @addtogroup Cortex_Core_Configuration Cortex M4 Core Configuration
+ * @addtogroup Cortex_Core_Configuration Configuration of the Cortex-M4 Processor and Core Peripherals
  * @{
  */
 
-#define __MPU_PRESENT                  1         /**< Defines if an MPU is present or not */
-#define __NVIC_PRIO_BITS               4         /**< Number of priority bits implemented in the NVIC */
-#define __Vendor_SysTickConfig         0         /**< Vendor specific implementation of SysTickConfig is defined */
+#define __CM4_REV                      0x0001    /**< Core revision r0p1 */
+#define __MPU_PRESENT                  0         /**< MPU present or not */
+#define __NVIC_PRIO_BITS               4         /**< Number of Bits used for Priority Levels */
+#define __Vendor_SysTickConfig         0         /**< Set to 1 if different SysTick Config is used */
+#define __FPU_PRESENT                  0         /**< FPU present or not */
 
 #include "core_cm4.h"                  /* Core Peripheral Access Layer */
+#include "system_MK20DZ10.h"           /* Device specific configuration file */
 
 /**
  * @}
@@ -237,7 +316,7 @@ typedef struct {
   __IO uint32_t CLP2;                              /**< ADC plus-side general calibration value register, offset: 0x44 */
   __IO uint32_t CLP1;                              /**< ADC plus-side general calibration value register, offset: 0x48 */
   __IO uint32_t CLP0;                              /**< ADC plus-side general calibration value register, offset: 0x4C */
-       uint8_t RESERVED_0[4];
+  __IO uint32_t PGA;                               /**< ADC PGA register, offset: 0x50 */
   __IO uint32_t CLMD;                              /**< ADC minus-side general calibration value register, offset: 0x54 */
   __IO uint32_t CLMS;                              /**< ADC minus-side general calibration value register, offset: 0x58 */
   __IO uint32_t CLM4;                              /**< ADC minus-side general calibration value register, offset: 0x5C */
@@ -370,6 +449,12 @@ typedef struct {
 #define ADC_CLP0_CLP0_MASK                       0x3Fu
 #define ADC_CLP0_CLP0_SHIFT                      0
 #define ADC_CLP0_CLP0(x)                         (((uint32_t)(((uint32_t)(x))<<ADC_CLP0_CLP0_SHIFT))&ADC_CLP0_CLP0_MASK)
+/* PGA Bit Fields */
+#define ADC_PGA_PGAG_MASK                        0xF0000u
+#define ADC_PGA_PGAG_SHIFT                       16
+#define ADC_PGA_PGAG(x)                          (((uint32_t)(((uint32_t)(x))<<ADC_PGA_PGAG_SHIFT))&ADC_PGA_PGAG_MASK)
+#define ADC_PGA_PGAEN_MASK                       0x800000u
+#define ADC_PGA_PGAEN_SHIFT                      23
 /* CLMD Bit Fields */
 #define ADC_CLMD_CLMD_MASK                       0x3Fu
 #define ADC_CLMD_CLMD_SHIFT                      0
@@ -409,10 +494,1335 @@ typedef struct {
 #define ADC0_BASE                                (0x4003B000u)
 /** Peripheral ADC0 base pointer */
 #define ADC0                                     ((ADC_Type *)ADC0_BASE)
+/** Peripheral ADC1 base address */
+#define ADC1_BASE                                (0x400BB000u)
+/** Peripheral ADC1 base pointer */
+#define ADC1                                     ((ADC_Type *)ADC1_BASE)
 
 /**
  * @}
  */ /* end of group ADC_Peripheral_Access_Layer */
+
+
+/* ----------------------------------------------------------------------------
+   -- AIPS Peripheral Access Layer
+   ---------------------------------------------------------------------------- */
+
+/**
+ * @addtogroup AIPS_Peripheral_Access_Layer AIPS Peripheral Access Layer
+ * @{
+ */
+
+/** AIPS - Register Layout Typedef */
+typedef struct {
+  __IO uint32_t MPRA;                              /**< Master Privilege Register A, offset: 0x0 */
+       uint8_t RESERVED_0[28];
+  __IO uint32_t PACRA;                             /**< Peripheral Access Control Register, offset: 0x20 */
+  __IO uint32_t PACRB;                             /**< Peripheral Access Control Register, offset: 0x24 */
+  __IO uint32_t PACRC;                             /**< Peripheral Access Control Register, offset: 0x28 */
+  __IO uint32_t PACRD;                             /**< Peripheral Access Control Register, offset: 0x2C */
+       uint8_t RESERVED_1[16];
+  __IO uint32_t PACRE;                             /**< Peripheral Access Control Register, offset: 0x40 */
+  __IO uint32_t PACRF;                             /**< Peripheral Access Control Register, offset: 0x44 */
+  __IO uint32_t PACRG;                             /**< Peripheral Access Control Register, offset: 0x48 */
+  __IO uint32_t PACRH;                             /**< Peripheral Access Control Register, offset: 0x4C */
+  __IO uint32_t PACRI;                             /**< Peripheral Access Control Register, offset: 0x50 */
+  __IO uint32_t PACRJ;                             /**< Peripheral Access Control Register, offset: 0x54 */
+  __IO uint32_t PACRK;                             /**< Peripheral Access Control Register, offset: 0x58 */
+  __IO uint32_t PACRL;                             /**< Peripheral Access Control Register, offset: 0x5C */
+  __IO uint32_t PACRM;                             /**< Peripheral Access Control Register, offset: 0x60 */
+  __IO uint32_t PACRN;                             /**< Peripheral Access Control Register, offset: 0x64 */
+  __IO uint32_t PACRO;                             /**< Peripheral Access Control Register, offset: 0x68 */
+  __IO uint32_t PACRP;                             /**< Peripheral Access Control Register, offset: 0x6C */
+} AIPS_Type;
+
+/* ----------------------------------------------------------------------------
+   -- AIPS Register Masks
+   ---------------------------------------------------------------------------- */
+
+/**
+ * @addtogroup AIPS_Register_Masks AIPS Register Masks
+ * @{
+ */
+
+/* MPRA Bit Fields */
+#define AIPS_MPRA_MPL5_MASK                      0x100u
+#define AIPS_MPRA_MPL5_SHIFT                     8
+#define AIPS_MPRA_MTW5_MASK                      0x200u
+#define AIPS_MPRA_MTW5_SHIFT                     9
+#define AIPS_MPRA_MTR5_MASK                      0x400u
+#define AIPS_MPRA_MTR5_SHIFT                     10
+#define AIPS_MPRA_MPL4_MASK                      0x1000u
+#define AIPS_MPRA_MPL4_SHIFT                     12
+#define AIPS_MPRA_MTW4_MASK                      0x2000u
+#define AIPS_MPRA_MTW4_SHIFT                     13
+#define AIPS_MPRA_MTR4_MASK                      0x4000u
+#define AIPS_MPRA_MTR4_SHIFT                     14
+#define AIPS_MPRA_MPL3_MASK                      0x10000u
+#define AIPS_MPRA_MPL3_SHIFT                     16
+#define AIPS_MPRA_MTW3_MASK                      0x20000u
+#define AIPS_MPRA_MTW3_SHIFT                     17
+#define AIPS_MPRA_MTR3_MASK                      0x40000u
+#define AIPS_MPRA_MTR3_SHIFT                     18
+#define AIPS_MPRA_MPL2_MASK                      0x100000u
+#define AIPS_MPRA_MPL2_SHIFT                     20
+#define AIPS_MPRA_MTW2_MASK                      0x200000u
+#define AIPS_MPRA_MTW2_SHIFT                     21
+#define AIPS_MPRA_MTR2_MASK                      0x400000u
+#define AIPS_MPRA_MTR2_SHIFT                     22
+#define AIPS_MPRA_MPL1_MASK                      0x1000000u
+#define AIPS_MPRA_MPL1_SHIFT                     24
+#define AIPS_MPRA_MTW1_MASK                      0x2000000u
+#define AIPS_MPRA_MTW1_SHIFT                     25
+#define AIPS_MPRA_MTR1_MASK                      0x4000000u
+#define AIPS_MPRA_MTR1_SHIFT                     26
+#define AIPS_MPRA_MPL0_MASK                      0x10000000u
+#define AIPS_MPRA_MPL0_SHIFT                     28
+#define AIPS_MPRA_MTW0_MASK                      0x20000000u
+#define AIPS_MPRA_MTW0_SHIFT                     29
+#define AIPS_MPRA_MTR0_MASK                      0x40000000u
+#define AIPS_MPRA_MTR0_SHIFT                     30
+/* PACRA Bit Fields */
+#define AIPS_PACRA_TP7_MASK                      0x1u
+#define AIPS_PACRA_TP7_SHIFT                     0
+#define AIPS_PACRA_WP7_MASK                      0x2u
+#define AIPS_PACRA_WP7_SHIFT                     1
+#define AIPS_PACRA_SP7_MASK                      0x4u
+#define AIPS_PACRA_SP7_SHIFT                     2
+#define AIPS_PACRA_TP6_MASK                      0x10u
+#define AIPS_PACRA_TP6_SHIFT                     4
+#define AIPS_PACRA_WP6_MASK                      0x20u
+#define AIPS_PACRA_WP6_SHIFT                     5
+#define AIPS_PACRA_SP6_MASK                      0x40u
+#define AIPS_PACRA_SP6_SHIFT                     6
+#define AIPS_PACRA_TP5_MASK                      0x100u
+#define AIPS_PACRA_TP5_SHIFT                     8
+#define AIPS_PACRA_WP5_MASK                      0x200u
+#define AIPS_PACRA_WP5_SHIFT                     9
+#define AIPS_PACRA_SP5_MASK                      0x400u
+#define AIPS_PACRA_SP5_SHIFT                     10
+#define AIPS_PACRA_TP4_MASK                      0x1000u
+#define AIPS_PACRA_TP4_SHIFT                     12
+#define AIPS_PACRA_WP4_MASK                      0x2000u
+#define AIPS_PACRA_WP4_SHIFT                     13
+#define AIPS_PACRA_SP4_MASK                      0x4000u
+#define AIPS_PACRA_SP4_SHIFT                     14
+#define AIPS_PACRA_TP3_MASK                      0x10000u
+#define AIPS_PACRA_TP3_SHIFT                     16
+#define AIPS_PACRA_WP3_MASK                      0x20000u
+#define AIPS_PACRA_WP3_SHIFT                     17
+#define AIPS_PACRA_SP3_MASK                      0x40000u
+#define AIPS_PACRA_SP3_SHIFT                     18
+#define AIPS_PACRA_TP2_MASK                      0x100000u
+#define AIPS_PACRA_TP2_SHIFT                     20
+#define AIPS_PACRA_WP2_MASK                      0x200000u
+#define AIPS_PACRA_WP2_SHIFT                     21
+#define AIPS_PACRA_SP2_MASK                      0x400000u
+#define AIPS_PACRA_SP2_SHIFT                     22
+#define AIPS_PACRA_TP1_MASK                      0x1000000u
+#define AIPS_PACRA_TP1_SHIFT                     24
+#define AIPS_PACRA_WP1_MASK                      0x2000000u
+#define AIPS_PACRA_WP1_SHIFT                     25
+#define AIPS_PACRA_SP1_MASK                      0x4000000u
+#define AIPS_PACRA_SP1_SHIFT                     26
+#define AIPS_PACRA_TP0_MASK                      0x10000000u
+#define AIPS_PACRA_TP0_SHIFT                     28
+#define AIPS_PACRA_WP0_MASK                      0x20000000u
+#define AIPS_PACRA_WP0_SHIFT                     29
+#define AIPS_PACRA_SP0_MASK                      0x40000000u
+#define AIPS_PACRA_SP0_SHIFT                     30
+/* PACRB Bit Fields */
+#define AIPS_PACRB_TP7_MASK                      0x1u
+#define AIPS_PACRB_TP7_SHIFT                     0
+#define AIPS_PACRB_WP7_MASK                      0x2u
+#define AIPS_PACRB_WP7_SHIFT                     1
+#define AIPS_PACRB_SP7_MASK                      0x4u
+#define AIPS_PACRB_SP7_SHIFT                     2
+#define AIPS_PACRB_TP6_MASK                      0x10u
+#define AIPS_PACRB_TP6_SHIFT                     4
+#define AIPS_PACRB_WP6_MASK                      0x20u
+#define AIPS_PACRB_WP6_SHIFT                     5
+#define AIPS_PACRB_SP6_MASK                      0x40u
+#define AIPS_PACRB_SP6_SHIFT                     6
+#define AIPS_PACRB_TP5_MASK                      0x100u
+#define AIPS_PACRB_TP5_SHIFT                     8
+#define AIPS_PACRB_WP5_MASK                      0x200u
+#define AIPS_PACRB_WP5_SHIFT                     9
+#define AIPS_PACRB_SP5_MASK                      0x400u
+#define AIPS_PACRB_SP5_SHIFT                     10
+#define AIPS_PACRB_TP4_MASK                      0x1000u
+#define AIPS_PACRB_TP4_SHIFT                     12
+#define AIPS_PACRB_WP4_MASK                      0x2000u
+#define AIPS_PACRB_WP4_SHIFT                     13
+#define AIPS_PACRB_SP4_MASK                      0x4000u
+#define AIPS_PACRB_SP4_SHIFT                     14
+#define AIPS_PACRB_TP3_MASK                      0x10000u
+#define AIPS_PACRB_TP3_SHIFT                     16
+#define AIPS_PACRB_WP3_MASK                      0x20000u
+#define AIPS_PACRB_WP3_SHIFT                     17
+#define AIPS_PACRB_SP3_MASK                      0x40000u
+#define AIPS_PACRB_SP3_SHIFT                     18
+#define AIPS_PACRB_TP2_MASK                      0x100000u
+#define AIPS_PACRB_TP2_SHIFT                     20
+#define AIPS_PACRB_WP2_MASK                      0x200000u
+#define AIPS_PACRB_WP2_SHIFT                     21
+#define AIPS_PACRB_SP2_MASK                      0x400000u
+#define AIPS_PACRB_SP2_SHIFT                     22
+#define AIPS_PACRB_TP1_MASK                      0x1000000u
+#define AIPS_PACRB_TP1_SHIFT                     24
+#define AIPS_PACRB_WP1_MASK                      0x2000000u
+#define AIPS_PACRB_WP1_SHIFT                     25
+#define AIPS_PACRB_SP1_MASK                      0x4000000u
+#define AIPS_PACRB_SP1_SHIFT                     26
+#define AIPS_PACRB_TP0_MASK                      0x10000000u
+#define AIPS_PACRB_TP0_SHIFT                     28
+#define AIPS_PACRB_WP0_MASK                      0x20000000u
+#define AIPS_PACRB_WP0_SHIFT                     29
+#define AIPS_PACRB_SP0_MASK                      0x40000000u
+#define AIPS_PACRB_SP0_SHIFT                     30
+/* PACRC Bit Fields */
+#define AIPS_PACRC_TP7_MASK                      0x1u
+#define AIPS_PACRC_TP7_SHIFT                     0
+#define AIPS_PACRC_WP7_MASK                      0x2u
+#define AIPS_PACRC_WP7_SHIFT                     1
+#define AIPS_PACRC_SP7_MASK                      0x4u
+#define AIPS_PACRC_SP7_SHIFT                     2
+#define AIPS_PACRC_TP6_MASK                      0x10u
+#define AIPS_PACRC_TP6_SHIFT                     4
+#define AIPS_PACRC_WP6_MASK                      0x20u
+#define AIPS_PACRC_WP6_SHIFT                     5
+#define AIPS_PACRC_SP6_MASK                      0x40u
+#define AIPS_PACRC_SP6_SHIFT                     6
+#define AIPS_PACRC_TP5_MASK                      0x100u
+#define AIPS_PACRC_TP5_SHIFT                     8
+#define AIPS_PACRC_WP5_MASK                      0x200u
+#define AIPS_PACRC_WP5_SHIFT                     9
+#define AIPS_PACRC_SP5_MASK                      0x400u
+#define AIPS_PACRC_SP5_SHIFT                     10
+#define AIPS_PACRC_TP4_MASK                      0x1000u
+#define AIPS_PACRC_TP4_SHIFT                     12
+#define AIPS_PACRC_WP4_MASK                      0x2000u
+#define AIPS_PACRC_WP4_SHIFT                     13
+#define AIPS_PACRC_SP4_MASK                      0x4000u
+#define AIPS_PACRC_SP4_SHIFT                     14
+#define AIPS_PACRC_TP3_MASK                      0x10000u
+#define AIPS_PACRC_TP3_SHIFT                     16
+#define AIPS_PACRC_WP3_MASK                      0x20000u
+#define AIPS_PACRC_WP3_SHIFT                     17
+#define AIPS_PACRC_SP3_MASK                      0x40000u
+#define AIPS_PACRC_SP3_SHIFT                     18
+#define AIPS_PACRC_TP2_MASK                      0x100000u
+#define AIPS_PACRC_TP2_SHIFT                     20
+#define AIPS_PACRC_WP2_MASK                      0x200000u
+#define AIPS_PACRC_WP2_SHIFT                     21
+#define AIPS_PACRC_SP2_MASK                      0x400000u
+#define AIPS_PACRC_SP2_SHIFT                     22
+#define AIPS_PACRC_TP1_MASK                      0x1000000u
+#define AIPS_PACRC_TP1_SHIFT                     24
+#define AIPS_PACRC_WP1_MASK                      0x2000000u
+#define AIPS_PACRC_WP1_SHIFT                     25
+#define AIPS_PACRC_SP1_MASK                      0x4000000u
+#define AIPS_PACRC_SP1_SHIFT                     26
+#define AIPS_PACRC_TP0_MASK                      0x10000000u
+#define AIPS_PACRC_TP0_SHIFT                     28
+#define AIPS_PACRC_WP0_MASK                      0x20000000u
+#define AIPS_PACRC_WP0_SHIFT                     29
+#define AIPS_PACRC_SP0_MASK                      0x40000000u
+#define AIPS_PACRC_SP0_SHIFT                     30
+/* PACRD Bit Fields */
+#define AIPS_PACRD_TP7_MASK                      0x1u
+#define AIPS_PACRD_TP7_SHIFT                     0
+#define AIPS_PACRD_WP7_MASK                      0x2u
+#define AIPS_PACRD_WP7_SHIFT                     1
+#define AIPS_PACRD_SP7_MASK                      0x4u
+#define AIPS_PACRD_SP7_SHIFT                     2
+#define AIPS_PACRD_TP6_MASK                      0x10u
+#define AIPS_PACRD_TP6_SHIFT                     4
+#define AIPS_PACRD_WP6_MASK                      0x20u
+#define AIPS_PACRD_WP6_SHIFT                     5
+#define AIPS_PACRD_SP6_MASK                      0x40u
+#define AIPS_PACRD_SP6_SHIFT                     6
+#define AIPS_PACRD_TP5_MASK                      0x100u
+#define AIPS_PACRD_TP5_SHIFT                     8
+#define AIPS_PACRD_WP5_MASK                      0x200u
+#define AIPS_PACRD_WP5_SHIFT                     9
+#define AIPS_PACRD_SP5_MASK                      0x400u
+#define AIPS_PACRD_SP5_SHIFT                     10
+#define AIPS_PACRD_TP4_MASK                      0x1000u
+#define AIPS_PACRD_TP4_SHIFT                     12
+#define AIPS_PACRD_WP4_MASK                      0x2000u
+#define AIPS_PACRD_WP4_SHIFT                     13
+#define AIPS_PACRD_SP4_MASK                      0x4000u
+#define AIPS_PACRD_SP4_SHIFT                     14
+#define AIPS_PACRD_TP3_MASK                      0x10000u
+#define AIPS_PACRD_TP3_SHIFT                     16
+#define AIPS_PACRD_WP3_MASK                      0x20000u
+#define AIPS_PACRD_WP3_SHIFT                     17
+#define AIPS_PACRD_SP3_MASK                      0x40000u
+#define AIPS_PACRD_SP3_SHIFT                     18
+#define AIPS_PACRD_TP2_MASK                      0x100000u
+#define AIPS_PACRD_TP2_SHIFT                     20
+#define AIPS_PACRD_WP2_MASK                      0x200000u
+#define AIPS_PACRD_WP2_SHIFT                     21
+#define AIPS_PACRD_SP2_MASK                      0x400000u
+#define AIPS_PACRD_SP2_SHIFT                     22
+#define AIPS_PACRD_TP1_MASK                      0x1000000u
+#define AIPS_PACRD_TP1_SHIFT                     24
+#define AIPS_PACRD_WP1_MASK                      0x2000000u
+#define AIPS_PACRD_WP1_SHIFT                     25
+#define AIPS_PACRD_SP1_MASK                      0x4000000u
+#define AIPS_PACRD_SP1_SHIFT                     26
+#define AIPS_PACRD_TP0_MASK                      0x10000000u
+#define AIPS_PACRD_TP0_SHIFT                     28
+#define AIPS_PACRD_WP0_MASK                      0x20000000u
+#define AIPS_PACRD_WP0_SHIFT                     29
+#define AIPS_PACRD_SP0_MASK                      0x40000000u
+#define AIPS_PACRD_SP0_SHIFT                     30
+/* PACRE Bit Fields */
+#define AIPS_PACRE_TP7_MASK                      0x1u
+#define AIPS_PACRE_TP7_SHIFT                     0
+#define AIPS_PACRE_WP7_MASK                      0x2u
+#define AIPS_PACRE_WP7_SHIFT                     1
+#define AIPS_PACRE_SP7_MASK                      0x4u
+#define AIPS_PACRE_SP7_SHIFT                     2
+#define AIPS_PACRE_TP6_MASK                      0x10u
+#define AIPS_PACRE_TP6_SHIFT                     4
+#define AIPS_PACRE_WP6_MASK                      0x20u
+#define AIPS_PACRE_WP6_SHIFT                     5
+#define AIPS_PACRE_SP6_MASK                      0x40u
+#define AIPS_PACRE_SP6_SHIFT                     6
+#define AIPS_PACRE_TP5_MASK                      0x100u
+#define AIPS_PACRE_TP5_SHIFT                     8
+#define AIPS_PACRE_WP5_MASK                      0x200u
+#define AIPS_PACRE_WP5_SHIFT                     9
+#define AIPS_PACRE_SP5_MASK                      0x400u
+#define AIPS_PACRE_SP5_SHIFT                     10
+#define AIPS_PACRE_TP4_MASK                      0x1000u
+#define AIPS_PACRE_TP4_SHIFT                     12
+#define AIPS_PACRE_WP4_MASK                      0x2000u
+#define AIPS_PACRE_WP4_SHIFT                     13
+#define AIPS_PACRE_SP4_MASK                      0x4000u
+#define AIPS_PACRE_SP4_SHIFT                     14
+#define AIPS_PACRE_TP3_MASK                      0x10000u
+#define AIPS_PACRE_TP3_SHIFT                     16
+#define AIPS_PACRE_WP3_MASK                      0x20000u
+#define AIPS_PACRE_WP3_SHIFT                     17
+#define AIPS_PACRE_SP3_MASK                      0x40000u
+#define AIPS_PACRE_SP3_SHIFT                     18
+#define AIPS_PACRE_TP2_MASK                      0x100000u
+#define AIPS_PACRE_TP2_SHIFT                     20
+#define AIPS_PACRE_WP2_MASK                      0x200000u
+#define AIPS_PACRE_WP2_SHIFT                     21
+#define AIPS_PACRE_SP2_MASK                      0x400000u
+#define AIPS_PACRE_SP2_SHIFT                     22
+#define AIPS_PACRE_TP1_MASK                      0x1000000u
+#define AIPS_PACRE_TP1_SHIFT                     24
+#define AIPS_PACRE_WP1_MASK                      0x2000000u
+#define AIPS_PACRE_WP1_SHIFT                     25
+#define AIPS_PACRE_SP1_MASK                      0x4000000u
+#define AIPS_PACRE_SP1_SHIFT                     26
+#define AIPS_PACRE_TP0_MASK                      0x10000000u
+#define AIPS_PACRE_TP0_SHIFT                     28
+#define AIPS_PACRE_WP0_MASK                      0x20000000u
+#define AIPS_PACRE_WP0_SHIFT                     29
+#define AIPS_PACRE_SP0_MASK                      0x40000000u
+#define AIPS_PACRE_SP0_SHIFT                     30
+/* PACRF Bit Fields */
+#define AIPS_PACRF_TP7_MASK                      0x1u
+#define AIPS_PACRF_TP7_SHIFT                     0
+#define AIPS_PACRF_WP7_MASK                      0x2u
+#define AIPS_PACRF_WP7_SHIFT                     1
+#define AIPS_PACRF_SP7_MASK                      0x4u
+#define AIPS_PACRF_SP7_SHIFT                     2
+#define AIPS_PACRF_TP6_MASK                      0x10u
+#define AIPS_PACRF_TP6_SHIFT                     4
+#define AIPS_PACRF_WP6_MASK                      0x20u
+#define AIPS_PACRF_WP6_SHIFT                     5
+#define AIPS_PACRF_SP6_MASK                      0x40u
+#define AIPS_PACRF_SP6_SHIFT                     6
+#define AIPS_PACRF_TP5_MASK                      0x100u
+#define AIPS_PACRF_TP5_SHIFT                     8
+#define AIPS_PACRF_WP5_MASK                      0x200u
+#define AIPS_PACRF_WP5_SHIFT                     9
+#define AIPS_PACRF_SP5_MASK                      0x400u
+#define AIPS_PACRF_SP5_SHIFT                     10
+#define AIPS_PACRF_TP4_MASK                      0x1000u
+#define AIPS_PACRF_TP4_SHIFT                     12
+#define AIPS_PACRF_WP4_MASK                      0x2000u
+#define AIPS_PACRF_WP4_SHIFT                     13
+#define AIPS_PACRF_SP4_MASK                      0x4000u
+#define AIPS_PACRF_SP4_SHIFT                     14
+#define AIPS_PACRF_TP3_MASK                      0x10000u
+#define AIPS_PACRF_TP3_SHIFT                     16
+#define AIPS_PACRF_WP3_MASK                      0x20000u
+#define AIPS_PACRF_WP3_SHIFT                     17
+#define AIPS_PACRF_SP3_MASK                      0x40000u
+#define AIPS_PACRF_SP3_SHIFT                     18
+#define AIPS_PACRF_TP2_MASK                      0x100000u
+#define AIPS_PACRF_TP2_SHIFT                     20
+#define AIPS_PACRF_WP2_MASK                      0x200000u
+#define AIPS_PACRF_WP2_SHIFT                     21
+#define AIPS_PACRF_SP2_MASK                      0x400000u
+#define AIPS_PACRF_SP2_SHIFT                     22
+#define AIPS_PACRF_TP1_MASK                      0x1000000u
+#define AIPS_PACRF_TP1_SHIFT                     24
+#define AIPS_PACRF_WP1_MASK                      0x2000000u
+#define AIPS_PACRF_WP1_SHIFT                     25
+#define AIPS_PACRF_SP1_MASK                      0x4000000u
+#define AIPS_PACRF_SP1_SHIFT                     26
+#define AIPS_PACRF_TP0_MASK                      0x10000000u
+#define AIPS_PACRF_TP0_SHIFT                     28
+#define AIPS_PACRF_WP0_MASK                      0x20000000u
+#define AIPS_PACRF_WP0_SHIFT                     29
+#define AIPS_PACRF_SP0_MASK                      0x40000000u
+#define AIPS_PACRF_SP0_SHIFT                     30
+/* PACRG Bit Fields */
+#define AIPS_PACRG_TP7_MASK                      0x1u
+#define AIPS_PACRG_TP7_SHIFT                     0
+#define AIPS_PACRG_WP7_MASK                      0x2u
+#define AIPS_PACRG_WP7_SHIFT                     1
+#define AIPS_PACRG_SP7_MASK                      0x4u
+#define AIPS_PACRG_SP7_SHIFT                     2
+#define AIPS_PACRG_TP6_MASK                      0x10u
+#define AIPS_PACRG_TP6_SHIFT                     4
+#define AIPS_PACRG_WP6_MASK                      0x20u
+#define AIPS_PACRG_WP6_SHIFT                     5
+#define AIPS_PACRG_SP6_MASK                      0x40u
+#define AIPS_PACRG_SP6_SHIFT                     6
+#define AIPS_PACRG_TP5_MASK                      0x100u
+#define AIPS_PACRG_TP5_SHIFT                     8
+#define AIPS_PACRG_WP5_MASK                      0x200u
+#define AIPS_PACRG_WP5_SHIFT                     9
+#define AIPS_PACRG_SP5_MASK                      0x400u
+#define AIPS_PACRG_SP5_SHIFT                     10
+#define AIPS_PACRG_TP4_MASK                      0x1000u
+#define AIPS_PACRG_TP4_SHIFT                     12
+#define AIPS_PACRG_WP4_MASK                      0x2000u
+#define AIPS_PACRG_WP4_SHIFT                     13
+#define AIPS_PACRG_SP4_MASK                      0x4000u
+#define AIPS_PACRG_SP4_SHIFT                     14
+#define AIPS_PACRG_TP3_MASK                      0x10000u
+#define AIPS_PACRG_TP3_SHIFT                     16
+#define AIPS_PACRG_WP3_MASK                      0x20000u
+#define AIPS_PACRG_WP3_SHIFT                     17
+#define AIPS_PACRG_SP3_MASK                      0x40000u
+#define AIPS_PACRG_SP3_SHIFT                     18
+#define AIPS_PACRG_TP2_MASK                      0x100000u
+#define AIPS_PACRG_TP2_SHIFT                     20
+#define AIPS_PACRG_WP2_MASK                      0x200000u
+#define AIPS_PACRG_WP2_SHIFT                     21
+#define AIPS_PACRG_SP2_MASK                      0x400000u
+#define AIPS_PACRG_SP2_SHIFT                     22
+#define AIPS_PACRG_TP1_MASK                      0x1000000u
+#define AIPS_PACRG_TP1_SHIFT                     24
+#define AIPS_PACRG_WP1_MASK                      0x2000000u
+#define AIPS_PACRG_WP1_SHIFT                     25
+#define AIPS_PACRG_SP1_MASK                      0x4000000u
+#define AIPS_PACRG_SP1_SHIFT                     26
+#define AIPS_PACRG_TP0_MASK                      0x10000000u
+#define AIPS_PACRG_TP0_SHIFT                     28
+#define AIPS_PACRG_WP0_MASK                      0x20000000u
+#define AIPS_PACRG_WP0_SHIFT                     29
+#define AIPS_PACRG_SP0_MASK                      0x40000000u
+#define AIPS_PACRG_SP0_SHIFT                     30
+/* PACRH Bit Fields */
+#define AIPS_PACRH_TP7_MASK                      0x1u
+#define AIPS_PACRH_TP7_SHIFT                     0
+#define AIPS_PACRH_WP7_MASK                      0x2u
+#define AIPS_PACRH_WP7_SHIFT                     1
+#define AIPS_PACRH_SP7_MASK                      0x4u
+#define AIPS_PACRH_SP7_SHIFT                     2
+#define AIPS_PACRH_TP6_MASK                      0x10u
+#define AIPS_PACRH_TP6_SHIFT                     4
+#define AIPS_PACRH_WP6_MASK                      0x20u
+#define AIPS_PACRH_WP6_SHIFT                     5
+#define AIPS_PACRH_SP6_MASK                      0x40u
+#define AIPS_PACRH_SP6_SHIFT                     6
+#define AIPS_PACRH_TP5_MASK                      0x100u
+#define AIPS_PACRH_TP5_SHIFT                     8
+#define AIPS_PACRH_WP5_MASK                      0x200u
+#define AIPS_PACRH_WP5_SHIFT                     9
+#define AIPS_PACRH_SP5_MASK                      0x400u
+#define AIPS_PACRH_SP5_SHIFT                     10
+#define AIPS_PACRH_TP4_MASK                      0x1000u
+#define AIPS_PACRH_TP4_SHIFT                     12
+#define AIPS_PACRH_WP4_MASK                      0x2000u
+#define AIPS_PACRH_WP4_SHIFT                     13
+#define AIPS_PACRH_SP4_MASK                      0x4000u
+#define AIPS_PACRH_SP4_SHIFT                     14
+#define AIPS_PACRH_TP3_MASK                      0x10000u
+#define AIPS_PACRH_TP3_SHIFT                     16
+#define AIPS_PACRH_WP3_MASK                      0x20000u
+#define AIPS_PACRH_WP3_SHIFT                     17
+#define AIPS_PACRH_SP3_MASK                      0x40000u
+#define AIPS_PACRH_SP3_SHIFT                     18
+#define AIPS_PACRH_TP2_MASK                      0x100000u
+#define AIPS_PACRH_TP2_SHIFT                     20
+#define AIPS_PACRH_WP2_MASK                      0x200000u
+#define AIPS_PACRH_WP2_SHIFT                     21
+#define AIPS_PACRH_SP2_MASK                      0x400000u
+#define AIPS_PACRH_SP2_SHIFT                     22
+#define AIPS_PACRH_TP1_MASK                      0x1000000u
+#define AIPS_PACRH_TP1_SHIFT                     24
+#define AIPS_PACRH_WP1_MASK                      0x2000000u
+#define AIPS_PACRH_WP1_SHIFT                     25
+#define AIPS_PACRH_SP1_MASK                      0x4000000u
+#define AIPS_PACRH_SP1_SHIFT                     26
+#define AIPS_PACRH_TP0_MASK                      0x10000000u
+#define AIPS_PACRH_TP0_SHIFT                     28
+#define AIPS_PACRH_WP0_MASK                      0x20000000u
+#define AIPS_PACRH_WP0_SHIFT                     29
+#define AIPS_PACRH_SP0_MASK                      0x40000000u
+#define AIPS_PACRH_SP0_SHIFT                     30
+/* PACRI Bit Fields */
+#define AIPS_PACRI_TP7_MASK                      0x1u
+#define AIPS_PACRI_TP7_SHIFT                     0
+#define AIPS_PACRI_WP7_MASK                      0x2u
+#define AIPS_PACRI_WP7_SHIFT                     1
+#define AIPS_PACRI_SP7_MASK                      0x4u
+#define AIPS_PACRI_SP7_SHIFT                     2
+#define AIPS_PACRI_TP6_MASK                      0x10u
+#define AIPS_PACRI_TP6_SHIFT                     4
+#define AIPS_PACRI_WP6_MASK                      0x20u
+#define AIPS_PACRI_WP6_SHIFT                     5
+#define AIPS_PACRI_SP6_MASK                      0x40u
+#define AIPS_PACRI_SP6_SHIFT                     6
+#define AIPS_PACRI_TP5_MASK                      0x100u
+#define AIPS_PACRI_TP5_SHIFT                     8
+#define AIPS_PACRI_WP5_MASK                      0x200u
+#define AIPS_PACRI_WP5_SHIFT                     9
+#define AIPS_PACRI_SP5_MASK                      0x400u
+#define AIPS_PACRI_SP5_SHIFT                     10
+#define AIPS_PACRI_TP4_MASK                      0x1000u
+#define AIPS_PACRI_TP4_SHIFT                     12
+#define AIPS_PACRI_WP4_MASK                      0x2000u
+#define AIPS_PACRI_WP4_SHIFT                     13
+#define AIPS_PACRI_SP4_MASK                      0x4000u
+#define AIPS_PACRI_SP4_SHIFT                     14
+#define AIPS_PACRI_TP3_MASK                      0x10000u
+#define AIPS_PACRI_TP3_SHIFT                     16
+#define AIPS_PACRI_WP3_MASK                      0x20000u
+#define AIPS_PACRI_WP3_SHIFT                     17
+#define AIPS_PACRI_SP3_MASK                      0x40000u
+#define AIPS_PACRI_SP3_SHIFT                     18
+#define AIPS_PACRI_TP2_MASK                      0x100000u
+#define AIPS_PACRI_TP2_SHIFT                     20
+#define AIPS_PACRI_WP2_MASK                      0x200000u
+#define AIPS_PACRI_WP2_SHIFT                     21
+#define AIPS_PACRI_SP2_MASK                      0x400000u
+#define AIPS_PACRI_SP2_SHIFT                     22
+#define AIPS_PACRI_TP1_MASK                      0x1000000u
+#define AIPS_PACRI_TP1_SHIFT                     24
+#define AIPS_PACRI_WP1_MASK                      0x2000000u
+#define AIPS_PACRI_WP1_SHIFT                     25
+#define AIPS_PACRI_SP1_MASK                      0x4000000u
+#define AIPS_PACRI_SP1_SHIFT                     26
+#define AIPS_PACRI_TP0_MASK                      0x10000000u
+#define AIPS_PACRI_TP0_SHIFT                     28
+#define AIPS_PACRI_WP0_MASK                      0x20000000u
+#define AIPS_PACRI_WP0_SHIFT                     29
+#define AIPS_PACRI_SP0_MASK                      0x40000000u
+#define AIPS_PACRI_SP0_SHIFT                     30
+/* PACRJ Bit Fields */
+#define AIPS_PACRJ_TP7_MASK                      0x1u
+#define AIPS_PACRJ_TP7_SHIFT                     0
+#define AIPS_PACRJ_WP7_MASK                      0x2u
+#define AIPS_PACRJ_WP7_SHIFT                     1
+#define AIPS_PACRJ_SP7_MASK                      0x4u
+#define AIPS_PACRJ_SP7_SHIFT                     2
+#define AIPS_PACRJ_TP6_MASK                      0x10u
+#define AIPS_PACRJ_TP6_SHIFT                     4
+#define AIPS_PACRJ_WP6_MASK                      0x20u
+#define AIPS_PACRJ_WP6_SHIFT                     5
+#define AIPS_PACRJ_SP6_MASK                      0x40u
+#define AIPS_PACRJ_SP6_SHIFT                     6
+#define AIPS_PACRJ_TP5_MASK                      0x100u
+#define AIPS_PACRJ_TP5_SHIFT                     8
+#define AIPS_PACRJ_WP5_MASK                      0x200u
+#define AIPS_PACRJ_WP5_SHIFT                     9
+#define AIPS_PACRJ_SP5_MASK                      0x400u
+#define AIPS_PACRJ_SP5_SHIFT                     10
+#define AIPS_PACRJ_TP4_MASK                      0x1000u
+#define AIPS_PACRJ_TP4_SHIFT                     12
+#define AIPS_PACRJ_WP4_MASK                      0x2000u
+#define AIPS_PACRJ_WP4_SHIFT                     13
+#define AIPS_PACRJ_SP4_MASK                      0x4000u
+#define AIPS_PACRJ_SP4_SHIFT                     14
+#define AIPS_PACRJ_TP3_MASK                      0x10000u
+#define AIPS_PACRJ_TP3_SHIFT                     16
+#define AIPS_PACRJ_WP3_MASK                      0x20000u
+#define AIPS_PACRJ_WP3_SHIFT                     17
+#define AIPS_PACRJ_SP3_MASK                      0x40000u
+#define AIPS_PACRJ_SP3_SHIFT                     18
+#define AIPS_PACRJ_TP2_MASK                      0x100000u
+#define AIPS_PACRJ_TP2_SHIFT                     20
+#define AIPS_PACRJ_WP2_MASK                      0x200000u
+#define AIPS_PACRJ_WP2_SHIFT                     21
+#define AIPS_PACRJ_SP2_MASK                      0x400000u
+#define AIPS_PACRJ_SP2_SHIFT                     22
+#define AIPS_PACRJ_TP1_MASK                      0x1000000u
+#define AIPS_PACRJ_TP1_SHIFT                     24
+#define AIPS_PACRJ_WP1_MASK                      0x2000000u
+#define AIPS_PACRJ_WP1_SHIFT                     25
+#define AIPS_PACRJ_SP1_MASK                      0x4000000u
+#define AIPS_PACRJ_SP1_SHIFT                     26
+#define AIPS_PACRJ_TP0_MASK                      0x10000000u
+#define AIPS_PACRJ_TP0_SHIFT                     28
+#define AIPS_PACRJ_WP0_MASK                      0x20000000u
+#define AIPS_PACRJ_WP0_SHIFT                     29
+#define AIPS_PACRJ_SP0_MASK                      0x40000000u
+#define AIPS_PACRJ_SP0_SHIFT                     30
+/* PACRK Bit Fields */
+#define AIPS_PACRK_TP7_MASK                      0x1u
+#define AIPS_PACRK_TP7_SHIFT                     0
+#define AIPS_PACRK_WP7_MASK                      0x2u
+#define AIPS_PACRK_WP7_SHIFT                     1
+#define AIPS_PACRK_SP7_MASK                      0x4u
+#define AIPS_PACRK_SP7_SHIFT                     2
+#define AIPS_PACRK_TP6_MASK                      0x10u
+#define AIPS_PACRK_TP6_SHIFT                     4
+#define AIPS_PACRK_WP6_MASK                      0x20u
+#define AIPS_PACRK_WP6_SHIFT                     5
+#define AIPS_PACRK_SP6_MASK                      0x40u
+#define AIPS_PACRK_SP6_SHIFT                     6
+#define AIPS_PACRK_TP5_MASK                      0x100u
+#define AIPS_PACRK_TP5_SHIFT                     8
+#define AIPS_PACRK_WP5_MASK                      0x200u
+#define AIPS_PACRK_WP5_SHIFT                     9
+#define AIPS_PACRK_SP5_MASK                      0x400u
+#define AIPS_PACRK_SP5_SHIFT                     10
+#define AIPS_PACRK_TP4_MASK                      0x1000u
+#define AIPS_PACRK_TP4_SHIFT                     12
+#define AIPS_PACRK_WP4_MASK                      0x2000u
+#define AIPS_PACRK_WP4_SHIFT                     13
+#define AIPS_PACRK_SP4_MASK                      0x4000u
+#define AIPS_PACRK_SP4_SHIFT                     14
+#define AIPS_PACRK_TP3_MASK                      0x10000u
+#define AIPS_PACRK_TP3_SHIFT                     16
+#define AIPS_PACRK_WP3_MASK                      0x20000u
+#define AIPS_PACRK_WP3_SHIFT                     17
+#define AIPS_PACRK_SP3_MASK                      0x40000u
+#define AIPS_PACRK_SP3_SHIFT                     18
+#define AIPS_PACRK_TP2_MASK                      0x100000u
+#define AIPS_PACRK_TP2_SHIFT                     20
+#define AIPS_PACRK_WP2_MASK                      0x200000u
+#define AIPS_PACRK_WP2_SHIFT                     21
+#define AIPS_PACRK_SP2_MASK                      0x400000u
+#define AIPS_PACRK_SP2_SHIFT                     22
+#define AIPS_PACRK_TP1_MASK                      0x1000000u
+#define AIPS_PACRK_TP1_SHIFT                     24
+#define AIPS_PACRK_WP1_MASK                      0x2000000u
+#define AIPS_PACRK_WP1_SHIFT                     25
+#define AIPS_PACRK_SP1_MASK                      0x4000000u
+#define AIPS_PACRK_SP1_SHIFT                     26
+#define AIPS_PACRK_TP0_MASK                      0x10000000u
+#define AIPS_PACRK_TP0_SHIFT                     28
+#define AIPS_PACRK_WP0_MASK                      0x20000000u
+#define AIPS_PACRK_WP0_SHIFT                     29
+#define AIPS_PACRK_SP0_MASK                      0x40000000u
+#define AIPS_PACRK_SP0_SHIFT                     30
+/* PACRL Bit Fields */
+#define AIPS_PACRL_TP7_MASK                      0x1u
+#define AIPS_PACRL_TP7_SHIFT                     0
+#define AIPS_PACRL_WP7_MASK                      0x2u
+#define AIPS_PACRL_WP7_SHIFT                     1
+#define AIPS_PACRL_SP7_MASK                      0x4u
+#define AIPS_PACRL_SP7_SHIFT                     2
+#define AIPS_PACRL_TP6_MASK                      0x10u
+#define AIPS_PACRL_TP6_SHIFT                     4
+#define AIPS_PACRL_WP6_MASK                      0x20u
+#define AIPS_PACRL_WP6_SHIFT                     5
+#define AIPS_PACRL_SP6_MASK                      0x40u
+#define AIPS_PACRL_SP6_SHIFT                     6
+#define AIPS_PACRL_TP5_MASK                      0x100u
+#define AIPS_PACRL_TP5_SHIFT                     8
+#define AIPS_PACRL_WP5_MASK                      0x200u
+#define AIPS_PACRL_WP5_SHIFT                     9
+#define AIPS_PACRL_SP5_MASK                      0x400u
+#define AIPS_PACRL_SP5_SHIFT                     10
+#define AIPS_PACRL_TP4_MASK                      0x1000u
+#define AIPS_PACRL_TP4_SHIFT                     12
+#define AIPS_PACRL_WP4_MASK                      0x2000u
+#define AIPS_PACRL_WP4_SHIFT                     13
+#define AIPS_PACRL_SP4_MASK                      0x4000u
+#define AIPS_PACRL_SP4_SHIFT                     14
+#define AIPS_PACRL_TP3_MASK                      0x10000u
+#define AIPS_PACRL_TP3_SHIFT                     16
+#define AIPS_PACRL_WP3_MASK                      0x20000u
+#define AIPS_PACRL_WP3_SHIFT                     17
+#define AIPS_PACRL_SP3_MASK                      0x40000u
+#define AIPS_PACRL_SP3_SHIFT                     18
+#define AIPS_PACRL_TP2_MASK                      0x100000u
+#define AIPS_PACRL_TP2_SHIFT                     20
+#define AIPS_PACRL_WP2_MASK                      0x200000u
+#define AIPS_PACRL_WP2_SHIFT                     21
+#define AIPS_PACRL_SP2_MASK                      0x400000u
+#define AIPS_PACRL_SP2_SHIFT                     22
+#define AIPS_PACRL_TP1_MASK                      0x1000000u
+#define AIPS_PACRL_TP1_SHIFT                     24
+#define AIPS_PACRL_WP1_MASK                      0x2000000u
+#define AIPS_PACRL_WP1_SHIFT                     25
+#define AIPS_PACRL_SP1_MASK                      0x4000000u
+#define AIPS_PACRL_SP1_SHIFT                     26
+#define AIPS_PACRL_TP0_MASK                      0x10000000u
+#define AIPS_PACRL_TP0_SHIFT                     28
+#define AIPS_PACRL_WP0_MASK                      0x20000000u
+#define AIPS_PACRL_WP0_SHIFT                     29
+#define AIPS_PACRL_SP0_MASK                      0x40000000u
+#define AIPS_PACRL_SP0_SHIFT                     30
+/* PACRM Bit Fields */
+#define AIPS_PACRM_TP7_MASK                      0x1u
+#define AIPS_PACRM_TP7_SHIFT                     0
+#define AIPS_PACRM_WP7_MASK                      0x2u
+#define AIPS_PACRM_WP7_SHIFT                     1
+#define AIPS_PACRM_SP7_MASK                      0x4u
+#define AIPS_PACRM_SP7_SHIFT                     2
+#define AIPS_PACRM_TP6_MASK                      0x10u
+#define AIPS_PACRM_TP6_SHIFT                     4
+#define AIPS_PACRM_WP6_MASK                      0x20u
+#define AIPS_PACRM_WP6_SHIFT                     5
+#define AIPS_PACRM_SP6_MASK                      0x40u
+#define AIPS_PACRM_SP6_SHIFT                     6
+#define AIPS_PACRM_TP5_MASK                      0x100u
+#define AIPS_PACRM_TP5_SHIFT                     8
+#define AIPS_PACRM_WP5_MASK                      0x200u
+#define AIPS_PACRM_WP5_SHIFT                     9
+#define AIPS_PACRM_SP5_MASK                      0x400u
+#define AIPS_PACRM_SP5_SHIFT                     10
+#define AIPS_PACRM_TP4_MASK                      0x1000u
+#define AIPS_PACRM_TP4_SHIFT                     12
+#define AIPS_PACRM_WP4_MASK                      0x2000u
+#define AIPS_PACRM_WP4_SHIFT                     13
+#define AIPS_PACRM_SP4_MASK                      0x4000u
+#define AIPS_PACRM_SP4_SHIFT                     14
+#define AIPS_PACRM_TP3_MASK                      0x10000u
+#define AIPS_PACRM_TP3_SHIFT                     16
+#define AIPS_PACRM_WP3_MASK                      0x20000u
+#define AIPS_PACRM_WP3_SHIFT                     17
+#define AIPS_PACRM_SP3_MASK                      0x40000u
+#define AIPS_PACRM_SP3_SHIFT                     18
+#define AIPS_PACRM_TP2_MASK                      0x100000u
+#define AIPS_PACRM_TP2_SHIFT                     20
+#define AIPS_PACRM_WP2_MASK                      0x200000u
+#define AIPS_PACRM_WP2_SHIFT                     21
+#define AIPS_PACRM_SP2_MASK                      0x400000u
+#define AIPS_PACRM_SP2_SHIFT                     22
+#define AIPS_PACRM_TP1_MASK                      0x1000000u
+#define AIPS_PACRM_TP1_SHIFT                     24
+#define AIPS_PACRM_WP1_MASK                      0x2000000u
+#define AIPS_PACRM_WP1_SHIFT                     25
+#define AIPS_PACRM_SP1_MASK                      0x4000000u
+#define AIPS_PACRM_SP1_SHIFT                     26
+#define AIPS_PACRM_TP0_MASK                      0x10000000u
+#define AIPS_PACRM_TP0_SHIFT                     28
+#define AIPS_PACRM_WP0_MASK                      0x20000000u
+#define AIPS_PACRM_WP0_SHIFT                     29
+#define AIPS_PACRM_SP0_MASK                      0x40000000u
+#define AIPS_PACRM_SP0_SHIFT                     30
+/* PACRN Bit Fields */
+#define AIPS_PACRN_TP7_MASK                      0x1u
+#define AIPS_PACRN_TP7_SHIFT                     0
+#define AIPS_PACRN_WP7_MASK                      0x2u
+#define AIPS_PACRN_WP7_SHIFT                     1
+#define AIPS_PACRN_SP7_MASK                      0x4u
+#define AIPS_PACRN_SP7_SHIFT                     2
+#define AIPS_PACRN_TP6_MASK                      0x10u
+#define AIPS_PACRN_TP6_SHIFT                     4
+#define AIPS_PACRN_WP6_MASK                      0x20u
+#define AIPS_PACRN_WP6_SHIFT                     5
+#define AIPS_PACRN_SP6_MASK                      0x40u
+#define AIPS_PACRN_SP6_SHIFT                     6
+#define AIPS_PACRN_TP5_MASK                      0x100u
+#define AIPS_PACRN_TP5_SHIFT                     8
+#define AIPS_PACRN_WP5_MASK                      0x200u
+#define AIPS_PACRN_WP5_SHIFT                     9
+#define AIPS_PACRN_SP5_MASK                      0x400u
+#define AIPS_PACRN_SP5_SHIFT                     10
+#define AIPS_PACRN_TP4_MASK                      0x1000u
+#define AIPS_PACRN_TP4_SHIFT                     12
+#define AIPS_PACRN_WP4_MASK                      0x2000u
+#define AIPS_PACRN_WP4_SHIFT                     13
+#define AIPS_PACRN_SP4_MASK                      0x4000u
+#define AIPS_PACRN_SP4_SHIFT                     14
+#define AIPS_PACRN_TP3_MASK                      0x10000u
+#define AIPS_PACRN_TP3_SHIFT                     16
+#define AIPS_PACRN_WP3_MASK                      0x20000u
+#define AIPS_PACRN_WP3_SHIFT                     17
+#define AIPS_PACRN_SP3_MASK                      0x40000u
+#define AIPS_PACRN_SP3_SHIFT                     18
+#define AIPS_PACRN_TP2_MASK                      0x100000u
+#define AIPS_PACRN_TP2_SHIFT                     20
+#define AIPS_PACRN_WP2_MASK                      0x200000u
+#define AIPS_PACRN_WP2_SHIFT                     21
+#define AIPS_PACRN_SP2_MASK                      0x400000u
+#define AIPS_PACRN_SP2_SHIFT                     22
+#define AIPS_PACRN_TP1_MASK                      0x1000000u
+#define AIPS_PACRN_TP1_SHIFT                     24
+#define AIPS_PACRN_WP1_MASK                      0x2000000u
+#define AIPS_PACRN_WP1_SHIFT                     25
+#define AIPS_PACRN_SP1_MASK                      0x4000000u
+#define AIPS_PACRN_SP1_SHIFT                     26
+#define AIPS_PACRN_TP0_MASK                      0x10000000u
+#define AIPS_PACRN_TP0_SHIFT                     28
+#define AIPS_PACRN_WP0_MASK                      0x20000000u
+#define AIPS_PACRN_WP0_SHIFT                     29
+#define AIPS_PACRN_SP0_MASK                      0x40000000u
+#define AIPS_PACRN_SP0_SHIFT                     30
+/* PACRO Bit Fields */
+#define AIPS_PACRO_TP7_MASK                      0x1u
+#define AIPS_PACRO_TP7_SHIFT                     0
+#define AIPS_PACRO_WP7_MASK                      0x2u
+#define AIPS_PACRO_WP7_SHIFT                     1
+#define AIPS_PACRO_SP7_MASK                      0x4u
+#define AIPS_PACRO_SP7_SHIFT                     2
+#define AIPS_PACRO_TP6_MASK                      0x10u
+#define AIPS_PACRO_TP6_SHIFT                     4
+#define AIPS_PACRO_WP6_MASK                      0x20u
+#define AIPS_PACRO_WP6_SHIFT                     5
+#define AIPS_PACRO_SP6_MASK                      0x40u
+#define AIPS_PACRO_SP6_SHIFT                     6
+#define AIPS_PACRO_TP5_MASK                      0x100u
+#define AIPS_PACRO_TP5_SHIFT                     8
+#define AIPS_PACRO_WP5_MASK                      0x200u
+#define AIPS_PACRO_WP5_SHIFT                     9
+#define AIPS_PACRO_SP5_MASK                      0x400u
+#define AIPS_PACRO_SP5_SHIFT                     10
+#define AIPS_PACRO_TP4_MASK                      0x1000u
+#define AIPS_PACRO_TP4_SHIFT                     12
+#define AIPS_PACRO_WP4_MASK                      0x2000u
+#define AIPS_PACRO_WP4_SHIFT                     13
+#define AIPS_PACRO_SP4_MASK                      0x4000u
+#define AIPS_PACRO_SP4_SHIFT                     14
+#define AIPS_PACRO_TP3_MASK                      0x10000u
+#define AIPS_PACRO_TP3_SHIFT                     16
+#define AIPS_PACRO_WP3_MASK                      0x20000u
+#define AIPS_PACRO_WP3_SHIFT                     17
+#define AIPS_PACRO_SP3_MASK                      0x40000u
+#define AIPS_PACRO_SP3_SHIFT                     18
+#define AIPS_PACRO_TP2_MASK                      0x100000u
+#define AIPS_PACRO_TP2_SHIFT                     20
+#define AIPS_PACRO_WP2_MASK                      0x200000u
+#define AIPS_PACRO_WP2_SHIFT                     21
+#define AIPS_PACRO_SP2_MASK                      0x400000u
+#define AIPS_PACRO_SP2_SHIFT                     22
+#define AIPS_PACRO_TP1_MASK                      0x1000000u
+#define AIPS_PACRO_TP1_SHIFT                     24
+#define AIPS_PACRO_WP1_MASK                      0x2000000u
+#define AIPS_PACRO_WP1_SHIFT                     25
+#define AIPS_PACRO_SP1_MASK                      0x4000000u
+#define AIPS_PACRO_SP1_SHIFT                     26
+#define AIPS_PACRO_TP0_MASK                      0x10000000u
+#define AIPS_PACRO_TP0_SHIFT                     28
+#define AIPS_PACRO_WP0_MASK                      0x20000000u
+#define AIPS_PACRO_WP0_SHIFT                     29
+#define AIPS_PACRO_SP0_MASK                      0x40000000u
+#define AIPS_PACRO_SP0_SHIFT                     30
+/* PACRP Bit Fields */
+#define AIPS_PACRP_TP7_MASK                      0x1u
+#define AIPS_PACRP_TP7_SHIFT                     0
+#define AIPS_PACRP_WP7_MASK                      0x2u
+#define AIPS_PACRP_WP7_SHIFT                     1
+#define AIPS_PACRP_SP7_MASK                      0x4u
+#define AIPS_PACRP_SP7_SHIFT                     2
+#define AIPS_PACRP_TP6_MASK                      0x10u
+#define AIPS_PACRP_TP6_SHIFT                     4
+#define AIPS_PACRP_WP6_MASK                      0x20u
+#define AIPS_PACRP_WP6_SHIFT                     5
+#define AIPS_PACRP_SP6_MASK                      0x40u
+#define AIPS_PACRP_SP6_SHIFT                     6
+#define AIPS_PACRP_TP5_MASK                      0x100u
+#define AIPS_PACRP_TP5_SHIFT                     8
+#define AIPS_PACRP_WP5_MASK                      0x200u
+#define AIPS_PACRP_WP5_SHIFT                     9
+#define AIPS_PACRP_SP5_MASK                      0x400u
+#define AIPS_PACRP_SP5_SHIFT                     10
+#define AIPS_PACRP_TP4_MASK                      0x1000u
+#define AIPS_PACRP_TP4_SHIFT                     12
+#define AIPS_PACRP_WP4_MASK                      0x2000u
+#define AIPS_PACRP_WP4_SHIFT                     13
+#define AIPS_PACRP_SP4_MASK                      0x4000u
+#define AIPS_PACRP_SP4_SHIFT                     14
+#define AIPS_PACRP_TP3_MASK                      0x10000u
+#define AIPS_PACRP_TP3_SHIFT                     16
+#define AIPS_PACRP_WP3_MASK                      0x20000u
+#define AIPS_PACRP_WP3_SHIFT                     17
+#define AIPS_PACRP_SP3_MASK                      0x40000u
+#define AIPS_PACRP_SP3_SHIFT                     18
+#define AIPS_PACRP_TP2_MASK                      0x100000u
+#define AIPS_PACRP_TP2_SHIFT                     20
+#define AIPS_PACRP_WP2_MASK                      0x200000u
+#define AIPS_PACRP_WP2_SHIFT                     21
+#define AIPS_PACRP_SP2_MASK                      0x400000u
+#define AIPS_PACRP_SP2_SHIFT                     22
+#define AIPS_PACRP_TP1_MASK                      0x1000000u
+#define AIPS_PACRP_TP1_SHIFT                     24
+#define AIPS_PACRP_WP1_MASK                      0x2000000u
+#define AIPS_PACRP_WP1_SHIFT                     25
+#define AIPS_PACRP_SP1_MASK                      0x4000000u
+#define AIPS_PACRP_SP1_SHIFT                     26
+#define AIPS_PACRP_TP0_MASK                      0x10000000u
+#define AIPS_PACRP_TP0_SHIFT                     28
+#define AIPS_PACRP_WP0_MASK                      0x20000000u
+#define AIPS_PACRP_WP0_SHIFT                     29
+#define AIPS_PACRP_SP0_MASK                      0x40000000u
+#define AIPS_PACRP_SP0_SHIFT                     30
+
+/**
+ * @}
+ */ /* end of group AIPS_Register_Masks */
+
+
+/* AIPS - Peripheral instance base addresses */
+/** Peripheral AIPS0 base address */
+#define AIPS0_BASE                               (0x40000000u)
+/** Peripheral AIPS0 base pointer */
+#define AIPS0                                    ((AIPS_Type *)AIPS0_BASE)
+/** Peripheral AIPS1 base address */
+#define AIPS1_BASE                               (0x40080000u)
+/** Peripheral AIPS1 base pointer */
+#define AIPS1                                    ((AIPS_Type *)AIPS1_BASE)
+
+/**
+ * @}
+ */ /* end of group AIPS_Peripheral_Access_Layer */
+
+
+/* ----------------------------------------------------------------------------
+   -- AXBS Peripheral Access Layer
+   ---------------------------------------------------------------------------- */
+
+/**
+ * @addtogroup AXBS_Peripheral_Access_Layer AXBS Peripheral Access Layer
+ * @{
+ */
+
+/** AXBS - Register Layout Typedef */
+typedef struct {
+  struct {                                         /* offset: 0x0, array step: 0x100 */
+    __IO uint32_t PRS;                               /**< Priority Registers Slave, array offset: 0x0, array step: 0x100 */
+         uint8_t RESERVED_0[12];
+    __IO uint32_t CRS;                               /**< Control Register, array offset: 0x10, array step: 0x100 */
+         uint8_t RESERVED_1[236];
+  } SLAVE[5];
+       uint8_t RESERVED_0[768];
+  __IO uint32_t MGPCR0;                            /**< Master General Purpose Control Register, offset: 0x800 */
+       uint8_t RESERVED_1[252];
+  __IO uint32_t MGPCR1;                            /**< Master General Purpose Control Register, offset: 0x900 */
+       uint8_t RESERVED_2[252];
+  __IO uint32_t MGPCR2;                            /**< Master General Purpose Control Register, offset: 0xA00 */
+       uint8_t RESERVED_3[508];
+  __IO uint32_t MGPCR4;                            /**< Master General Purpose Control Register, offset: 0xC00 */
+       uint8_t RESERVED_4[252];
+  __IO uint32_t MGPCR5;                            /**< Master General Purpose Control Register, offset: 0xD00 */
+} AXBS_Type;
+
+/* ----------------------------------------------------------------------------
+   -- AXBS Register Masks
+   ---------------------------------------------------------------------------- */
+
+/**
+ * @addtogroup AXBS_Register_Masks AXBS Register Masks
+ * @{
+ */
+
+/* PRS Bit Fields */
+#define AXBS_PRS_M0_MASK                         0x7u
+#define AXBS_PRS_M0_SHIFT                        0
+#define AXBS_PRS_M0(x)                           (((uint32_t)(((uint32_t)(x))<<AXBS_PRS_M0_SHIFT))&AXBS_PRS_M0_MASK)
+#define AXBS_PRS_M1_MASK                         0x70u
+#define AXBS_PRS_M1_SHIFT                        4
+#define AXBS_PRS_M1(x)                           (((uint32_t)(((uint32_t)(x))<<AXBS_PRS_M1_SHIFT))&AXBS_PRS_M1_MASK)
+#define AXBS_PRS_M2_MASK                         0x700u
+#define AXBS_PRS_M2_SHIFT                        8
+#define AXBS_PRS_M2(x)                           (((uint32_t)(((uint32_t)(x))<<AXBS_PRS_M2_SHIFT))&AXBS_PRS_M2_MASK)
+#define AXBS_PRS_M3_MASK                         0x7000u
+#define AXBS_PRS_M3_SHIFT                        12
+#define AXBS_PRS_M3(x)                           (((uint32_t)(((uint32_t)(x))<<AXBS_PRS_M3_SHIFT))&AXBS_PRS_M3_MASK)
+#define AXBS_PRS_M4_MASK                         0x70000u
+#define AXBS_PRS_M4_SHIFT                        16
+#define AXBS_PRS_M4(x)                           (((uint32_t)(((uint32_t)(x))<<AXBS_PRS_M4_SHIFT))&AXBS_PRS_M4_MASK)
+#define AXBS_PRS_M5_MASK                         0x700000u
+#define AXBS_PRS_M5_SHIFT                        20
+#define AXBS_PRS_M5(x)                           (((uint32_t)(((uint32_t)(x))<<AXBS_PRS_M5_SHIFT))&AXBS_PRS_M5_MASK)
+/* CRS Bit Fields */
+#define AXBS_CRS_PARK_MASK                       0x7u
+#define AXBS_CRS_PARK_SHIFT                      0
+#define AXBS_CRS_PARK(x)                         (((uint32_t)(((uint32_t)(x))<<AXBS_CRS_PARK_SHIFT))&AXBS_CRS_PARK_MASK)
+#define AXBS_CRS_PCTL_MASK                       0x30u
+#define AXBS_CRS_PCTL_SHIFT                      4
+#define AXBS_CRS_PCTL(x)                         (((uint32_t)(((uint32_t)(x))<<AXBS_CRS_PCTL_SHIFT))&AXBS_CRS_PCTL_MASK)
+#define AXBS_CRS_ARB_MASK                        0x300u
+#define AXBS_CRS_ARB_SHIFT                       8
+#define AXBS_CRS_ARB(x)                          (((uint32_t)(((uint32_t)(x))<<AXBS_CRS_ARB_SHIFT))&AXBS_CRS_ARB_MASK)
+#define AXBS_CRS_HLP_MASK                        0x40000000u
+#define AXBS_CRS_HLP_SHIFT                       30
+#define AXBS_CRS_RO_MASK                         0x80000000u
+#define AXBS_CRS_RO_SHIFT                        31
+/* MGPCR0 Bit Fields */
+#define AXBS_MGPCR0_AULB_MASK                    0x7u
+#define AXBS_MGPCR0_AULB_SHIFT                   0
+#define AXBS_MGPCR0_AULB(x)                      (((uint32_t)(((uint32_t)(x))<<AXBS_MGPCR0_AULB_SHIFT))&AXBS_MGPCR0_AULB_MASK)
+/* MGPCR1 Bit Fields */
+#define AXBS_MGPCR1_AULB_MASK                    0x7u
+#define AXBS_MGPCR1_AULB_SHIFT                   0
+#define AXBS_MGPCR1_AULB(x)                      (((uint32_t)(((uint32_t)(x))<<AXBS_MGPCR1_AULB_SHIFT))&AXBS_MGPCR1_AULB_MASK)
+/* MGPCR2 Bit Fields */
+#define AXBS_MGPCR2_AULB_MASK                    0x7u
+#define AXBS_MGPCR2_AULB_SHIFT                   0
+#define AXBS_MGPCR2_AULB(x)                      (((uint32_t)(((uint32_t)(x))<<AXBS_MGPCR2_AULB_SHIFT))&AXBS_MGPCR2_AULB_MASK)
+/* MGPCR4 Bit Fields */
+#define AXBS_MGPCR4_AULB_MASK                    0x7u
+#define AXBS_MGPCR4_AULB_SHIFT                   0
+#define AXBS_MGPCR4_AULB(x)                      (((uint32_t)(((uint32_t)(x))<<AXBS_MGPCR4_AULB_SHIFT))&AXBS_MGPCR4_AULB_MASK)
+/* MGPCR5 Bit Fields */
+#define AXBS_MGPCR5_AULB_MASK                    0x7u
+#define AXBS_MGPCR5_AULB_SHIFT                   0
+#define AXBS_MGPCR5_AULB(x)                      (((uint32_t)(((uint32_t)(x))<<AXBS_MGPCR5_AULB_SHIFT))&AXBS_MGPCR5_AULB_MASK)
+
+/**
+ * @}
+ */ /* end of group AXBS_Register_Masks */
+
+
+/* AXBS - Peripheral instance base addresses */
+/** Peripheral AXBS base address */
+#define AXBS_BASE                                (0x40004000u)
+/** Peripheral AXBS base pointer */
+#define AXBS                                     ((AXBS_Type *)AXBS_BASE)
+
+/**
+ * @}
+ */ /* end of group AXBS_Peripheral_Access_Layer */
+
+
+/* ----------------------------------------------------------------------------
+   -- CAN Peripheral Access Layer
+   ---------------------------------------------------------------------------- */
+
+/**
+ * @addtogroup CAN_Peripheral_Access_Layer CAN Peripheral Access Layer
+ * @{
+ */
+
+/** CAN - Register Layout Typedef */
+typedef struct {
+  __IO uint32_t MCR;                               /**< Module Configuration Register, offset: 0x0 */
+  __IO uint32_t CTRL1;                             /**< Control 1 Register, offset: 0x4 */
+  __IO uint32_t TIMER;                             /**< Free Running Timer, offset: 0x8 */
+       uint8_t RESERVED_0[4];
+  __IO uint32_t RXMGMASK;                          /**< Rx Mailboxes Global Mask Register, offset: 0x10 */
+  __IO uint32_t RX14MASK;                          /**< Rx 14 Mask Register, offset: 0x14 */
+  __IO uint32_t RX15MASK;                          /**< Rx 15 Mask Register, offset: 0x18 */
+  __IO uint32_t ECR;                               /**< Error Counter, offset: 0x1C */
+  __IO uint32_t ESR1;                              /**< Error and Status 1 Register, offset: 0x20 */
+  __IO uint32_t IMASK2;                            /**< Interrupt Masks 2 Register, offset: 0x24 */
+  __IO uint32_t IMASK1;                            /**< Interrupt Masks 1 Register, offset: 0x28 */
+  __IO uint32_t IFLAG2;                            /**< Interrupt Flags 2 Register, offset: 0x2C */
+  __IO uint32_t IFLAG1;                            /**< Interrupt Flags 1 Register, offset: 0x30 */
+  __IO uint32_t CTRL2;                             /**< Control 2 Register, offset: 0x34 */
+  __I  uint32_t ESR2;                              /**< Error and Status 2 Register, offset: 0x38 */
+       uint8_t RESERVED_1[8];
+  __I  uint32_t CRCR;                              /**< CRC Register, offset: 0x44 */
+  __IO uint32_t RXFGMASK;                          /**< Rx FIFO Global Mask Register, offset: 0x48 */
+  __I  uint32_t RXFIR;                             /**< Rx FIFO Information Register, offset: 0x4C */
+       uint8_t RESERVED_2[48];
+  struct {                                         /* offset: 0x80, array step: 0x10 */
+    __IO uint32_t CS;                                /**< Message Buffer 0 CS Register..Message Buffer 15 CS Register, array offset: 0x80, array step: 0x10 */
+    __IO uint32_t ID;                                /**< Message Buffer 0 ID Register..Message Buffer 15 ID Register, array offset: 0x84, array step: 0x10 */
+    __IO uint32_t WORD0;                             /**< Message Buffer 0 WORD0 Register..Message Buffer 15 WORD0 Register, array offset: 0x88, array step: 0x10 */
+    __IO uint32_t WORD1;                             /**< Message Buffer 0 WORD1 Register..Message Buffer 15 WORD1 Register, array offset: 0x8C, array step: 0x10 */
+  } MB[16];
+       uint8_t RESERVED_3[1792];
+  __IO uint32_t RXIMR[16];                         /**< Rx Individual Mask Registers, array offset: 0x880, array step: 0x4 */
+} CAN_Type;
+
+/* ----------------------------------------------------------------------------
+   -- CAN Register Masks
+   ---------------------------------------------------------------------------- */
+
+/**
+ * @addtogroup CAN_Register_Masks CAN Register Masks
+ * @{
+ */
+
+/* MCR Bit Fields */
+#define CAN_MCR_MAXMB_MASK                       0x7Fu
+#define CAN_MCR_MAXMB_SHIFT                      0
+#define CAN_MCR_MAXMB(x)                         (((uint32_t)(((uint32_t)(x))<<CAN_MCR_MAXMB_SHIFT))&CAN_MCR_MAXMB_MASK)
+#define CAN_MCR_IDAM_MASK                        0x300u
+#define CAN_MCR_IDAM_SHIFT                       8
+#define CAN_MCR_IDAM(x)                          (((uint32_t)(((uint32_t)(x))<<CAN_MCR_IDAM_SHIFT))&CAN_MCR_IDAM_MASK)
+#define CAN_MCR_AEN_MASK                         0x1000u
+#define CAN_MCR_AEN_SHIFT                        12
+#define CAN_MCR_LPRIOEN_MASK                     0x2000u
+#define CAN_MCR_LPRIOEN_SHIFT                    13
+#define CAN_MCR_IRMQ_MASK                        0x10000u
+#define CAN_MCR_IRMQ_SHIFT                       16
+#define CAN_MCR_SRXDIS_MASK                      0x20000u
+#define CAN_MCR_SRXDIS_SHIFT                     17
+#define CAN_MCR_DOZE_MASK                        0x40000u
+#define CAN_MCR_DOZE_SHIFT                       18
+#define CAN_MCR_LPMACK_MASK                      0x100000u
+#define CAN_MCR_LPMACK_SHIFT                     20
+#define CAN_MCR_WRNEN_MASK                       0x200000u
+#define CAN_MCR_WRNEN_SHIFT                      21
+#define CAN_MCR_SLFWAK_MASK                      0x400000u
+#define CAN_MCR_SLFWAK_SHIFT                     22
+#define CAN_MCR_SUPV_MASK                        0x800000u
+#define CAN_MCR_SUPV_SHIFT                       23
+#define CAN_MCR_FRZACK_MASK                      0x1000000u
+#define CAN_MCR_FRZACK_SHIFT                     24
+#define CAN_MCR_SOFTRST_MASK                     0x2000000u
+#define CAN_MCR_SOFTRST_SHIFT                    25
+#define CAN_MCR_WAKMSK_MASK                      0x4000000u
+#define CAN_MCR_WAKMSK_SHIFT                     26
+#define CAN_MCR_NOTRDY_MASK                      0x8000000u
+#define CAN_MCR_NOTRDY_SHIFT                     27
+#define CAN_MCR_HALT_MASK                        0x10000000u
+#define CAN_MCR_HALT_SHIFT                       28
+#define CAN_MCR_RFEN_MASK                        0x20000000u
+#define CAN_MCR_RFEN_SHIFT                       29
+#define CAN_MCR_FRZ_MASK                         0x40000000u
+#define CAN_MCR_FRZ_SHIFT                        30
+#define CAN_MCR_MDIS_MASK                        0x80000000u
+#define CAN_MCR_MDIS_SHIFT                       31
+/* CTRL1 Bit Fields */
+#define CAN_CTRL1_PROPSEG_MASK                   0x7u
+#define CAN_CTRL1_PROPSEG_SHIFT                  0
+#define CAN_CTRL1_PROPSEG(x)                     (((uint32_t)(((uint32_t)(x))<<CAN_CTRL1_PROPSEG_SHIFT))&CAN_CTRL1_PROPSEG_MASK)
+#define CAN_CTRL1_LOM_MASK                       0x8u
+#define CAN_CTRL1_LOM_SHIFT                      3
+#define CAN_CTRL1_LBUF_MASK                      0x10u
+#define CAN_CTRL1_LBUF_SHIFT                     4
+#define CAN_CTRL1_TSYN_MASK                      0x20u
+#define CAN_CTRL1_TSYN_SHIFT                     5
+#define CAN_CTRL1_BOFFREC_MASK                   0x40u
+#define CAN_CTRL1_BOFFREC_SHIFT                  6
+#define CAN_CTRL1_SMP_MASK                       0x80u
+#define CAN_CTRL1_SMP_SHIFT                      7
+#define CAN_CTRL1_RWRNMSK_MASK                   0x400u
+#define CAN_CTRL1_RWRNMSK_SHIFT                  10
+#define CAN_CTRL1_TWRNMSK_MASK                   0x800u
+#define CAN_CTRL1_TWRNMSK_SHIFT                  11
+#define CAN_CTRL1_LPB_MASK                       0x1000u
+#define CAN_CTRL1_LPB_SHIFT                      12
+#define CAN_CTRL1_CLKSRC_MASK                    0x2000u
+#define CAN_CTRL1_CLKSRC_SHIFT                   13
+#define CAN_CTRL1_ERRMSK_MASK                    0x4000u
+#define CAN_CTRL1_ERRMSK_SHIFT                   14
+#define CAN_CTRL1_BOFFMSK_MASK                   0x8000u
+#define CAN_CTRL1_BOFFMSK_SHIFT                  15
+#define CAN_CTRL1_PSEG2_MASK                     0x70000u
+#define CAN_CTRL1_PSEG2_SHIFT                    16
+#define CAN_CTRL1_PSEG2(x)                       (((uint32_t)(((uint32_t)(x))<<CAN_CTRL1_PSEG2_SHIFT))&CAN_CTRL1_PSEG2_MASK)
+#define CAN_CTRL1_PSEG1_MASK                     0x380000u
+#define CAN_CTRL1_PSEG1_SHIFT                    19
+#define CAN_CTRL1_PSEG1(x)                       (((uint32_t)(((uint32_t)(x))<<CAN_CTRL1_PSEG1_SHIFT))&CAN_CTRL1_PSEG1_MASK)
+#define CAN_CTRL1_RJW_MASK                       0xC00000u
+#define CAN_CTRL1_RJW_SHIFT                      22
+#define CAN_CTRL1_RJW(x)                         (((uint32_t)(((uint32_t)(x))<<CAN_CTRL1_RJW_SHIFT))&CAN_CTRL1_RJW_MASK)
+#define CAN_CTRL1_PRESDIV_MASK                   0xFF000000u
+#define CAN_CTRL1_PRESDIV_SHIFT                  24
+#define CAN_CTRL1_PRESDIV(x)                     (((uint32_t)(((uint32_t)(x))<<CAN_CTRL1_PRESDIV_SHIFT))&CAN_CTRL1_PRESDIV_MASK)
+/* TIMER Bit Fields */
+#define CAN_TIMER_TIMER_MASK                     0xFFFFu
+#define CAN_TIMER_TIMER_SHIFT                    0
+#define CAN_TIMER_TIMER(x)                       (((uint32_t)(((uint32_t)(x))<<CAN_TIMER_TIMER_SHIFT))&CAN_TIMER_TIMER_MASK)
+/* RXMGMASK Bit Fields */
+#define CAN_RXMGMASK_MG_MASK                     0xFFFFFFFFu
+#define CAN_RXMGMASK_MG_SHIFT                    0
+#define CAN_RXMGMASK_MG(x)                       (((uint32_t)(((uint32_t)(x))<<CAN_RXMGMASK_MG_SHIFT))&CAN_RXMGMASK_MG_MASK)
+/* RX14MASK Bit Fields */
+#define CAN_RX14MASK_RX14M_MASK                  0xFFFFFFFFu
+#define CAN_RX14MASK_RX14M_SHIFT                 0
+#define CAN_RX14MASK_RX14M(x)                    (((uint32_t)(((uint32_t)(x))<<CAN_RX14MASK_RX14M_SHIFT))&CAN_RX14MASK_RX14M_MASK)
+/* RX15MASK Bit Fields */
+#define CAN_RX15MASK_RX15M_MASK                  0xFFFFFFFFu
+#define CAN_RX15MASK_RX15M_SHIFT                 0
+#define CAN_RX15MASK_RX15M(x)                    (((uint32_t)(((uint32_t)(x))<<CAN_RX15MASK_RX15M_SHIFT))&CAN_RX15MASK_RX15M_MASK)
+/* ECR Bit Fields */
+#define CAN_ECR_TXERRCNT_MASK                    0xFFu
+#define CAN_ECR_TXERRCNT_SHIFT                   0
+#define CAN_ECR_TXERRCNT(x)                      (((uint32_t)(((uint32_t)(x))<<CAN_ECR_TXERRCNT_SHIFT))&CAN_ECR_TXERRCNT_MASK)
+#define CAN_ECR_RXERRCNT_MASK                    0xFF00u
+#define CAN_ECR_RXERRCNT_SHIFT                   8
+#define CAN_ECR_RXERRCNT(x)                      (((uint32_t)(((uint32_t)(x))<<CAN_ECR_RXERRCNT_SHIFT))&CAN_ECR_RXERRCNT_MASK)
+/* ESR1 Bit Fields */
+#define CAN_ESR1_WAKINT_MASK                     0x1u
+#define CAN_ESR1_WAKINT_SHIFT                    0
+#define CAN_ESR1_ERRINT_MASK                     0x2u
+#define CAN_ESR1_ERRINT_SHIFT                    1
+#define CAN_ESR1_BOFFINT_MASK                    0x4u
+#define CAN_ESR1_BOFFINT_SHIFT                   2
+#define CAN_ESR1_RX_MASK                         0x8u
+#define CAN_ESR1_RX_SHIFT                        3
+#define CAN_ESR1_FLTCONF_MASK                    0x30u
+#define CAN_ESR1_FLTCONF_SHIFT                   4
+#define CAN_ESR1_FLTCONF(x)                      (((uint32_t)(((uint32_t)(x))<<CAN_ESR1_FLTCONF_SHIFT))&CAN_ESR1_FLTCONF_MASK)
+#define CAN_ESR1_TX_MASK                         0x40u
+#define CAN_ESR1_TX_SHIFT                        6
+#define CAN_ESR1_IDLE_MASK                       0x80u
+#define CAN_ESR1_IDLE_SHIFT                      7
+#define CAN_ESR1_RXWRN_MASK                      0x100u
+#define CAN_ESR1_RXWRN_SHIFT                     8
+#define CAN_ESR1_TXWRN_MASK                      0x200u
+#define CAN_ESR1_TXWRN_SHIFT                     9
+#define CAN_ESR1_STFERR_MASK                     0x400u
+#define CAN_ESR1_STFERR_SHIFT                    10
+#define CAN_ESR1_FRMERR_MASK                     0x800u
+#define CAN_ESR1_FRMERR_SHIFT                    11
+#define CAN_ESR1_CRCERR_MASK                     0x1000u
+#define CAN_ESR1_CRCERR_SHIFT                    12
+#define CAN_ESR1_ACKERR_MASK                     0x2000u
+#define CAN_ESR1_ACKERR_SHIFT                    13
+#define CAN_ESR1_BIT0ERR_MASK                    0x4000u
+#define CAN_ESR1_BIT0ERR_SHIFT                   14
+#define CAN_ESR1_BIT1ERR_MASK                    0x8000u
+#define CAN_ESR1_BIT1ERR_SHIFT                   15
+#define CAN_ESR1_RWRNINT_MASK                    0x10000u
+#define CAN_ESR1_RWRNINT_SHIFT                   16
+#define CAN_ESR1_TWRNINT_MASK                    0x20000u
+#define CAN_ESR1_TWRNINT_SHIFT                   17
+#define CAN_ESR1_SYNCH_MASK                      0x40000u
+#define CAN_ESR1_SYNCH_SHIFT                     18
+/* IMASK2 Bit Fields */
+#define CAN_IMASK2_BUFHM_MASK                    0xFFFFFFFFu
+#define CAN_IMASK2_BUFHM_SHIFT                   0
+#define CAN_IMASK2_BUFHM(x)                      (((uint32_t)(((uint32_t)(x))<<CAN_IMASK2_BUFHM_SHIFT))&CAN_IMASK2_BUFHM_MASK)
+/* IMASK1 Bit Fields */
+#define CAN_IMASK1_BUFLM_MASK                    0xFFFFFFFFu
+#define CAN_IMASK1_BUFLM_SHIFT                   0
+#define CAN_IMASK1_BUFLM(x)                      (((uint32_t)(((uint32_t)(x))<<CAN_IMASK1_BUFLM_SHIFT))&CAN_IMASK1_BUFLM_MASK)
+/* IFLAG2 Bit Fields */
+#define CAN_IFLAG2_BUFHI_MASK                    0xFFFFFFFFu
+#define CAN_IFLAG2_BUFHI_SHIFT                   0
+#define CAN_IFLAG2_BUFHI(x)                      (((uint32_t)(((uint32_t)(x))<<CAN_IFLAG2_BUFHI_SHIFT))&CAN_IFLAG2_BUFHI_MASK)
+/* IFLAG1 Bit Fields */
+#define CAN_IFLAG1_BUF4TO0I_MASK                 0x1Fu
+#define CAN_IFLAG1_BUF4TO0I_SHIFT                0
+#define CAN_IFLAG1_BUF4TO0I(x)                   (((uint32_t)(((uint32_t)(x))<<CAN_IFLAG1_BUF4TO0I_SHIFT))&CAN_IFLAG1_BUF4TO0I_MASK)
+#define CAN_IFLAG1_BUF5I_MASK                    0x20u
+#define CAN_IFLAG1_BUF5I_SHIFT                   5
+#define CAN_IFLAG1_BUF6I_MASK                    0x40u
+#define CAN_IFLAG1_BUF6I_SHIFT                   6
+#define CAN_IFLAG1_BUF7I_MASK                    0x80u
+#define CAN_IFLAG1_BUF7I_SHIFT                   7
+#define CAN_IFLAG1_BUF31TO8I_MASK                0xFFFFFF00u
+#define CAN_IFLAG1_BUF31TO8I_SHIFT               8
+#define CAN_IFLAG1_BUF31TO8I(x)                  (((uint32_t)(((uint32_t)(x))<<CAN_IFLAG1_BUF31TO8I_SHIFT))&CAN_IFLAG1_BUF31TO8I_MASK)
+/* CTRL2 Bit Fields */
+#define CAN_CTRL2_EACEN_MASK                     0x10000u
+#define CAN_CTRL2_EACEN_SHIFT                    16
+#define CAN_CTRL2_RRS_MASK                       0x20000u
+#define CAN_CTRL2_RRS_SHIFT                      17
+#define CAN_CTRL2_MRP_MASK                       0x40000u
+#define CAN_CTRL2_MRP_SHIFT                      18
+#define CAN_CTRL2_TASD_MASK                      0xF80000u
+#define CAN_CTRL2_TASD_SHIFT                     19
+#define CAN_CTRL2_TASD(x)                        (((uint32_t)(((uint32_t)(x))<<CAN_CTRL2_TASD_SHIFT))&CAN_CTRL2_TASD_MASK)
+#define CAN_CTRL2_RFFN_MASK                      0xF000000u
+#define CAN_CTRL2_RFFN_SHIFT                     24
+#define CAN_CTRL2_RFFN(x)                        (((uint32_t)(((uint32_t)(x))<<CAN_CTRL2_RFFN_SHIFT))&CAN_CTRL2_RFFN_MASK)
+#define CAN_CTRL2_WRMFRZ_MASK                    0x10000000u
+#define CAN_CTRL2_WRMFRZ_SHIFT                   28
+/* ESR2 Bit Fields */
+#define CAN_ESR2_IMB_MASK                        0x2000u
+#define CAN_ESR2_IMB_SHIFT                       13
+#define CAN_ESR2_VPS_MASK                        0x4000u
+#define CAN_ESR2_VPS_SHIFT                       14
+#define CAN_ESR2_LPTM_MASK                       0x7F0000u
+#define CAN_ESR2_LPTM_SHIFT                      16
+#define CAN_ESR2_LPTM(x)                         (((uint32_t)(((uint32_t)(x))<<CAN_ESR2_LPTM_SHIFT))&CAN_ESR2_LPTM_MASK)
+/* CRCR Bit Fields */
+#define CAN_CRCR_TXCRC_MASK                      0x7FFFu
+#define CAN_CRCR_TXCRC_SHIFT                     0
+#define CAN_CRCR_TXCRC(x)                        (((uint32_t)(((uint32_t)(x))<<CAN_CRCR_TXCRC_SHIFT))&CAN_CRCR_TXCRC_MASK)
+#define CAN_CRCR_MBCRC_MASK                      0x7F0000u
+#define CAN_CRCR_MBCRC_SHIFT                     16
+#define CAN_CRCR_MBCRC(x)                        (((uint32_t)(((uint32_t)(x))<<CAN_CRCR_MBCRC_SHIFT))&CAN_CRCR_MBCRC_MASK)
+/* RXFGMASK Bit Fields */
+#define CAN_RXFGMASK_FGM_MASK                    0xFFFFFFFFu
+#define CAN_RXFGMASK_FGM_SHIFT                   0
+#define CAN_RXFGMASK_FGM(x)                      (((uint32_t)(((uint32_t)(x))<<CAN_RXFGMASK_FGM_SHIFT))&CAN_RXFGMASK_FGM_MASK)
+/* RXFIR Bit Fields */
+#define CAN_RXFIR_IDHIT_MASK                     0x1FFu
+#define CAN_RXFIR_IDHIT_SHIFT                    0
+#define CAN_RXFIR_IDHIT(x)                       (((uint32_t)(((uint32_t)(x))<<CAN_RXFIR_IDHIT_SHIFT))&CAN_RXFIR_IDHIT_MASK)
+/* CS Bit Fields */
+#define CAN_CS_TIME_STAMP_MASK                   0xFFFFu
+#define CAN_CS_TIME_STAMP_SHIFT                  0
+#define CAN_CS_TIME_STAMP(x)                     (((uint32_t)(((uint32_t)(x))<<CAN_CS_TIME_STAMP_SHIFT))&CAN_CS_TIME_STAMP_MASK)
+#define CAN_CS_DLC_MASK                          0xF0000u
+#define CAN_CS_DLC_SHIFT                         16
+#define CAN_CS_DLC(x)                            (((uint32_t)(((uint32_t)(x))<<CAN_CS_DLC_SHIFT))&CAN_CS_DLC_MASK)
+#define CAN_CS_RTR_MASK                          0x100000u
+#define CAN_CS_RTR_SHIFT                         20
+#define CAN_CS_IDE_MASK                          0x200000u
+#define CAN_CS_IDE_SHIFT                         21
+#define CAN_CS_SRR_MASK                          0x400000u
+#define CAN_CS_SRR_SHIFT                         22
+#define CAN_CS_CODE_MASK                         0xF000000u
+#define CAN_CS_CODE_SHIFT                        24
+#define CAN_CS_CODE(x)                           (((uint32_t)(((uint32_t)(x))<<CAN_CS_CODE_SHIFT))&CAN_CS_CODE_MASK)
+/* ID Bit Fields */
+#define CAN_ID_EXT_MASK                          0x3FFFFu
+#define CAN_ID_EXT_SHIFT                         0
+#define CAN_ID_EXT(x)                            (((uint32_t)(((uint32_t)(x))<<CAN_ID_EXT_SHIFT))&CAN_ID_EXT_MASK)
+#define CAN_ID_STD_MASK                          0x1FFC0000u
+#define CAN_ID_STD_SHIFT                         18
+#define CAN_ID_STD(x)                            (((uint32_t)(((uint32_t)(x))<<CAN_ID_STD_SHIFT))&CAN_ID_STD_MASK)
+#define CAN_ID_PRIO_MASK                         0xE0000000u
+#define CAN_ID_PRIO_SHIFT                        29
+#define CAN_ID_PRIO(x)                           (((uint32_t)(((uint32_t)(x))<<CAN_ID_PRIO_SHIFT))&CAN_ID_PRIO_MASK)
+/* WORD0 Bit Fields */
+#define CAN_WORD0_DATA_BYTE_3_MASK               0xFFu
+#define CAN_WORD0_DATA_BYTE_3_SHIFT              0
+#define CAN_WORD0_DATA_BYTE_3(x)                 (((uint32_t)(((uint32_t)(x))<<CAN_WORD0_DATA_BYTE_3_SHIFT))&CAN_WORD0_DATA_BYTE_3_MASK)
+#define CAN_WORD0_DATA_BYTE_2_MASK               0xFF00u
+#define CAN_WORD0_DATA_BYTE_2_SHIFT              8
+#define CAN_WORD0_DATA_BYTE_2(x)                 (((uint32_t)(((uint32_t)(x))<<CAN_WORD0_DATA_BYTE_2_SHIFT))&CAN_WORD0_DATA_BYTE_2_MASK)
+#define CAN_WORD0_DATA_BYTE_1_MASK               0xFF0000u
+#define CAN_WORD0_DATA_BYTE_1_SHIFT              16
+#define CAN_WORD0_DATA_BYTE_1(x)                 (((uint32_t)(((uint32_t)(x))<<CAN_WORD0_DATA_BYTE_1_SHIFT))&CAN_WORD0_DATA_BYTE_1_MASK)
+#define CAN_WORD0_DATA_BYTE_0_MASK               0xFF000000u
+#define CAN_WORD0_DATA_BYTE_0_SHIFT              24
+#define CAN_WORD0_DATA_BYTE_0(x)                 (((uint32_t)(((uint32_t)(x))<<CAN_WORD0_DATA_BYTE_0_SHIFT))&CAN_WORD0_DATA_BYTE_0_MASK)
+/* WORD1 Bit Fields */
+#define CAN_WORD1_DATA_BYTE_7_MASK               0xFFu
+#define CAN_WORD1_DATA_BYTE_7_SHIFT              0
+#define CAN_WORD1_DATA_BYTE_7(x)                 (((uint32_t)(((uint32_t)(x))<<CAN_WORD1_DATA_BYTE_7_SHIFT))&CAN_WORD1_DATA_BYTE_7_MASK)
+#define CAN_WORD1_DATA_BYTE_6_MASK               0xFF00u
+#define CAN_WORD1_DATA_BYTE_6_SHIFT              8
+#define CAN_WORD1_DATA_BYTE_6(x)                 (((uint32_t)(((uint32_t)(x))<<CAN_WORD1_DATA_BYTE_6_SHIFT))&CAN_WORD1_DATA_BYTE_6_MASK)
+#define CAN_WORD1_DATA_BYTE_5_MASK               0xFF0000u
+#define CAN_WORD1_DATA_BYTE_5_SHIFT              16
+#define CAN_WORD1_DATA_BYTE_5(x)                 (((uint32_t)(((uint32_t)(x))<<CAN_WORD1_DATA_BYTE_5_SHIFT))&CAN_WORD1_DATA_BYTE_5_MASK)
+#define CAN_WORD1_DATA_BYTE_4_MASK               0xFF000000u
+#define CAN_WORD1_DATA_BYTE_4_SHIFT              24
+#define CAN_WORD1_DATA_BYTE_4(x)                 (((uint32_t)(((uint32_t)(x))<<CAN_WORD1_DATA_BYTE_4_SHIFT))&CAN_WORD1_DATA_BYTE_4_MASK)
+/* RXIMR Bit Fields */
+#define CAN_RXIMR_MI_MASK                        0xFFFFFFFFu
+#define CAN_RXIMR_MI_SHIFT                       0
+#define CAN_RXIMR_MI(x)                          (((uint32_t)(((uint32_t)(x))<<CAN_RXIMR_MI_SHIFT))&CAN_RXIMR_MI_MASK)
+
+/**
+ * @}
+ */ /* end of group CAN_Register_Masks */
+
+
+/* CAN - Peripheral instance base addresses */
+/** Peripheral CAN0 base address */
+#define CAN0_BASE                                (0x40024000u)
+/** Peripheral CAN0 base pointer */
+#define CAN0                                     ((CAN_Type *)CAN0_BASE)
+/** Peripheral CAN1 base address */
+#define CAN1_BASE                                (0x400A4000u)
+/** Peripheral CAN1 base pointer */
+#define CAN1                                     ((CAN_Type *)CAN1_BASE)
+
+/**
+ * @}
+ */ /* end of group CAN_Peripheral_Access_Layer */
 
 
 /* ----------------------------------------------------------------------------
@@ -480,6 +1890,8 @@ typedef struct {
 #define CMP_SCR_IEF_SHIFT                        3
 #define CMP_SCR_IER_MASK                         0x10u
 #define CMP_SCR_IER_SHIFT                        4
+#define CMP_SCR_SMELB_MASK                       0x20u
+#define CMP_SCR_SMELB_SHIFT                      5
 #define CMP_SCR_DMAEN_MASK                       0x40u
 #define CMP_SCR_DMAEN_SHIFT                      6
 /* DACCR Bit Fields */
@@ -497,6 +1909,10 @@ typedef struct {
 #define CMP_MUXCR_PSEL_MASK                      0x38u
 #define CMP_MUXCR_PSEL_SHIFT                     3
 #define CMP_MUXCR_PSEL(x)                        (((uint8_t)(((uint8_t)(x))<<CMP_MUXCR_PSEL_SHIFT))&CMP_MUXCR_PSEL_MASK)
+#define CMP_MUXCR_MEN_MASK                       0x40u
+#define CMP_MUXCR_MEN_SHIFT                      6
+#define CMP_MUXCR_PEN_MASK                       0x80u
+#define CMP_MUXCR_PEN_SHIFT                      7
 
 /**
  * @}
@@ -512,6 +1928,10 @@ typedef struct {
 #define CMP1_BASE                                (0x40073008u)
 /** Peripheral CMP1 base pointer */
 #define CMP1                                     ((CMP_Type *)CMP1_BASE)
+/** Peripheral CMP2 base address */
+#define CMP2_BASE                                (0x40073010u)
+/** Peripheral CMP2 base pointer */
+#define CMP2                                     ((CMP_Type *)CMP2_BASE)
 
 /**
  * @}
@@ -798,6 +2218,107 @@ typedef struct {
 
 
 /* ----------------------------------------------------------------------------
+   -- DAC Peripheral Access Layer
+   ---------------------------------------------------------------------------- */
+
+/**
+ * @addtogroup DAC_Peripheral_Access_Layer DAC Peripheral Access Layer
+ * @{
+ */
+
+/** DAC - Register Layout Typedef */
+typedef struct {
+  struct {                                         /* offset: 0x0, array step: 0x2 */
+    __IO uint8_t DATL;                               /**< DAC Data Low Register, array offset: 0x0, array step: 0x2 */
+    __IO uint8_t DATH;                               /**< DAC Data High Register, array offset: 0x1, array step: 0x2 */
+  } DAT[16];
+  __IO uint8_t SR;                                 /**< DAC Status Register, offset: 0x20 */
+  __IO uint8_t C0;                                 /**< DAC Control Register, offset: 0x21 */
+  __IO uint8_t C1;                                 /**< DAC Control Register 1, offset: 0x22 */
+  __IO uint8_t C2;                                 /**< DAC Control Register 2, offset: 0x23 */
+} DAC_Type;
+
+/* ----------------------------------------------------------------------------
+   -- DAC Register Masks
+   ---------------------------------------------------------------------------- */
+
+/**
+ * @addtogroup DAC_Register_Masks DAC Register Masks
+ * @{
+ */
+
+/* DATL Bit Fields */
+#define DAC_DATL_DATA_MASK                       0xFFu
+#define DAC_DATL_DATA_SHIFT                      0
+#define DAC_DATL_DATA(x)                         (((uint8_t)(((uint8_t)(x))<<DAC_DATL_DATA_SHIFT))&DAC_DATL_DATA_MASK)
+/* DATH Bit Fields */
+#define DAC_DATH_DATA_MASK                       0xFu
+#define DAC_DATH_DATA_SHIFT                      0
+#define DAC_DATH_DATA(x)                         (((uint8_t)(((uint8_t)(x))<<DAC_DATH_DATA_SHIFT))&DAC_DATH_DATA_MASK)
+/* SR Bit Fields */
+#define DAC_SR_DACBFRPBF_MASK                    0x1u
+#define DAC_SR_DACBFRPBF_SHIFT                   0
+#define DAC_SR_DACBFRPTF_MASK                    0x2u
+#define DAC_SR_DACBFRPTF_SHIFT                   1
+#define DAC_SR_DACBFWMF_MASK                     0x4u
+#define DAC_SR_DACBFWMF_SHIFT                    2
+/* C0 Bit Fields */
+#define DAC_C0_DACBBIEN_MASK                     0x1u
+#define DAC_C0_DACBBIEN_SHIFT                    0
+#define DAC_C0_DACBTIEN_MASK                     0x2u
+#define DAC_C0_DACBTIEN_SHIFT                    1
+#define DAC_C0_DACBWIEN_MASK                     0x4u
+#define DAC_C0_DACBWIEN_SHIFT                    2
+#define DAC_C0_LPEN_MASK                         0x8u
+#define DAC_C0_LPEN_SHIFT                        3
+#define DAC_C0_DACSWTRG_MASK                     0x10u
+#define DAC_C0_DACSWTRG_SHIFT                    4
+#define DAC_C0_DACTRGSEL_MASK                    0x20u
+#define DAC_C0_DACTRGSEL_SHIFT                   5
+#define DAC_C0_DACRFS_MASK                       0x40u
+#define DAC_C0_DACRFS_SHIFT                      6
+#define DAC_C0_DACEN_MASK                        0x80u
+#define DAC_C0_DACEN_SHIFT                       7
+/* C1 Bit Fields */
+#define DAC_C1_DACBFEN_MASK                      0x1u
+#define DAC_C1_DACBFEN_SHIFT                     0
+#define DAC_C1_DACBFMD_MASK                      0x6u
+#define DAC_C1_DACBFMD_SHIFT                     1
+#define DAC_C1_DACBFMD(x)                        (((uint8_t)(((uint8_t)(x))<<DAC_C1_DACBFMD_SHIFT))&DAC_C1_DACBFMD_MASK)
+#define DAC_C1_DACBFWM_MASK                      0x18u
+#define DAC_C1_DACBFWM_SHIFT                     3
+#define DAC_C1_DACBFWM(x)                        (((uint8_t)(((uint8_t)(x))<<DAC_C1_DACBFWM_SHIFT))&DAC_C1_DACBFWM_MASK)
+#define DAC_C1_DMAEN_MASK                        0x80u
+#define DAC_C1_DMAEN_SHIFT                       7
+/* C2 Bit Fields */
+#define DAC_C2_DACBFUP_MASK                      0xFu
+#define DAC_C2_DACBFUP_SHIFT                     0
+#define DAC_C2_DACBFUP(x)                        (((uint8_t)(((uint8_t)(x))<<DAC_C2_DACBFUP_SHIFT))&DAC_C2_DACBFUP_MASK)
+#define DAC_C2_DACBFRP_MASK                      0xF0u
+#define DAC_C2_DACBFRP_SHIFT                     4
+#define DAC_C2_DACBFRP(x)                        (((uint8_t)(((uint8_t)(x))<<DAC_C2_DACBFRP_SHIFT))&DAC_C2_DACBFRP_MASK)
+
+/**
+ * @}
+ */ /* end of group DAC_Register_Masks */
+
+
+/* DAC - Peripheral instance base addresses */
+/** Peripheral DAC0 base address */
+#define DAC0_BASE                                (0x400CC000u)
+/** Peripheral DAC0 base pointer */
+#define DAC0                                     ((DAC_Type *)DAC0_BASE)
+/** Peripheral DAC1 base address */
+#define DAC1_BASE                                (0x400CD000u)
+/** Peripheral DAC1 base pointer */
+#define DAC1                                     ((DAC_Type *)DAC1_BASE)
+
+/**
+ * @}
+ */ /* end of group DAC_Peripheral_Access_Layer */
+
+
+/* ----------------------------------------------------------------------------
    -- DMA Peripheral Access Layer
    ---------------------------------------------------------------------------- */
 
@@ -833,7 +2354,19 @@ typedef struct {
   __IO uint8_t DCHPRI2;                            /**< Channel n Priority Register, offset: 0x101 */
   __IO uint8_t DCHPRI1;                            /**< Channel n Priority Register, offset: 0x102 */
   __IO uint8_t DCHPRI0;                            /**< Channel n Priority Register, offset: 0x103 */
-       uint8_t RESERVED_6[3836];
+  __IO uint8_t DCHPRI7;                            /**< Channel n Priority Register, offset: 0x104 */
+  __IO uint8_t DCHPRI6;                            /**< Channel n Priority Register, offset: 0x105 */
+  __IO uint8_t DCHPRI5;                            /**< Channel n Priority Register, offset: 0x106 */
+  __IO uint8_t DCHPRI4;                            /**< Channel n Priority Register, offset: 0x107 */
+  __IO uint8_t DCHPRI11;                           /**< Channel n Priority Register, offset: 0x108 */
+  __IO uint8_t DCHPRI10;                           /**< Channel n Priority Register, offset: 0x109 */
+  __IO uint8_t DCHPRI9;                            /**< Channel n Priority Register, offset: 0x10A */
+  __IO uint8_t DCHPRI8;                            /**< Channel n Priority Register, offset: 0x10B */
+  __IO uint8_t DCHPRI15;                           /**< Channel n Priority Register, offset: 0x10C */
+  __IO uint8_t DCHPRI14;                           /**< Channel n Priority Register, offset: 0x10D */
+  __IO uint8_t DCHPRI13;                           /**< Channel n Priority Register, offset: 0x10E */
+  __IO uint8_t DCHPRI12;                           /**< Channel n Priority Register, offset: 0x10F */
+       uint8_t RESERVED_6[3824];
   struct {                                         /* offset: 0x1000, array step: 0x20 */
     __IO uint32_t SADDR;                             /**< TCD Source Address, array offset: 0x1000, array step: 0x20 */
     __IO uint16_t SOFF;                              /**< TCD Signed Source Address Offset, array offset: 0x1004, array step: 0x20 */
@@ -856,7 +2389,7 @@ typedef struct {
       __IO uint16_t BITER_ELINKNO;                     /**< TCD Beginning Minor Loop Link, Major Loop Count (Channel Linking Disabled), array offset: 0x101E, array step: 0x20 */
       __IO uint16_t BITER_ELINKYES;                    /**< TCD Beginning Minor Loop Link, Major Loop Count (Channel Linking Enabled), array offset: 0x101E, array step: 0x20 */
     };
-  } TCD[4];
+  } TCD[16];
 } DMA_Type;
 
 /* ----------------------------------------------------------------------------
@@ -920,6 +2453,30 @@ typedef struct {
 #define DMA_ERQ_ERQ2_SHIFT                       2
 #define DMA_ERQ_ERQ3_MASK                        0x8u
 #define DMA_ERQ_ERQ3_SHIFT                       3
+#define DMA_ERQ_ERQ4_MASK                        0x10u
+#define DMA_ERQ_ERQ4_SHIFT                       4
+#define DMA_ERQ_ERQ5_MASK                        0x20u
+#define DMA_ERQ_ERQ5_SHIFT                       5
+#define DMA_ERQ_ERQ6_MASK                        0x40u
+#define DMA_ERQ_ERQ6_SHIFT                       6
+#define DMA_ERQ_ERQ7_MASK                        0x80u
+#define DMA_ERQ_ERQ7_SHIFT                       7
+#define DMA_ERQ_ERQ8_MASK                        0x100u
+#define DMA_ERQ_ERQ8_SHIFT                       8
+#define DMA_ERQ_ERQ9_MASK                        0x200u
+#define DMA_ERQ_ERQ9_SHIFT                       9
+#define DMA_ERQ_ERQ10_MASK                       0x400u
+#define DMA_ERQ_ERQ10_SHIFT                      10
+#define DMA_ERQ_ERQ11_MASK                       0x800u
+#define DMA_ERQ_ERQ11_SHIFT                      11
+#define DMA_ERQ_ERQ12_MASK                       0x1000u
+#define DMA_ERQ_ERQ12_SHIFT                      12
+#define DMA_ERQ_ERQ13_MASK                       0x2000u
+#define DMA_ERQ_ERQ13_SHIFT                      13
+#define DMA_ERQ_ERQ14_MASK                       0x4000u
+#define DMA_ERQ_ERQ14_SHIFT                      14
+#define DMA_ERQ_ERQ15_MASK                       0x8000u
+#define DMA_ERQ_ERQ15_SHIFT                      15
 /* EEI Bit Fields */
 #define DMA_EEI_EEI0_MASK                        0x1u
 #define DMA_EEI_EEI0_SHIFT                       0
@@ -929,6 +2486,30 @@ typedef struct {
 #define DMA_EEI_EEI2_SHIFT                       2
 #define DMA_EEI_EEI3_MASK                        0x8u
 #define DMA_EEI_EEI3_SHIFT                       3
+#define DMA_EEI_EEI4_MASK                        0x10u
+#define DMA_EEI_EEI4_SHIFT                       4
+#define DMA_EEI_EEI5_MASK                        0x20u
+#define DMA_EEI_EEI5_SHIFT                       5
+#define DMA_EEI_EEI6_MASK                        0x40u
+#define DMA_EEI_EEI6_SHIFT                       6
+#define DMA_EEI_EEI7_MASK                        0x80u
+#define DMA_EEI_EEI7_SHIFT                       7
+#define DMA_EEI_EEI8_MASK                        0x100u
+#define DMA_EEI_EEI8_SHIFT                       8
+#define DMA_EEI_EEI9_MASK                        0x200u
+#define DMA_EEI_EEI9_SHIFT                       9
+#define DMA_EEI_EEI10_MASK                       0x400u
+#define DMA_EEI_EEI10_SHIFT                      10
+#define DMA_EEI_EEI11_MASK                       0x800u
+#define DMA_EEI_EEI11_SHIFT                      11
+#define DMA_EEI_EEI12_MASK                       0x1000u
+#define DMA_EEI_EEI12_SHIFT                      12
+#define DMA_EEI_EEI13_MASK                       0x2000u
+#define DMA_EEI_EEI13_SHIFT                      13
+#define DMA_EEI_EEI14_MASK                       0x4000u
+#define DMA_EEI_EEI14_SHIFT                      14
+#define DMA_EEI_EEI15_MASK                       0x8000u
+#define DMA_EEI_EEI15_SHIFT                      15
 /* CEEI Bit Fields */
 #define DMA_CEEI_CEEI_MASK                       0xFu
 #define DMA_CEEI_CEEI_SHIFT                      0
@@ -1002,6 +2583,30 @@ typedef struct {
 #define DMA_INT_INT2_SHIFT                       2
 #define DMA_INT_INT3_MASK                        0x8u
 #define DMA_INT_INT3_SHIFT                       3
+#define DMA_INT_INT4_MASK                        0x10u
+#define DMA_INT_INT4_SHIFT                       4
+#define DMA_INT_INT5_MASK                        0x20u
+#define DMA_INT_INT5_SHIFT                       5
+#define DMA_INT_INT6_MASK                        0x40u
+#define DMA_INT_INT6_SHIFT                       6
+#define DMA_INT_INT7_MASK                        0x80u
+#define DMA_INT_INT7_SHIFT                       7
+#define DMA_INT_INT8_MASK                        0x100u
+#define DMA_INT_INT8_SHIFT                       8
+#define DMA_INT_INT9_MASK                        0x200u
+#define DMA_INT_INT9_SHIFT                       9
+#define DMA_INT_INT10_MASK                       0x400u
+#define DMA_INT_INT10_SHIFT                      10
+#define DMA_INT_INT11_MASK                       0x800u
+#define DMA_INT_INT11_SHIFT                      11
+#define DMA_INT_INT12_MASK                       0x1000u
+#define DMA_INT_INT12_SHIFT                      12
+#define DMA_INT_INT13_MASK                       0x2000u
+#define DMA_INT_INT13_SHIFT                      13
+#define DMA_INT_INT14_MASK                       0x4000u
+#define DMA_INT_INT14_SHIFT                      14
+#define DMA_INT_INT15_MASK                       0x8000u
+#define DMA_INT_INT15_SHIFT                      15
 /* ERR Bit Fields */
 #define DMA_ERR_ERR0_MASK                        0x1u
 #define DMA_ERR_ERR0_SHIFT                       0
@@ -1011,6 +2616,30 @@ typedef struct {
 #define DMA_ERR_ERR2_SHIFT                       2
 #define DMA_ERR_ERR3_MASK                        0x8u
 #define DMA_ERR_ERR3_SHIFT                       3
+#define DMA_ERR_ERR4_MASK                        0x10u
+#define DMA_ERR_ERR4_SHIFT                       4
+#define DMA_ERR_ERR5_MASK                        0x20u
+#define DMA_ERR_ERR5_SHIFT                       5
+#define DMA_ERR_ERR6_MASK                        0x40u
+#define DMA_ERR_ERR6_SHIFT                       6
+#define DMA_ERR_ERR7_MASK                        0x80u
+#define DMA_ERR_ERR7_SHIFT                       7
+#define DMA_ERR_ERR8_MASK                        0x100u
+#define DMA_ERR_ERR8_SHIFT                       8
+#define DMA_ERR_ERR9_MASK                        0x200u
+#define DMA_ERR_ERR9_SHIFT                       9
+#define DMA_ERR_ERR10_MASK                       0x400u
+#define DMA_ERR_ERR10_SHIFT                      10
+#define DMA_ERR_ERR11_MASK                       0x800u
+#define DMA_ERR_ERR11_SHIFT                      11
+#define DMA_ERR_ERR12_MASK                       0x1000u
+#define DMA_ERR_ERR12_SHIFT                      12
+#define DMA_ERR_ERR13_MASK                       0x2000u
+#define DMA_ERR_ERR13_SHIFT                      13
+#define DMA_ERR_ERR14_MASK                       0x4000u
+#define DMA_ERR_ERR14_SHIFT                      14
+#define DMA_ERR_ERR15_MASK                       0x8000u
+#define DMA_ERR_ERR15_SHIFT                      15
 /* HRS Bit Fields */
 #define DMA_HRS_HRS0_MASK                        0x1u
 #define DMA_HRS_HRS0_SHIFT                       0
@@ -1020,6 +2649,30 @@ typedef struct {
 #define DMA_HRS_HRS2_SHIFT                       2
 #define DMA_HRS_HRS3_MASK                        0x8u
 #define DMA_HRS_HRS3_SHIFT                       3
+#define DMA_HRS_HRS4_MASK                        0x10u
+#define DMA_HRS_HRS4_SHIFT                       4
+#define DMA_HRS_HRS5_MASK                        0x20u
+#define DMA_HRS_HRS5_SHIFT                       5
+#define DMA_HRS_HRS6_MASK                        0x40u
+#define DMA_HRS_HRS6_SHIFT                       6
+#define DMA_HRS_HRS7_MASK                        0x80u
+#define DMA_HRS_HRS7_SHIFT                       7
+#define DMA_HRS_HRS8_MASK                        0x100u
+#define DMA_HRS_HRS8_SHIFT                       8
+#define DMA_HRS_HRS9_MASK                        0x200u
+#define DMA_HRS_HRS9_SHIFT                       9
+#define DMA_HRS_HRS10_MASK                       0x400u
+#define DMA_HRS_HRS10_SHIFT                      10
+#define DMA_HRS_HRS11_MASK                       0x800u
+#define DMA_HRS_HRS11_SHIFT                      11
+#define DMA_HRS_HRS12_MASK                       0x1000u
+#define DMA_HRS_HRS12_SHIFT                      12
+#define DMA_HRS_HRS13_MASK                       0x2000u
+#define DMA_HRS_HRS13_SHIFT                      13
+#define DMA_HRS_HRS14_MASK                       0x4000u
+#define DMA_HRS_HRS14_SHIFT                      14
+#define DMA_HRS_HRS15_MASK                       0x8000u
+#define DMA_HRS_HRS15_SHIFT                      15
 /* DCHPRI3 Bit Fields */
 #define DMA_DCHPRI3_CHPRI_MASK                   0xFu
 #define DMA_DCHPRI3_CHPRI_SHIFT                  0
@@ -1052,6 +2705,102 @@ typedef struct {
 #define DMA_DCHPRI0_DPA_SHIFT                    6
 #define DMA_DCHPRI0_ECP_MASK                     0x80u
 #define DMA_DCHPRI0_ECP_SHIFT                    7
+/* DCHPRI7 Bit Fields */
+#define DMA_DCHPRI7_CHPRI_MASK                   0xFu
+#define DMA_DCHPRI7_CHPRI_SHIFT                  0
+#define DMA_DCHPRI7_CHPRI(x)                     (((uint8_t)(((uint8_t)(x))<<DMA_DCHPRI7_CHPRI_SHIFT))&DMA_DCHPRI7_CHPRI_MASK)
+#define DMA_DCHPRI7_DPA_MASK                     0x40u
+#define DMA_DCHPRI7_DPA_SHIFT                    6
+#define DMA_DCHPRI7_ECP_MASK                     0x80u
+#define DMA_DCHPRI7_ECP_SHIFT                    7
+/* DCHPRI6 Bit Fields */
+#define DMA_DCHPRI6_CHPRI_MASK                   0xFu
+#define DMA_DCHPRI6_CHPRI_SHIFT                  0
+#define DMA_DCHPRI6_CHPRI(x)                     (((uint8_t)(((uint8_t)(x))<<DMA_DCHPRI6_CHPRI_SHIFT))&DMA_DCHPRI6_CHPRI_MASK)
+#define DMA_DCHPRI6_DPA_MASK                     0x40u
+#define DMA_DCHPRI6_DPA_SHIFT                    6
+#define DMA_DCHPRI6_ECP_MASK                     0x80u
+#define DMA_DCHPRI6_ECP_SHIFT                    7
+/* DCHPRI5 Bit Fields */
+#define DMA_DCHPRI5_CHPRI_MASK                   0xFu
+#define DMA_DCHPRI5_CHPRI_SHIFT                  0
+#define DMA_DCHPRI5_CHPRI(x)                     (((uint8_t)(((uint8_t)(x))<<DMA_DCHPRI5_CHPRI_SHIFT))&DMA_DCHPRI5_CHPRI_MASK)
+#define DMA_DCHPRI5_DPA_MASK                     0x40u
+#define DMA_DCHPRI5_DPA_SHIFT                    6
+#define DMA_DCHPRI5_ECP_MASK                     0x80u
+#define DMA_DCHPRI5_ECP_SHIFT                    7
+/* DCHPRI4 Bit Fields */
+#define DMA_DCHPRI4_CHPRI_MASK                   0xFu
+#define DMA_DCHPRI4_CHPRI_SHIFT                  0
+#define DMA_DCHPRI4_CHPRI(x)                     (((uint8_t)(((uint8_t)(x))<<DMA_DCHPRI4_CHPRI_SHIFT))&DMA_DCHPRI4_CHPRI_MASK)
+#define DMA_DCHPRI4_DPA_MASK                     0x40u
+#define DMA_DCHPRI4_DPA_SHIFT                    6
+#define DMA_DCHPRI4_ECP_MASK                     0x80u
+#define DMA_DCHPRI4_ECP_SHIFT                    7
+/* DCHPRI11 Bit Fields */
+#define DMA_DCHPRI11_CHPRI_MASK                  0xFu
+#define DMA_DCHPRI11_CHPRI_SHIFT                 0
+#define DMA_DCHPRI11_CHPRI(x)                    (((uint8_t)(((uint8_t)(x))<<DMA_DCHPRI11_CHPRI_SHIFT))&DMA_DCHPRI11_CHPRI_MASK)
+#define DMA_DCHPRI11_DPA_MASK                    0x40u
+#define DMA_DCHPRI11_DPA_SHIFT                   6
+#define DMA_DCHPRI11_ECP_MASK                    0x80u
+#define DMA_DCHPRI11_ECP_SHIFT                   7
+/* DCHPRI10 Bit Fields */
+#define DMA_DCHPRI10_CHPRI_MASK                  0xFu
+#define DMA_DCHPRI10_CHPRI_SHIFT                 0
+#define DMA_DCHPRI10_CHPRI(x)                    (((uint8_t)(((uint8_t)(x))<<DMA_DCHPRI10_CHPRI_SHIFT))&DMA_DCHPRI10_CHPRI_MASK)
+#define DMA_DCHPRI10_DPA_MASK                    0x40u
+#define DMA_DCHPRI10_DPA_SHIFT                   6
+#define DMA_DCHPRI10_ECP_MASK                    0x80u
+#define DMA_DCHPRI10_ECP_SHIFT                   7
+/* DCHPRI9 Bit Fields */
+#define DMA_DCHPRI9_CHPRI_MASK                   0xFu
+#define DMA_DCHPRI9_CHPRI_SHIFT                  0
+#define DMA_DCHPRI9_CHPRI(x)                     (((uint8_t)(((uint8_t)(x))<<DMA_DCHPRI9_CHPRI_SHIFT))&DMA_DCHPRI9_CHPRI_MASK)
+#define DMA_DCHPRI9_DPA_MASK                     0x40u
+#define DMA_DCHPRI9_DPA_SHIFT                    6
+#define DMA_DCHPRI9_ECP_MASK                     0x80u
+#define DMA_DCHPRI9_ECP_SHIFT                    7
+/* DCHPRI8 Bit Fields */
+#define DMA_DCHPRI8_CHPRI_MASK                   0xFu
+#define DMA_DCHPRI8_CHPRI_SHIFT                  0
+#define DMA_DCHPRI8_CHPRI(x)                     (((uint8_t)(((uint8_t)(x))<<DMA_DCHPRI8_CHPRI_SHIFT))&DMA_DCHPRI8_CHPRI_MASK)
+#define DMA_DCHPRI8_DPA_MASK                     0x40u
+#define DMA_DCHPRI8_DPA_SHIFT                    6
+#define DMA_DCHPRI8_ECP_MASK                     0x80u
+#define DMA_DCHPRI8_ECP_SHIFT                    7
+/* DCHPRI15 Bit Fields */
+#define DMA_DCHPRI15_CHPRI_MASK                  0xFu
+#define DMA_DCHPRI15_CHPRI_SHIFT                 0
+#define DMA_DCHPRI15_CHPRI(x)                    (((uint8_t)(((uint8_t)(x))<<DMA_DCHPRI15_CHPRI_SHIFT))&DMA_DCHPRI15_CHPRI_MASK)
+#define DMA_DCHPRI15_DPA_MASK                    0x40u
+#define DMA_DCHPRI15_DPA_SHIFT                   6
+#define DMA_DCHPRI15_ECP_MASK                    0x80u
+#define DMA_DCHPRI15_ECP_SHIFT                   7
+/* DCHPRI14 Bit Fields */
+#define DMA_DCHPRI14_CHPRI_MASK                  0xFu
+#define DMA_DCHPRI14_CHPRI_SHIFT                 0
+#define DMA_DCHPRI14_CHPRI(x)                    (((uint8_t)(((uint8_t)(x))<<DMA_DCHPRI14_CHPRI_SHIFT))&DMA_DCHPRI14_CHPRI_MASK)
+#define DMA_DCHPRI14_DPA_MASK                    0x40u
+#define DMA_DCHPRI14_DPA_SHIFT                   6
+#define DMA_DCHPRI14_ECP_MASK                    0x80u
+#define DMA_DCHPRI14_ECP_SHIFT                   7
+/* DCHPRI13 Bit Fields */
+#define DMA_DCHPRI13_CHPRI_MASK                  0xFu
+#define DMA_DCHPRI13_CHPRI_SHIFT                 0
+#define DMA_DCHPRI13_CHPRI(x)                    (((uint8_t)(((uint8_t)(x))<<DMA_DCHPRI13_CHPRI_SHIFT))&DMA_DCHPRI13_CHPRI_MASK)
+#define DMA_DCHPRI13_DPA_MASK                    0x40u
+#define DMA_DCHPRI13_DPA_SHIFT                   6
+#define DMA_DCHPRI13_ECP_MASK                    0x80u
+#define DMA_DCHPRI13_ECP_SHIFT                   7
+/* DCHPRI12 Bit Fields */
+#define DMA_DCHPRI12_CHPRI_MASK                  0xFu
+#define DMA_DCHPRI12_CHPRI_SHIFT                 0
+#define DMA_DCHPRI12_CHPRI(x)                    (((uint8_t)(((uint8_t)(x))<<DMA_DCHPRI12_CHPRI_SHIFT))&DMA_DCHPRI12_CHPRI_MASK)
+#define DMA_DCHPRI12_DPA_MASK                    0x40u
+#define DMA_DCHPRI12_DPA_SHIFT                   6
+#define DMA_DCHPRI12_ECP_MASK                    0x80u
+#define DMA_DCHPRI12_ECP_SHIFT                   7
 /* SADDR Bit Fields */
 #define DMA_SADDR_SADDR_MASK                     0xFFFFFFFFu
 #define DMA_SADDR_SADDR_SHIFT                    0
@@ -1263,8 +3012,6 @@ typedef struct {
 #define EWM_CTRL_ASSIN_SHIFT                     1
 #define EWM_CTRL_INEN_MASK                       0x4u
 #define EWM_CTRL_INEN_SHIFT                      2
-#define EWM_CTRL_INTEN_MASK                      0x8u
-#define EWM_CTRL_INTEN_SHIFT                     3
 /* SERV Bit Fields */
 #define EWM_SERV_SERVICE_MASK                    0xFFu
 #define EWM_SERV_SERVICE_SHIFT                   0
@@ -1295,6 +3042,113 @@ typedef struct {
 
 
 /* ----------------------------------------------------------------------------
+   -- FB Peripheral Access Layer
+   ---------------------------------------------------------------------------- */
+
+/**
+ * @addtogroup FB_Peripheral_Access_Layer FB Peripheral Access Layer
+ * @{
+ */
+
+/** FB - Register Layout Typedef */
+typedef struct {
+  struct {                                         /* offset: 0x0, array step: 0xC */
+    __IO uint32_t CSAR;                              /**< Chip select address register, array offset: 0x0, array step: 0xC */
+    __IO uint32_t CSMR;                              /**< Chip select mask register, array offset: 0x4, array step: 0xC */
+    __IO uint32_t CSCR;                              /**< Chip select control register, array offset: 0x8, array step: 0xC */
+  } CS[6];
+       uint8_t RESERVED_0[24];
+  __IO uint32_t CSPMCR;                            /**< Chip select port multiplexing control register, offset: 0x60 */
+} FB_Type;
+
+/* ----------------------------------------------------------------------------
+   -- FB Register Masks
+   ---------------------------------------------------------------------------- */
+
+/**
+ * @addtogroup FB_Register_Masks FB Register Masks
+ * @{
+ */
+
+/* CSAR Bit Fields */
+#define FB_CSAR_BA_MASK                          0xFFFF0000u
+#define FB_CSAR_BA_SHIFT                         16
+#define FB_CSAR_BA(x)                            (((uint32_t)(((uint32_t)(x))<<FB_CSAR_BA_SHIFT))&FB_CSAR_BA_MASK)
+/* CSMR Bit Fields */
+#define FB_CSMR_V_MASK                           0x1u
+#define FB_CSMR_V_SHIFT                          0
+#define FB_CSMR_WP_MASK                          0x100u
+#define FB_CSMR_WP_SHIFT                         8
+#define FB_CSMR_BAM_MASK                         0xFFFF0000u
+#define FB_CSMR_BAM_SHIFT                        16
+#define FB_CSMR_BAM(x)                           (((uint32_t)(((uint32_t)(x))<<FB_CSMR_BAM_SHIFT))&FB_CSMR_BAM_MASK)
+/* CSCR Bit Fields */
+#define FB_CSCR_BSTW_MASK                        0x8u
+#define FB_CSCR_BSTW_SHIFT                       3
+#define FB_CSCR_BSTR_MASK                        0x10u
+#define FB_CSCR_BSTR_SHIFT                       4
+#define FB_CSCR_BEM_MASK                         0x20u
+#define FB_CSCR_BEM_SHIFT                        5
+#define FB_CSCR_PS_MASK                          0xC0u
+#define FB_CSCR_PS_SHIFT                         6
+#define FB_CSCR_PS(x)                            (((uint32_t)(((uint32_t)(x))<<FB_CSCR_PS_SHIFT))&FB_CSCR_PS_MASK)
+#define FB_CSCR_AA_MASK                          0x100u
+#define FB_CSCR_AA_SHIFT                         8
+#define FB_CSCR_BLS_MASK                         0x200u
+#define FB_CSCR_BLS_SHIFT                        9
+#define FB_CSCR_WS_MASK                          0xFC00u
+#define FB_CSCR_WS_SHIFT                         10
+#define FB_CSCR_WS(x)                            (((uint32_t)(((uint32_t)(x))<<FB_CSCR_WS_SHIFT))&FB_CSCR_WS_MASK)
+#define FB_CSCR_WRAH_MASK                        0x30000u
+#define FB_CSCR_WRAH_SHIFT                       16
+#define FB_CSCR_WRAH(x)                          (((uint32_t)(((uint32_t)(x))<<FB_CSCR_WRAH_SHIFT))&FB_CSCR_WRAH_MASK)
+#define FB_CSCR_RDAH_MASK                        0xC0000u
+#define FB_CSCR_RDAH_SHIFT                       18
+#define FB_CSCR_RDAH(x)                          (((uint32_t)(((uint32_t)(x))<<FB_CSCR_RDAH_SHIFT))&FB_CSCR_RDAH_MASK)
+#define FB_CSCR_ASET_MASK                        0x300000u
+#define FB_CSCR_ASET_SHIFT                       20
+#define FB_CSCR_ASET(x)                          (((uint32_t)(((uint32_t)(x))<<FB_CSCR_ASET_SHIFT))&FB_CSCR_ASET_MASK)
+#define FB_CSCR_EXTS_MASK                        0x400000u
+#define FB_CSCR_EXTS_SHIFT                       22
+#define FB_CSCR_SWSEN_MASK                       0x800000u
+#define FB_CSCR_SWSEN_SHIFT                      23
+#define FB_CSCR_SWS_MASK                         0xFC000000u
+#define FB_CSCR_SWS_SHIFT                        26
+#define FB_CSCR_SWS(x)                           (((uint32_t)(((uint32_t)(x))<<FB_CSCR_SWS_SHIFT))&FB_CSCR_SWS_MASK)
+/* CSPMCR Bit Fields */
+#define FB_CSPMCR_GROUP5_MASK                    0xF000u
+#define FB_CSPMCR_GROUP5_SHIFT                   12
+#define FB_CSPMCR_GROUP5(x)                      (((uint32_t)(((uint32_t)(x))<<FB_CSPMCR_GROUP5_SHIFT))&FB_CSPMCR_GROUP5_MASK)
+#define FB_CSPMCR_GROUP4_MASK                    0xF0000u
+#define FB_CSPMCR_GROUP4_SHIFT                   16
+#define FB_CSPMCR_GROUP4(x)                      (((uint32_t)(((uint32_t)(x))<<FB_CSPMCR_GROUP4_SHIFT))&FB_CSPMCR_GROUP4_MASK)
+#define FB_CSPMCR_GROUP3_MASK                    0xF00000u
+#define FB_CSPMCR_GROUP3_SHIFT                   20
+#define FB_CSPMCR_GROUP3(x)                      (((uint32_t)(((uint32_t)(x))<<FB_CSPMCR_GROUP3_SHIFT))&FB_CSPMCR_GROUP3_MASK)
+#define FB_CSPMCR_GROUP2_MASK                    0xF000000u
+#define FB_CSPMCR_GROUP2_SHIFT                   24
+#define FB_CSPMCR_GROUP2(x)                      (((uint32_t)(((uint32_t)(x))<<FB_CSPMCR_GROUP2_SHIFT))&FB_CSPMCR_GROUP2_MASK)
+#define FB_CSPMCR_GROUP1_MASK                    0xF0000000u
+#define FB_CSPMCR_GROUP1_SHIFT                   28
+#define FB_CSPMCR_GROUP1(x)                      (((uint32_t)(((uint32_t)(x))<<FB_CSPMCR_GROUP1_SHIFT))&FB_CSPMCR_GROUP1_MASK)
+
+/**
+ * @}
+ */ /* end of group FB_Register_Masks */
+
+
+/* FB - Peripheral instance base addresses */
+/** Peripheral FB base address */
+#define FB_BASE                                  (0x4000C000u)
+/** Peripheral FB base pointer */
+#define FB                                       ((FB_Type *)FB_BASE)
+
+/**
+ * @}
+ */ /* end of group FB_Peripheral_Access_Layer */
+
+
+/* ----------------------------------------------------------------------------
    -- FMC Peripheral Access Layer
    ---------------------------------------------------------------------------- */
 
@@ -1306,32 +3160,15 @@ typedef struct {
 /** FMC - Register Layout Typedef */
 typedef struct {
   __IO uint32_t PFAPR;                             /**< Flash Access Protection Register, offset: 0x0 */
-  __IO uint32_t PFB0CR;                            /**< Flash Control Register, offset: 0x4 */
-       uint8_t RESERVED_0[248];
-  struct {                                         /* offset: 0x100, array step: 0x20 */
-    __IO uint32_t TAGVD[2];                          /**< Cache Tag Storage, array offset: 0x100, array step: index*0x20, index2*0x4 */
-         uint8_t RESERVED_0[24];
-  } TAG_WAY[4];
-       uint8_t RESERVED_1[132];
-  struct {                                         /* offset: 0x204, array step: 0x8 */
-    __IO uint32_t DATAW0S;                           /**< Cache Data Storage, array offset: 0x204, array step: 0x8 */
-         uint8_t RESERVED_0[4];
-  } DATAW0S[2];
-       uint8_t RESERVED_2[48];
-  struct {                                         /* offset: 0x244, array step: 0x8 */
-    __IO uint32_t DATAW1S;                           /**< Cache Data Storage, array offset: 0x244, array step: 0x8 */
-         uint8_t RESERVED_0[4];
-  } DATAW1S[2];
-       uint8_t RESERVED_3[48];
-  struct {                                         /* offset: 0x284, array step: 0x8 */
-    __IO uint32_t DATAW2S;                           /**< Cache Data Storage, array offset: 0x284, array step: 0x8 */
-         uint8_t RESERVED_0[4];
-  } DATAW2S[2];
-       uint8_t RESERVED_4[48];
-  struct {                                         /* offset: 0x2C4, array step: 0x8 */
-    __IO uint32_t DATAW3S;                           /**< Cache Data Storage, array offset: 0x2C4, array step: 0x8 */
-         uint8_t RESERVED_0[4];
-  } DATAW3S[2];
+  __IO uint32_t PFB0CR;                            /**< Flash Bank 0 Control Register, offset: 0x4 */
+  __IO uint32_t PFB1CR;                            /**< Flash Bank 1 Control Register, offset: 0x8 */
+       uint8_t RESERVED_0[244];
+  __IO uint32_t TAGVD[4][8];                       /**< Cache Directory Storage, array offset: 0x100, array step: index*0x20, index2*0x4 */
+       uint8_t RESERVED_1[128];
+  struct {                                         /* offset: 0x200, array step: index*0x40, index2*0x8 */
+    __IO uint32_t DATA_U;                            /**< Cache Data Storage (upper word), array offset: 0x200, array step: index*0x40, index2*0x8 */
+    __IO uint32_t DATA_L;                            /**< Cache Data Storage (lower word), array offset: 0x204, array step: index*0x40, index2*0x8 */
+  } SET[4][8];
 } FMC_Type;
 
 /* ----------------------------------------------------------------------------
@@ -1356,6 +3193,18 @@ typedef struct {
 #define FMC_PFAPR_M3AP_MASK                      0xC0u
 #define FMC_PFAPR_M3AP_SHIFT                     6
 #define FMC_PFAPR_M3AP(x)                        (((uint32_t)(((uint32_t)(x))<<FMC_PFAPR_M3AP_SHIFT))&FMC_PFAPR_M3AP_MASK)
+#define FMC_PFAPR_M4AP_MASK                      0x300u
+#define FMC_PFAPR_M4AP_SHIFT                     8
+#define FMC_PFAPR_M4AP(x)                        (((uint32_t)(((uint32_t)(x))<<FMC_PFAPR_M4AP_SHIFT))&FMC_PFAPR_M4AP_MASK)
+#define FMC_PFAPR_M5AP_MASK                      0xC00u
+#define FMC_PFAPR_M5AP_SHIFT                     10
+#define FMC_PFAPR_M5AP(x)                        (((uint32_t)(((uint32_t)(x))<<FMC_PFAPR_M5AP_SHIFT))&FMC_PFAPR_M5AP_MASK)
+#define FMC_PFAPR_M6AP_MASK                      0x3000u
+#define FMC_PFAPR_M6AP_SHIFT                     12
+#define FMC_PFAPR_M6AP(x)                        (((uint32_t)(((uint32_t)(x))<<FMC_PFAPR_M6AP_SHIFT))&FMC_PFAPR_M6AP_MASK)
+#define FMC_PFAPR_M7AP_MASK                      0xC000u
+#define FMC_PFAPR_M7AP_SHIFT                     14
+#define FMC_PFAPR_M7AP(x)                        (((uint32_t)(((uint32_t)(x))<<FMC_PFAPR_M7AP_SHIFT))&FMC_PFAPR_M7AP_MASK)
 #define FMC_PFAPR_M0PFD_MASK                     0x10000u
 #define FMC_PFAPR_M0PFD_SHIFT                    16
 #define FMC_PFAPR_M1PFD_MASK                     0x20000u
@@ -1364,6 +3213,14 @@ typedef struct {
 #define FMC_PFAPR_M2PFD_SHIFT                    18
 #define FMC_PFAPR_M3PFD_MASK                     0x80000u
 #define FMC_PFAPR_M3PFD_SHIFT                    19
+#define FMC_PFAPR_M4PFD_MASK                     0x100000u
+#define FMC_PFAPR_M4PFD_SHIFT                    20
+#define FMC_PFAPR_M5PFD_MASK                     0x200000u
+#define FMC_PFAPR_M5PFD_SHIFT                    21
+#define FMC_PFAPR_M6PFD_MASK                     0x400000u
+#define FMC_PFAPR_M6PFD_SHIFT                    22
+#define FMC_PFAPR_M7PFD_MASK                     0x800000u
+#define FMC_PFAPR_M7PFD_SHIFT                    23
 /* PFB0CR Bit Fields */
 #define FMC_PFB0CR_B0SEBE_MASK                   0x1u
 #define FMC_PFB0CR_B0SEBE_SHIFT                  0
@@ -1392,28 +3249,37 @@ typedef struct {
 #define FMC_PFB0CR_B0RWSC_MASK                   0xF0000000u
 #define FMC_PFB0CR_B0RWSC_SHIFT                  28
 #define FMC_PFB0CR_B0RWSC(x)                     (((uint32_t)(((uint32_t)(x))<<FMC_PFB0CR_B0RWSC_SHIFT))&FMC_PFB0CR_B0RWSC_MASK)
+/* PFB1CR Bit Fields */
+#define FMC_PFB1CR_B1SEBE_MASK                   0x1u
+#define FMC_PFB1CR_B1SEBE_SHIFT                  0
+#define FMC_PFB1CR_B1IPE_MASK                    0x2u
+#define FMC_PFB1CR_B1IPE_SHIFT                   1
+#define FMC_PFB1CR_B1DPE_MASK                    0x4u
+#define FMC_PFB1CR_B1DPE_SHIFT                   2
+#define FMC_PFB1CR_B1ICE_MASK                    0x8u
+#define FMC_PFB1CR_B1ICE_SHIFT                   3
+#define FMC_PFB1CR_B1DCE_MASK                    0x10u
+#define FMC_PFB1CR_B1DCE_SHIFT                   4
+#define FMC_PFB1CR_B1MW_MASK                     0x60000u
+#define FMC_PFB1CR_B1MW_SHIFT                    17
+#define FMC_PFB1CR_B1MW(x)                       (((uint32_t)(((uint32_t)(x))<<FMC_PFB1CR_B1MW_SHIFT))&FMC_PFB1CR_B1MW_MASK)
+#define FMC_PFB1CR_B1RWSC_MASK                   0xF0000000u
+#define FMC_PFB1CR_B1RWSC_SHIFT                  28
+#define FMC_PFB1CR_B1RWSC(x)                     (((uint32_t)(((uint32_t)(x))<<FMC_PFB1CR_B1RWSC_SHIFT))&FMC_PFB1CR_B1RWSC_MASK)
 /* TAGVD Bit Fields */
 #define FMC_TAGVD_valid_MASK                     0x1u
 #define FMC_TAGVD_valid_SHIFT                    0
 #define FMC_TAGVD_tag_MASK                       0x7FFC0u
 #define FMC_TAGVD_tag_SHIFT                      6
 #define FMC_TAGVD_tag(x)                         (((uint32_t)(((uint32_t)(x))<<FMC_TAGVD_tag_SHIFT))&FMC_TAGVD_tag_MASK)
-/* DATAW0S Bit Fields */
-#define FMC_DATAW0S_data_MASK                    0xFFFFFFFFu
-#define FMC_DATAW0S_data_SHIFT                   0
-#define FMC_DATAW0S_data(x)                      (((uint32_t)(((uint32_t)(x))<<FMC_DATAW0S_data_SHIFT))&FMC_DATAW0S_data_MASK)
-/* DATAW1S Bit Fields */
-#define FMC_DATAW1S_data_MASK                    0xFFFFFFFFu
-#define FMC_DATAW1S_data_SHIFT                   0
-#define FMC_DATAW1S_data(x)                      (((uint32_t)(((uint32_t)(x))<<FMC_DATAW1S_data_SHIFT))&FMC_DATAW1S_data_MASK)
-/* DATAW2S Bit Fields */
-#define FMC_DATAW2S_data_MASK                    0xFFFFFFFFu
-#define FMC_DATAW2S_data_SHIFT                   0
-#define FMC_DATAW2S_data(x)                      (((uint32_t)(((uint32_t)(x))<<FMC_DATAW2S_data_SHIFT))&FMC_DATAW2S_data_MASK)
-/* DATAW3S Bit Fields */
-#define FMC_DATAW3S_data_MASK                    0xFFFFFFFFu
-#define FMC_DATAW3S_data_SHIFT                   0
-#define FMC_DATAW3S_data(x)                      (((uint32_t)(((uint32_t)(x))<<FMC_DATAW3S_data_SHIFT))&FMC_DATAW3S_data_MASK)
+/* DATA_U Bit Fields */
+#define FMC_DATA_U_data_MASK                     0xFFFFFFFFu
+#define FMC_DATA_U_data_SHIFT                    0
+#define FMC_DATA_U_data(x)                       (((uint32_t)(((uint32_t)(x))<<FMC_DATA_U_data_SHIFT))&FMC_DATA_U_data_MASK)
+/* DATA_L Bit Fields */
+#define FMC_DATA_L_data_MASK                     0xFFFFFFFFu
+#define FMC_DATA_L_data_SHIFT                    0
+#define FMC_DATA_L_data(x)                       (((uint32_t)(((uint32_t)(x))<<FMC_DATA_L_data_SHIFT))&FMC_DATA_L_data_MASK)
 
 /**
  * @}
@@ -1494,6 +3360,8 @@ typedef struct {
 #define FTFL_FCNFG_RAMRDY_SHIFT                  1
 #define FTFL_FCNFG_PFLSH_MASK                    0x4u
 #define FTFL_FCNFG_PFLSH_SHIFT                   2
+#define FTFL_FCNFG_SWAP_MASK                     0x8u
+#define FTFL_FCNFG_SWAP_SHIFT                    3
 #define FTFL_FCNFG_ERSSUSP_MASK                  0x10u
 #define FTFL_FCNFG_ERSSUSP_SHIFT                 4
 #define FTFL_FCNFG_ERSAREQ_MASK                  0x20u
@@ -2075,6 +3943,10 @@ typedef struct {
 #define FTM1_BASE                                (0x40039000u)
 /** Peripheral FTM1 base pointer */
 #define FTM1                                     ((FTM_Type *)FTM1_BASE)
+/** Peripheral FTM2 base address */
+#define FTM2_BASE                                (0x400B8000u)
+/** Peripheral FTM2 base pointer */
+#define FTM2                                     ((FTM_Type *)FTM2_BASE)
 
 /**
  * @}
@@ -2311,6 +4183,10 @@ typedef struct {
 #define I2C0_BASE                                (0x40066000u)
 /** Peripheral I2C0 base pointer */
 #define I2C0                                     ((I2C_Type *)I2C0_BASE)
+/** Peripheral I2C1 base address */
+#define I2C1_BASE                                (0x40067000u)
+/** Peripheral I2C1 base pointer */
+#define I2C1                                     ((I2C_Type *)I2C1_BASE)
 
 /**
  * @}
@@ -2328,34 +4204,28 @@ typedef struct {
 
 /** I2S - Register Layout Typedef */
 typedef struct {
-  __IO uint32_t TCSR;                              /**< SAI Transmit Control Register, offset: 0x0 */
-  __IO uint32_t TCR1;                              /**< SAI Transmit Configuration 1 Register, offset: 0x4 */
-  __IO uint32_t TCR2;                              /**< SAI Transmit Configuration 2 Register, offset: 0x8 */
-  __IO uint32_t TCR3;                              /**< SAI Transmit Configuration 3 Register, offset: 0xC */
-  __IO uint32_t TCR4;                              /**< SAI Transmit Configuration 4 Register, offset: 0x10 */
-  __IO uint32_t TCR5;                              /**< SAI Transmit Configuration 5 Register, offset: 0x14 */
+  __IO uint32_t TX0;                               /**< I2S Transmit Data Registers 0, offset: 0x0 */
+  __IO uint32_t TX1;                               /**< I2S Transmit Data Registers 1, offset: 0x4 */
+  __IO uint32_t RX0;                               /**< I2S Receive Data Registers 0, offset: 0x8 */
+  __IO uint32_t RX1;                               /**< I2S Receive Data Registers 1, offset: 0xC */
+  __IO uint32_t CR;                                /**< I2S Control Register, offset: 0x10 */
+  __IO uint32_t ISR;                               /**< I2S Interrupt Status Register, offset: 0x14 */
+  __IO uint32_t IER;                               /**< I2S Interrupt Enable Register, offset: 0x18 */
+  __IO uint32_t TCR;                               /**< I2S Transmit Configuration Register, offset: 0x1C */
+  __IO uint32_t RCR;                               /**< I2S Receive Configuration Register, offset: 0x20 */
+  __IO uint32_t TCCR;                              /**< I2S Transmit Clock Control Registers, offset: 0x24 */
+  __IO uint32_t RCCR;                              /**< I2S Receive Clock Control Registers, offset: 0x28 */
+  __IO uint32_t FCSR;                              /**< I2S FIFO Control/Status Register, offset: 0x2C */
        uint8_t RESERVED_0[8];
-  __O  uint32_t TDR[2];                            /**< SAI Transmit Data Register, array offset: 0x20, array step: 0x4 */
-       uint8_t RESERVED_1[24];
-  __I  uint32_t TFR[2];                            /**< SAI Transmit FIFO Register, array offset: 0x40, array step: 0x4 */
-       uint8_t RESERVED_2[24];
-  __IO uint32_t TMR;                               /**< SAI Transmit Mask Register, offset: 0x60 */
-       uint8_t RESERVED_3[28];
-  __IO uint32_t RCSR;                              /**< SAI Receive Control Register, offset: 0x80 */
-  __IO uint32_t RCR1;                              /**< SAI Receive Configuration 1 Register, offset: 0x84 */
-  __IO uint32_t RCR2;                              /**< SAI Receive Configuration 2 Register, offset: 0x88 */
-  __IO uint32_t RCR3;                              /**< SAI Receive Configuration 3 Register, offset: 0x8C */
-  __IO uint32_t RCR4;                              /**< SAI Receive Configuration 4 Register, offset: 0x90 */
-  __IO uint32_t RCR5;                              /**< SAI Receive Configuration 5 Register, offset: 0x94 */
-       uint8_t RESERVED_4[8];
-  __I  uint32_t RDR[2];                            /**< SAI Receive Data Register, array offset: 0xA0, array step: 0x4 */
-       uint8_t RESERVED_5[24];
-  __I  uint32_t RFR[2];                            /**< SAI Receive FIFO Register, array offset: 0xC0, array step: 0x4 */
-       uint8_t RESERVED_6[24];
-  __IO uint32_t RMR;                               /**< SAI Receive Mask Register, offset: 0xE0 */
-       uint8_t RESERVED_7[28];
-  __IO uint32_t MCR;                               /**< SAI MCLK Control Register, offset: 0x100 */
-  __IO uint32_t MDR;                               /**< MCLK Divide Register, offset: 0x104 */
+  __IO uint32_t ACNT;                              /**< I2S AC97 Control Register, offset: 0x38 */
+  __IO uint32_t ACADD;                             /**< I2S AC97 Command Address Register, offset: 0x3C */
+  __IO uint32_t ACDAT;                             /**< I2S AC97 Command Data Register, offset: 0x40 */
+  __IO uint32_t ATAG;                              /**< I2S AC97 Tag Register, offset: 0x44 */
+  __IO uint32_t TMSK;                              /**< I2S Transmit Time Slot Mask Register, offset: 0x48 */
+  __IO uint32_t RMSK;                              /**< I2S Receive Time Slot Mask Register, offset: 0x4C */
+  __I  uint32_t ACCST;                             /**< I2S AC97 Channel Status Register, offset: 0x50 */
+  __IO uint32_t ACCEN;                             /**< I2S AC97 Channel Enable Register, offset: 0x54 */
+  __IO uint32_t ACCDIS;                            /**< I2S AC97 Channel Disable Register, offset: 0x58 */
 } I2S_Type;
 
 /* ----------------------------------------------------------------------------
@@ -2367,233 +4237,285 @@ typedef struct {
  * @{
  */
 
-/* TCSR Bit Fields */
-#define I2S_TCSR_FRDE_MASK                       0x1u
-#define I2S_TCSR_FRDE_SHIFT                      0
-#define I2S_TCSR_FWDE_MASK                       0x2u
-#define I2S_TCSR_FWDE_SHIFT                      1
-#define I2S_TCSR_FRIE_MASK                       0x100u
-#define I2S_TCSR_FRIE_SHIFT                      8
-#define I2S_TCSR_FWIE_MASK                       0x200u
-#define I2S_TCSR_FWIE_SHIFT                      9
-#define I2S_TCSR_FEIE_MASK                       0x400u
-#define I2S_TCSR_FEIE_SHIFT                      10
-#define I2S_TCSR_SEIE_MASK                       0x800u
-#define I2S_TCSR_SEIE_SHIFT                      11
-#define I2S_TCSR_WSIE_MASK                       0x1000u
-#define I2S_TCSR_WSIE_SHIFT                      12
-#define I2S_TCSR_FRF_MASK                        0x10000u
-#define I2S_TCSR_FRF_SHIFT                       16
-#define I2S_TCSR_FWF_MASK                        0x20000u
-#define I2S_TCSR_FWF_SHIFT                       17
-#define I2S_TCSR_FEF_MASK                        0x40000u
-#define I2S_TCSR_FEF_SHIFT                       18
-#define I2S_TCSR_SEF_MASK                        0x80000u
-#define I2S_TCSR_SEF_SHIFT                       19
-#define I2S_TCSR_WSF_MASK                        0x100000u
-#define I2S_TCSR_WSF_SHIFT                       20
-#define I2S_TCSR_SR_MASK                         0x1000000u
-#define I2S_TCSR_SR_SHIFT                        24
-#define I2S_TCSR_FR_MASK                         0x2000000u
-#define I2S_TCSR_FR_SHIFT                        25
-#define I2S_TCSR_BCE_MASK                        0x10000000u
-#define I2S_TCSR_BCE_SHIFT                       28
-#define I2S_TCSR_DBGE_MASK                       0x20000000u
-#define I2S_TCSR_DBGE_SHIFT                      29
-#define I2S_TCSR_STOPE_MASK                      0x40000000u
-#define I2S_TCSR_STOPE_SHIFT                     30
-#define I2S_TCSR_TE_MASK                         0x80000000u
-#define I2S_TCSR_TE_SHIFT                        31
-/* TCR1 Bit Fields */
-#define I2S_TCR1_TFW_MASK                        0x7u
-#define I2S_TCR1_TFW_SHIFT                       0
-#define I2S_TCR1_TFW(x)                          (((uint32_t)(((uint32_t)(x))<<I2S_TCR1_TFW_SHIFT))&I2S_TCR1_TFW_MASK)
-/* TCR2 Bit Fields */
-#define I2S_TCR2_DIV_MASK                        0xFFu
-#define I2S_TCR2_DIV_SHIFT                       0
-#define I2S_TCR2_DIV(x)                          (((uint32_t)(((uint32_t)(x))<<I2S_TCR2_DIV_SHIFT))&I2S_TCR2_DIV_MASK)
-#define I2S_TCR2_BCD_MASK                        0x1000000u
-#define I2S_TCR2_BCD_SHIFT                       24
-#define I2S_TCR2_BCP_MASK                        0x2000000u
-#define I2S_TCR2_BCP_SHIFT                       25
-#define I2S_TCR2_MSEL_MASK                       0xC000000u
-#define I2S_TCR2_MSEL_SHIFT                      26
-#define I2S_TCR2_MSEL(x)                         (((uint32_t)(((uint32_t)(x))<<I2S_TCR2_MSEL_SHIFT))&I2S_TCR2_MSEL_MASK)
-#define I2S_TCR2_BCI_MASK                        0x10000000u
-#define I2S_TCR2_BCI_SHIFT                       28
-#define I2S_TCR2_BCS_MASK                        0x20000000u
-#define I2S_TCR2_BCS_SHIFT                       29
-#define I2S_TCR2_SYNC_MASK                       0xC0000000u
-#define I2S_TCR2_SYNC_SHIFT                      30
-#define I2S_TCR2_SYNC(x)                         (((uint32_t)(((uint32_t)(x))<<I2S_TCR2_SYNC_SHIFT))&I2S_TCR2_SYNC_MASK)
-/* TCR3 Bit Fields */
-#define I2S_TCR3_WDFL_MASK                       0x1Fu
-#define I2S_TCR3_WDFL_SHIFT                      0
-#define I2S_TCR3_WDFL(x)                         (((uint32_t)(((uint32_t)(x))<<I2S_TCR3_WDFL_SHIFT))&I2S_TCR3_WDFL_MASK)
-#define I2S_TCR3_TCE_MASK                        0x30000u
-#define I2S_TCR3_TCE_SHIFT                       16
-#define I2S_TCR3_TCE(x)                          (((uint32_t)(((uint32_t)(x))<<I2S_TCR3_TCE_SHIFT))&I2S_TCR3_TCE_MASK)
-/* TCR4 Bit Fields */
-#define I2S_TCR4_FSD_MASK                        0x1u
-#define I2S_TCR4_FSD_SHIFT                       0
-#define I2S_TCR4_FSP_MASK                        0x2u
-#define I2S_TCR4_FSP_SHIFT                       1
-#define I2S_TCR4_FSE_MASK                        0x8u
-#define I2S_TCR4_FSE_SHIFT                       3
-#define I2S_TCR4_MF_MASK                         0x10u
-#define I2S_TCR4_MF_SHIFT                        4
-#define I2S_TCR4_SYWD_MASK                       0x1F00u
-#define I2S_TCR4_SYWD_SHIFT                      8
-#define I2S_TCR4_SYWD(x)                         (((uint32_t)(((uint32_t)(x))<<I2S_TCR4_SYWD_SHIFT))&I2S_TCR4_SYWD_MASK)
-#define I2S_TCR4_FRSZ_MASK                       0x1F0000u
-#define I2S_TCR4_FRSZ_SHIFT                      16
-#define I2S_TCR4_FRSZ(x)                         (((uint32_t)(((uint32_t)(x))<<I2S_TCR4_FRSZ_SHIFT))&I2S_TCR4_FRSZ_MASK)
-/* TCR5 Bit Fields */
-#define I2S_TCR5_FBT_MASK                        0x1F00u
-#define I2S_TCR5_FBT_SHIFT                       8
-#define I2S_TCR5_FBT(x)                          (((uint32_t)(((uint32_t)(x))<<I2S_TCR5_FBT_SHIFT))&I2S_TCR5_FBT_MASK)
-#define I2S_TCR5_W0W_MASK                        0x1F0000u
-#define I2S_TCR5_W0W_SHIFT                       16
-#define I2S_TCR5_W0W(x)                          (((uint32_t)(((uint32_t)(x))<<I2S_TCR5_W0W_SHIFT))&I2S_TCR5_W0W_MASK)
-#define I2S_TCR5_WNW_MASK                        0x1F000000u
-#define I2S_TCR5_WNW_SHIFT                       24
-#define I2S_TCR5_WNW(x)                          (((uint32_t)(((uint32_t)(x))<<I2S_TCR5_WNW_SHIFT))&I2S_TCR5_WNW_MASK)
-/* TDR Bit Fields */
-#define I2S_TDR_TDR_MASK                         0xFFFFFFFFu
-#define I2S_TDR_TDR_SHIFT                        0
-#define I2S_TDR_TDR(x)                           (((uint32_t)(((uint32_t)(x))<<I2S_TDR_TDR_SHIFT))&I2S_TDR_TDR_MASK)
-/* TFR Bit Fields */
-#define I2S_TFR_RFP_MASK                         0xFu
-#define I2S_TFR_RFP_SHIFT                        0
-#define I2S_TFR_RFP(x)                           (((uint32_t)(((uint32_t)(x))<<I2S_TFR_RFP_SHIFT))&I2S_TFR_RFP_MASK)
-#define I2S_TFR_WFP_MASK                         0xF0000u
-#define I2S_TFR_WFP_SHIFT                        16
-#define I2S_TFR_WFP(x)                           (((uint32_t)(((uint32_t)(x))<<I2S_TFR_WFP_SHIFT))&I2S_TFR_WFP_MASK)
-/* TMR Bit Fields */
-#define I2S_TMR_TWM_MASK                         0xFFFFFFFFu
-#define I2S_TMR_TWM_SHIFT                        0
-#define I2S_TMR_TWM(x)                           (((uint32_t)(((uint32_t)(x))<<I2S_TMR_TWM_SHIFT))&I2S_TMR_TWM_MASK)
-/* RCSR Bit Fields */
-#define I2S_RCSR_FRDE_MASK                       0x1u
-#define I2S_RCSR_FRDE_SHIFT                      0
-#define I2S_RCSR_FWDE_MASK                       0x2u
-#define I2S_RCSR_FWDE_SHIFT                      1
-#define I2S_RCSR_FRIE_MASK                       0x100u
-#define I2S_RCSR_FRIE_SHIFT                      8
-#define I2S_RCSR_FWIE_MASK                       0x200u
-#define I2S_RCSR_FWIE_SHIFT                      9
-#define I2S_RCSR_FEIE_MASK                       0x400u
-#define I2S_RCSR_FEIE_SHIFT                      10
-#define I2S_RCSR_SEIE_MASK                       0x800u
-#define I2S_RCSR_SEIE_SHIFT                      11
-#define I2S_RCSR_WSIE_MASK                       0x1000u
-#define I2S_RCSR_WSIE_SHIFT                      12
-#define I2S_RCSR_FRF_MASK                        0x10000u
-#define I2S_RCSR_FRF_SHIFT                       16
-#define I2S_RCSR_FWF_MASK                        0x20000u
-#define I2S_RCSR_FWF_SHIFT                       17
-#define I2S_RCSR_FEF_MASK                        0x40000u
-#define I2S_RCSR_FEF_SHIFT                       18
-#define I2S_RCSR_SEF_MASK                        0x80000u
-#define I2S_RCSR_SEF_SHIFT                       19
-#define I2S_RCSR_WSF_MASK                        0x100000u
-#define I2S_RCSR_WSF_SHIFT                       20
-#define I2S_RCSR_SR_MASK                         0x1000000u
-#define I2S_RCSR_SR_SHIFT                        24
-#define I2S_RCSR_FR_MASK                         0x2000000u
-#define I2S_RCSR_FR_SHIFT                        25
-#define I2S_RCSR_BCE_MASK                        0x10000000u
-#define I2S_RCSR_BCE_SHIFT                       28
-#define I2S_RCSR_DBGE_MASK                       0x20000000u
-#define I2S_RCSR_DBGE_SHIFT                      29
-#define I2S_RCSR_STOPE_MASK                      0x40000000u
-#define I2S_RCSR_STOPE_SHIFT                     30
-#define I2S_RCSR_RE_MASK                         0x80000000u
-#define I2S_RCSR_RE_SHIFT                        31
-/* RCR1 Bit Fields */
-#define I2S_RCR1_RFW_MASK                        0x7u
-#define I2S_RCR1_RFW_SHIFT                       0
-#define I2S_RCR1_RFW(x)                          (((uint32_t)(((uint32_t)(x))<<I2S_RCR1_RFW_SHIFT))&I2S_RCR1_RFW_MASK)
-/* RCR2 Bit Fields */
-#define I2S_RCR2_DIV_MASK                        0xFFu
-#define I2S_RCR2_DIV_SHIFT                       0
-#define I2S_RCR2_DIV(x)                          (((uint32_t)(((uint32_t)(x))<<I2S_RCR2_DIV_SHIFT))&I2S_RCR2_DIV_MASK)
-#define I2S_RCR2_BCD_MASK                        0x1000000u
-#define I2S_RCR2_BCD_SHIFT                       24
-#define I2S_RCR2_BCP_MASK                        0x2000000u
-#define I2S_RCR2_BCP_SHIFT                       25
-#define I2S_RCR2_MSEL_MASK                       0xC000000u
-#define I2S_RCR2_MSEL_SHIFT                      26
-#define I2S_RCR2_MSEL(x)                         (((uint32_t)(((uint32_t)(x))<<I2S_RCR2_MSEL_SHIFT))&I2S_RCR2_MSEL_MASK)
-#define I2S_RCR2_BCI_MASK                        0x10000000u
-#define I2S_RCR2_BCI_SHIFT                       28
-#define I2S_RCR2_BCS_MASK                        0x20000000u
-#define I2S_RCR2_BCS_SHIFT                       29
-#define I2S_RCR2_SYNC_MASK                       0xC0000000u
-#define I2S_RCR2_SYNC_SHIFT                      30
-#define I2S_RCR2_SYNC(x)                         (((uint32_t)(((uint32_t)(x))<<I2S_RCR2_SYNC_SHIFT))&I2S_RCR2_SYNC_MASK)
-/* RCR3 Bit Fields */
-#define I2S_RCR3_WDFL_MASK                       0x1Fu
-#define I2S_RCR3_WDFL_SHIFT                      0
-#define I2S_RCR3_WDFL(x)                         (((uint32_t)(((uint32_t)(x))<<I2S_RCR3_WDFL_SHIFT))&I2S_RCR3_WDFL_MASK)
-#define I2S_RCR3_RCE_MASK                        0x30000u
-#define I2S_RCR3_RCE_SHIFT                       16
-#define I2S_RCR3_RCE(x)                          (((uint32_t)(((uint32_t)(x))<<I2S_RCR3_RCE_SHIFT))&I2S_RCR3_RCE_MASK)
-/* RCR4 Bit Fields */
-#define I2S_RCR4_FSD_MASK                        0x1u
-#define I2S_RCR4_FSD_SHIFT                       0
-#define I2S_RCR4_FSP_MASK                        0x2u
-#define I2S_RCR4_FSP_SHIFT                       1
-#define I2S_RCR4_FSE_MASK                        0x8u
-#define I2S_RCR4_FSE_SHIFT                       3
-#define I2S_RCR4_MF_MASK                         0x10u
-#define I2S_RCR4_MF_SHIFT                        4
-#define I2S_RCR4_SYWD_MASK                       0x1F00u
-#define I2S_RCR4_SYWD_SHIFT                      8
-#define I2S_RCR4_SYWD(x)                         (((uint32_t)(((uint32_t)(x))<<I2S_RCR4_SYWD_SHIFT))&I2S_RCR4_SYWD_MASK)
-#define I2S_RCR4_FRSZ_MASK                       0x1F0000u
-#define I2S_RCR4_FRSZ_SHIFT                      16
-#define I2S_RCR4_FRSZ(x)                         (((uint32_t)(((uint32_t)(x))<<I2S_RCR4_FRSZ_SHIFT))&I2S_RCR4_FRSZ_MASK)
-/* RCR5 Bit Fields */
-#define I2S_RCR5_FBT_MASK                        0x1F00u
-#define I2S_RCR5_FBT_SHIFT                       8
-#define I2S_RCR5_FBT(x)                          (((uint32_t)(((uint32_t)(x))<<I2S_RCR5_FBT_SHIFT))&I2S_RCR5_FBT_MASK)
-#define I2S_RCR5_W0W_MASK                        0x1F0000u
-#define I2S_RCR5_W0W_SHIFT                       16
-#define I2S_RCR5_W0W(x)                          (((uint32_t)(((uint32_t)(x))<<I2S_RCR5_W0W_SHIFT))&I2S_RCR5_W0W_MASK)
-#define I2S_RCR5_WNW_MASK                        0x1F000000u
-#define I2S_RCR5_WNW_SHIFT                       24
-#define I2S_RCR5_WNW(x)                          (((uint32_t)(((uint32_t)(x))<<I2S_RCR5_WNW_SHIFT))&I2S_RCR5_WNW_MASK)
-/* RDR Bit Fields */
-#define I2S_RDR_RDR_MASK                         0xFFFFFFFFu
-#define I2S_RDR_RDR_SHIFT                        0
-#define I2S_RDR_RDR(x)                           (((uint32_t)(((uint32_t)(x))<<I2S_RDR_RDR_SHIFT))&I2S_RDR_RDR_MASK)
-/* RFR Bit Fields */
-#define I2S_RFR_RFP_MASK                         0xFu
-#define I2S_RFR_RFP_SHIFT                        0
-#define I2S_RFR_RFP(x)                           (((uint32_t)(((uint32_t)(x))<<I2S_RFR_RFP_SHIFT))&I2S_RFR_RFP_MASK)
-#define I2S_RFR_WFP_MASK                         0xF0000u
-#define I2S_RFR_WFP_SHIFT                        16
-#define I2S_RFR_WFP(x)                           (((uint32_t)(((uint32_t)(x))<<I2S_RFR_WFP_SHIFT))&I2S_RFR_WFP_MASK)
-/* RMR Bit Fields */
-#define I2S_RMR_RWM_MASK                         0xFFFFFFFFu
-#define I2S_RMR_RWM_SHIFT                        0
-#define I2S_RMR_RWM(x)                           (((uint32_t)(((uint32_t)(x))<<I2S_RMR_RWM_SHIFT))&I2S_RMR_RWM_MASK)
-/* MCR Bit Fields */
-#define I2S_MCR_MICS_MASK                        0x3000000u
-#define I2S_MCR_MICS_SHIFT                       24
-#define I2S_MCR_MICS(x)                          (((uint32_t)(((uint32_t)(x))<<I2S_MCR_MICS_SHIFT))&I2S_MCR_MICS_MASK)
-#define I2S_MCR_MOE_MASK                         0x40000000u
-#define I2S_MCR_MOE_SHIFT                        30
-#define I2S_MCR_DUF_MASK                         0x80000000u
-#define I2S_MCR_DUF_SHIFT                        31
-/* MDR Bit Fields */
-#define I2S_MDR_DIVIDE_MASK                      0xFFFu
-#define I2S_MDR_DIVIDE_SHIFT                     0
-#define I2S_MDR_DIVIDE(x)                        (((uint32_t)(((uint32_t)(x))<<I2S_MDR_DIVIDE_SHIFT))&I2S_MDR_DIVIDE_MASK)
-#define I2S_MDR_FRACT_MASK                       0xFF000u
-#define I2S_MDR_FRACT_SHIFT                      12
-#define I2S_MDR_FRACT(x)                         (((uint32_t)(((uint32_t)(x))<<I2S_MDR_FRACT_SHIFT))&I2S_MDR_FRACT_MASK)
+/* TX0 Bit Fields */
+#define I2S_TX0_TX0_MASK                         0xFFFFFFFFu
+#define I2S_TX0_TX0_SHIFT                        0
+#define I2S_TX0_TX0(x)                           (((uint32_t)(((uint32_t)(x))<<I2S_TX0_TX0_SHIFT))&I2S_TX0_TX0_MASK)
+/* TX1 Bit Fields */
+#define I2S_TX1_TX1_MASK                         0xFFFFFFFFu
+#define I2S_TX1_TX1_SHIFT                        0
+#define I2S_TX1_TX1(x)                           (((uint32_t)(((uint32_t)(x))<<I2S_TX1_TX1_SHIFT))&I2S_TX1_TX1_MASK)
+/* RX0 Bit Fields */
+#define I2S_RX0_RX0_MASK                         0xFFFFFFFFu
+#define I2S_RX0_RX0_SHIFT                        0
+#define I2S_RX0_RX0(x)                           (((uint32_t)(((uint32_t)(x))<<I2S_RX0_RX0_SHIFT))&I2S_RX0_RX0_MASK)
+/* RX1 Bit Fields */
+#define I2S_RX1_RX1_MASK                         0xFFFFFFFFu
+#define I2S_RX1_RX1_SHIFT                        0
+#define I2S_RX1_RX1(x)                           (((uint32_t)(((uint32_t)(x))<<I2S_RX1_RX1_SHIFT))&I2S_RX1_RX1_MASK)
+/* CR Bit Fields */
+#define I2S_CR_I2SEN_MASK                        0x1u
+#define I2S_CR_I2SEN_SHIFT                       0
+#define I2S_CR_TE_MASK                           0x2u
+#define I2S_CR_TE_SHIFT                          1
+#define I2S_CR_RE_MASK                           0x4u
+#define I2S_CR_RE_SHIFT                          2
+#define I2S_CR_NET_MASK                          0x8u
+#define I2S_CR_NET_SHIFT                         3
+#define I2S_CR_SYN_MASK                          0x10u
+#define I2S_CR_SYN_SHIFT                         4
+#define I2S_CR_I2SMODE_MASK                      0x60u
+#define I2S_CR_I2SMODE_SHIFT                     5
+#define I2S_CR_I2SMODE(x)                        (((uint32_t)(((uint32_t)(x))<<I2S_CR_I2SMODE_SHIFT))&I2S_CR_I2SMODE_MASK)
+#define I2S_CR_SYSCLKEN_MASK                     0x80u
+#define I2S_CR_SYSCLKEN_SHIFT                    7
+#define I2S_CR_TCHEN_MASK                        0x100u
+#define I2S_CR_TCHEN_SHIFT                       8
+#define I2S_CR_CLKIST_MASK                       0x200u
+#define I2S_CR_CLKIST_SHIFT                      9
+#define I2S_CR_TFRCLKDIS_MASK                    0x400u
+#define I2S_CR_TFRCLKDIS_SHIFT                   10
+#define I2S_CR_RFRCLKDIS_MASK                    0x800u
+#define I2S_CR_RFRCLKDIS_SHIFT                   11
+#define I2S_CR_SYNCTXFS_MASK                     0x1000u
+#define I2S_CR_SYNCTXFS_SHIFT                    12
+/* ISR Bit Fields */
+#define I2S_ISR_TFE0_MASK                        0x1u
+#define I2S_ISR_TFE0_SHIFT                       0
+#define I2S_ISR_TFE1_MASK                        0x2u
+#define I2S_ISR_TFE1_SHIFT                       1
+#define I2S_ISR_RFF0_MASK                        0x4u
+#define I2S_ISR_RFF0_SHIFT                       2
+#define I2S_ISR_RFF1_MASK                        0x8u
+#define I2S_ISR_RFF1_SHIFT                       3
+#define I2S_ISR_RLS_MASK                         0x10u
+#define I2S_ISR_RLS_SHIFT                        4
+#define I2S_ISR_TLS_MASK                         0x20u
+#define I2S_ISR_TLS_SHIFT                        5
+#define I2S_ISR_RFS_MASK                         0x40u
+#define I2S_ISR_RFS_SHIFT                        6
+#define I2S_ISR_TFS_MASK                         0x80u
+#define I2S_ISR_TFS_SHIFT                        7
+#define I2S_ISR_TUE0_MASK                        0x100u
+#define I2S_ISR_TUE0_SHIFT                       8
+#define I2S_ISR_TUE1_MASK                        0x200u
+#define I2S_ISR_TUE1_SHIFT                       9
+#define I2S_ISR_ROE0_MASK                        0x400u
+#define I2S_ISR_ROE0_SHIFT                       10
+#define I2S_ISR_ROE1_MASK                        0x800u
+#define I2S_ISR_ROE1_SHIFT                       11
+#define I2S_ISR_TDE0_MASK                        0x1000u
+#define I2S_ISR_TDE0_SHIFT                       12
+#define I2S_ISR_TDE1_MASK                        0x2000u
+#define I2S_ISR_TDE1_SHIFT                       13
+#define I2S_ISR_RDR0_MASK                        0x4000u
+#define I2S_ISR_RDR0_SHIFT                       14
+#define I2S_ISR_RDR1_MASK                        0x8000u
+#define I2S_ISR_RDR1_SHIFT                       15
+#define I2S_ISR_RXT_MASK                         0x10000u
+#define I2S_ISR_RXT_SHIFT                        16
+#define I2S_ISR_CMDDU_MASK                       0x20000u
+#define I2S_ISR_CMDDU_SHIFT                      17
+#define I2S_ISR_CMDAU_MASK                       0x40000u
+#define I2S_ISR_CMDAU_SHIFT                      18
+#define I2S_ISR_TRFC_MASK                        0x800000u
+#define I2S_ISR_TRFC_SHIFT                       23
+#define I2S_ISR_RFRC_MASK                        0x1000000u
+#define I2S_ISR_RFRC_SHIFT                       24
+/* IER Bit Fields */
+#define I2S_IER_TFE0EN_MASK                      0x1u
+#define I2S_IER_TFE0EN_SHIFT                     0
+#define I2S_IER_TFE1EN_MASK                      0x2u
+#define I2S_IER_TFE1EN_SHIFT                     1
+#define I2S_IER_RFF0EN_MASK                      0x4u
+#define I2S_IER_RFF0EN_SHIFT                     2
+#define I2S_IER_RFF1EN_MASK                      0x8u
+#define I2S_IER_RFF1EN_SHIFT                     3
+#define I2S_IER_RLSEN_MASK                       0x10u
+#define I2S_IER_RLSEN_SHIFT                      4
+#define I2S_IER_TLSEN_MASK                       0x20u
+#define I2S_IER_TLSEN_SHIFT                      5
+#define I2S_IER_RFSEN_MASK                       0x40u
+#define I2S_IER_RFSEN_SHIFT                      6
+#define I2S_IER_TFSEN_MASK                       0x80u
+#define I2S_IER_TFSEN_SHIFT                      7
+#define I2S_IER_TUE0EN_MASK                      0x100u
+#define I2S_IER_TUE0EN_SHIFT                     8
+#define I2S_IER_TUE1EN_MASK                      0x200u
+#define I2S_IER_TUE1EN_SHIFT                     9
+#define I2S_IER_ROE0EN_MASK                      0x400u
+#define I2S_IER_ROE0EN_SHIFT                     10
+#define I2S_IER_ROE1EN_MASK                      0x800u
+#define I2S_IER_ROE1EN_SHIFT                     11
+#define I2S_IER_TDE0EN_MASK                      0x1000u
+#define I2S_IER_TDE0EN_SHIFT                     12
+#define I2S_IER_TDE1EN_MASK                      0x2000u
+#define I2S_IER_TDE1EN_SHIFT                     13
+#define I2S_IER_RDR0EN_MASK                      0x4000u
+#define I2S_IER_RDR0EN_SHIFT                     14
+#define I2S_IER_RDR1EN_MASK                      0x8000u
+#define I2S_IER_RDR1EN_SHIFT                     15
+#define I2S_IER_RXTEN_MASK                       0x10000u
+#define I2S_IER_RXTEN_SHIFT                      16
+#define I2S_IER_CMDDUEN_MASK                     0x20000u
+#define I2S_IER_CMDDUEN_SHIFT                    17
+#define I2S_IER_CMDAUEN_MASK                     0x40000u
+#define I2S_IER_CMDAUEN_SHIFT                    18
+#define I2S_IER_TIE_MASK                         0x80000u
+#define I2S_IER_TIE_SHIFT                        19
+#define I2S_IER_TDMAE_MASK                       0x100000u
+#define I2S_IER_TDMAE_SHIFT                      20
+#define I2S_IER_RIE_MASK                         0x200000u
+#define I2S_IER_RIE_SHIFT                        21
+#define I2S_IER_RDMAE_MASK                       0x400000u
+#define I2S_IER_RDMAE_SHIFT                      22
+#define I2S_IER_TFRC_EN_MASK                     0x800000u
+#define I2S_IER_TFRC_EN_SHIFT                    23
+#define I2S_IER_RFRC_EN_MASK                     0x1000000u
+#define I2S_IER_RFRC_EN_SHIFT                    24
+/* TCR Bit Fields */
+#define I2S_TCR_TEFS_MASK                        0x1u
+#define I2S_TCR_TEFS_SHIFT                       0
+#define I2S_TCR_TFSL_MASK                        0x2u
+#define I2S_TCR_TFSL_SHIFT                       1
+#define I2S_TCR_TFSI_MASK                        0x4u
+#define I2S_TCR_TFSI_SHIFT                       2
+#define I2S_TCR_TSCKP_MASK                       0x8u
+#define I2S_TCR_TSCKP_SHIFT                      3
+#define I2S_TCR_TSHFD_MASK                       0x10u
+#define I2S_TCR_TSHFD_SHIFT                      4
+#define I2S_TCR_TXDIR_MASK                       0x20u
+#define I2S_TCR_TXDIR_SHIFT                      5
+#define I2S_TCR_TFDIR_MASK                       0x40u
+#define I2S_TCR_TFDIR_SHIFT                      6
+#define I2S_TCR_TFEN0_MASK                       0x80u
+#define I2S_TCR_TFEN0_SHIFT                      7
+#define I2S_TCR_TFEN1_MASK                       0x100u
+#define I2S_TCR_TFEN1_SHIFT                      8
+#define I2S_TCR_TXBIT0_MASK                      0x200u
+#define I2S_TCR_TXBIT0_SHIFT                     9
+/* RCR Bit Fields */
+#define I2S_RCR_REFS_MASK                        0x1u
+#define I2S_RCR_REFS_SHIFT                       0
+#define I2S_RCR_RFSL_MASK                        0x2u
+#define I2S_RCR_RFSL_SHIFT                       1
+#define I2S_RCR_RFSI_MASK                        0x4u
+#define I2S_RCR_RFSI_SHIFT                       2
+#define I2S_RCR_RSCKP_MASK                       0x8u
+#define I2S_RCR_RSCKP_SHIFT                      3
+#define I2S_RCR_RSHFD_MASK                       0x10u
+#define I2S_RCR_RSHFD_SHIFT                      4
+#define I2S_RCR_RXDIR_MASK                       0x20u
+#define I2S_RCR_RXDIR_SHIFT                      5
+#define I2S_RCR_RFDIR_MASK                       0x40u
+#define I2S_RCR_RFDIR_SHIFT                      6
+#define I2S_RCR_RFEN0_MASK                       0x80u
+#define I2S_RCR_RFEN0_SHIFT                      7
+#define I2S_RCR_RFEN1_MASK                       0x100u
+#define I2S_RCR_RFEN1_SHIFT                      8
+#define I2S_RCR_RXBIT0_MASK                      0x200u
+#define I2S_RCR_RXBIT0_SHIFT                     9
+#define I2S_RCR_RXEXT_MASK                       0x400u
+#define I2S_RCR_RXEXT_SHIFT                      10
+/* TCCR Bit Fields */
+#define I2S_TCCR_PM_MASK                         0xFFu
+#define I2S_TCCR_PM_SHIFT                        0
+#define I2S_TCCR_PM(x)                           (((uint32_t)(((uint32_t)(x))<<I2S_TCCR_PM_SHIFT))&I2S_TCCR_PM_MASK)
+#define I2S_TCCR_DC_MASK                         0x1F00u
+#define I2S_TCCR_DC_SHIFT                        8
+#define I2S_TCCR_DC(x)                           (((uint32_t)(((uint32_t)(x))<<I2S_TCCR_DC_SHIFT))&I2S_TCCR_DC_MASK)
+#define I2S_TCCR_WL_MASK                         0x1E000u
+#define I2S_TCCR_WL_SHIFT                        13
+#define I2S_TCCR_WL(x)                           (((uint32_t)(((uint32_t)(x))<<I2S_TCCR_WL_SHIFT))&I2S_TCCR_WL_MASK)
+#define I2S_TCCR_PSR_MASK                        0x20000u
+#define I2S_TCCR_PSR_SHIFT                       17
+#define I2S_TCCR_DIV2_MASK                       0x40000u
+#define I2S_TCCR_DIV2_SHIFT                      18
+/* RCCR Bit Fields */
+#define I2S_RCCR_PM_MASK                         0xFFu
+#define I2S_RCCR_PM_SHIFT                        0
+#define I2S_RCCR_PM(x)                           (((uint32_t)(((uint32_t)(x))<<I2S_RCCR_PM_SHIFT))&I2S_RCCR_PM_MASK)
+#define I2S_RCCR_DC_MASK                         0x1F00u
+#define I2S_RCCR_DC_SHIFT                        8
+#define I2S_RCCR_DC(x)                           (((uint32_t)(((uint32_t)(x))<<I2S_RCCR_DC_SHIFT))&I2S_RCCR_DC_MASK)
+#define I2S_RCCR_WL_MASK                         0x1E000u
+#define I2S_RCCR_WL_SHIFT                        13
+#define I2S_RCCR_WL(x)                           (((uint32_t)(((uint32_t)(x))<<I2S_RCCR_WL_SHIFT))&I2S_RCCR_WL_MASK)
+#define I2S_RCCR_PSR_MASK                        0x20000u
+#define I2S_RCCR_PSR_SHIFT                       17
+#define I2S_RCCR_DIV2_MASK                       0x40000u
+#define I2S_RCCR_DIV2_SHIFT                      18
+/* FCSR Bit Fields */
+#define I2S_FCSR_TFWM0_MASK                      0xFu
+#define I2S_FCSR_TFWM0_SHIFT                     0
+#define I2S_FCSR_TFWM0(x)                        (((uint32_t)(((uint32_t)(x))<<I2S_FCSR_TFWM0_SHIFT))&I2S_FCSR_TFWM0_MASK)
+#define I2S_FCSR_RFWM0_MASK                      0xF0u
+#define I2S_FCSR_RFWM0_SHIFT                     4
+#define I2S_FCSR_RFWM0(x)                        (((uint32_t)(((uint32_t)(x))<<I2S_FCSR_RFWM0_SHIFT))&I2S_FCSR_RFWM0_MASK)
+#define I2S_FCSR_TFCNT0_MASK                     0xF00u
+#define I2S_FCSR_TFCNT0_SHIFT                    8
+#define I2S_FCSR_TFCNT0(x)                       (((uint32_t)(((uint32_t)(x))<<I2S_FCSR_TFCNT0_SHIFT))&I2S_FCSR_TFCNT0_MASK)
+#define I2S_FCSR_RFCNT0_MASK                     0xF000u
+#define I2S_FCSR_RFCNT0_SHIFT                    12
+#define I2S_FCSR_RFCNT0(x)                       (((uint32_t)(((uint32_t)(x))<<I2S_FCSR_RFCNT0_SHIFT))&I2S_FCSR_RFCNT0_MASK)
+#define I2S_FCSR_TFWM1_MASK                      0xF0000u
+#define I2S_FCSR_TFWM1_SHIFT                     16
+#define I2S_FCSR_TFWM1(x)                        (((uint32_t)(((uint32_t)(x))<<I2S_FCSR_TFWM1_SHIFT))&I2S_FCSR_TFWM1_MASK)
+#define I2S_FCSR_RFWM1_MASK                      0xF00000u
+#define I2S_FCSR_RFWM1_SHIFT                     20
+#define I2S_FCSR_RFWM1(x)                        (((uint32_t)(((uint32_t)(x))<<I2S_FCSR_RFWM1_SHIFT))&I2S_FCSR_RFWM1_MASK)
+#define I2S_FCSR_TFCNT1_MASK                     0xF000000u
+#define I2S_FCSR_TFCNT1_SHIFT                    24
+#define I2S_FCSR_TFCNT1(x)                       (((uint32_t)(((uint32_t)(x))<<I2S_FCSR_TFCNT1_SHIFT))&I2S_FCSR_TFCNT1_MASK)
+#define I2S_FCSR_RFCNT1_MASK                     0xF0000000u
+#define I2S_FCSR_RFCNT1_SHIFT                    28
+#define I2S_FCSR_RFCNT1(x)                       (((uint32_t)(((uint32_t)(x))<<I2S_FCSR_RFCNT1_SHIFT))&I2S_FCSR_RFCNT1_MASK)
+/* ACNT Bit Fields */
+#define I2S_ACNT_AC97EN_MASK                     0x1u
+#define I2S_ACNT_AC97EN_SHIFT                    0
+#define I2S_ACNT_FV_MASK                         0x2u
+#define I2S_ACNT_FV_SHIFT                        1
+#define I2S_ACNT_TIF_MASK                        0x4u
+#define I2S_ACNT_TIF_SHIFT                       2
+#define I2S_ACNT_RD_MASK                         0x8u
+#define I2S_ACNT_RD_SHIFT                        3
+#define I2S_ACNT_WR_MASK                         0x10u
+#define I2S_ACNT_WR_SHIFT                        4
+#define I2S_ACNT_FRDIV_MASK                      0x7E0u
+#define I2S_ACNT_FRDIV_SHIFT                     5
+#define I2S_ACNT_FRDIV(x)                        (((uint32_t)(((uint32_t)(x))<<I2S_ACNT_FRDIV_SHIFT))&I2S_ACNT_FRDIV_MASK)
+/* ACADD Bit Fields */
+#define I2S_ACADD_ACADD_MASK                     0x7FFFFu
+#define I2S_ACADD_ACADD_SHIFT                    0
+#define I2S_ACADD_ACADD(x)                       (((uint32_t)(((uint32_t)(x))<<I2S_ACADD_ACADD_SHIFT))&I2S_ACADD_ACADD_MASK)
+/* ACDAT Bit Fields */
+#define I2S_ACDAT_ACDAT_MASK                     0xFFFFFu
+#define I2S_ACDAT_ACDAT_SHIFT                    0
+#define I2S_ACDAT_ACDAT(x)                       (((uint32_t)(((uint32_t)(x))<<I2S_ACDAT_ACDAT_SHIFT))&I2S_ACDAT_ACDAT_MASK)
+/* ATAG Bit Fields */
+#define I2S_ATAG_ATAG_MASK                       0xFFFFu
+#define I2S_ATAG_ATAG_SHIFT                      0
+#define I2S_ATAG_ATAG(x)                         (((uint32_t)(((uint32_t)(x))<<I2S_ATAG_ATAG_SHIFT))&I2S_ATAG_ATAG_MASK)
+/* TMSK Bit Fields */
+#define I2S_TMSK_TMSK_MASK                       0xFFFFFFFFu
+#define I2S_TMSK_TMSK_SHIFT                      0
+#define I2S_TMSK_TMSK(x)                         (((uint32_t)(((uint32_t)(x))<<I2S_TMSK_TMSK_SHIFT))&I2S_TMSK_TMSK_MASK)
+/* RMSK Bit Fields */
+#define I2S_RMSK_RMSK_MASK                       0xFFFFFFFFu
+#define I2S_RMSK_RMSK_SHIFT                      0
+#define I2S_RMSK_RMSK(x)                         (((uint32_t)(((uint32_t)(x))<<I2S_RMSK_RMSK_SHIFT))&I2S_RMSK_RMSK_MASK)
+/* ACCST Bit Fields */
+#define I2S_ACCST_ACCST_MASK                     0x3FFu
+#define I2S_ACCST_ACCST_SHIFT                    0
+#define I2S_ACCST_ACCST(x)                       (((uint32_t)(((uint32_t)(x))<<I2S_ACCST_ACCST_SHIFT))&I2S_ACCST_ACCST_MASK)
+/* ACCEN Bit Fields */
+#define I2S_ACCEN_ACCEN_MASK                     0x3FFu
+#define I2S_ACCEN_ACCEN_SHIFT                    0
+#define I2S_ACCEN_ACCEN(x)                       (((uint32_t)(((uint32_t)(x))<<I2S_ACCEN_ACCEN_SHIFT))&I2S_ACCEN_ACCEN_MASK)
+/* ACCDIS Bit Fields */
+#define I2S_ACCDIS_ACCDIS_MASK                   0x3FFu
+#define I2S_ACCDIS_ACCDIS_SHIFT                  0
+#define I2S_ACCDIS_ACCDIS(x)                     (((uint32_t)(((uint32_t)(x))<<I2S_ACCDIS_ACCDIS_SHIFT))&I2S_ACCDIS_ACCDIS_MASK)
 
 /**
  * @}
@@ -2629,10 +4551,8 @@ typedef struct {
   __IO uint8_t ME;                                 /**< LLWU Module Enable Register, offset: 0x4 */
   __IO uint8_t F1;                                 /**< LLWU Flag 1 Register, offset: 0x5 */
   __IO uint8_t F2;                                 /**< LLWU Flag 2 Register, offset: 0x6 */
-  __I  uint8_t F3;                                 /**< LLWU Flag 3 Register, offset: 0x7 */
-  __IO uint8_t FILT1;                              /**< LLWU Pin Filter 1 Register, offset: 0x8 */
-  __IO uint8_t FILT2;                              /**< LLWU Pin Filter 2 Register, offset: 0x9 */
-  __IO uint8_t RST;                                /**< LLWU Reset Enable Register, offset: 0xA */
+  __IO uint8_t F3;                                 /**< LLWU Flag 3 Register, offset: 0x7 */
+  __IO uint8_t CS;                                 /**< LLWU Control and Status Register, offset: 0x8 */
 } LLWU_Type;
 
 /* ----------------------------------------------------------------------------
@@ -2764,29 +4684,13 @@ typedef struct {
 #define LLWU_F3_MWUF6_SHIFT                      6
 #define LLWU_F3_MWUF7_MASK                       0x80u
 #define LLWU_F3_MWUF7_SHIFT                      7
-/* FILT1 Bit Fields */
-#define LLWU_FILT1_FILTSEL_MASK                  0xFu
-#define LLWU_FILT1_FILTSEL_SHIFT                 0
-#define LLWU_FILT1_FILTSEL(x)                    (((uint8_t)(((uint8_t)(x))<<LLWU_FILT1_FILTSEL_SHIFT))&LLWU_FILT1_FILTSEL_MASK)
-#define LLWU_FILT1_FILTE_MASK                    0x60u
-#define LLWU_FILT1_FILTE_SHIFT                   5
-#define LLWU_FILT1_FILTE(x)                      (((uint8_t)(((uint8_t)(x))<<LLWU_FILT1_FILTE_SHIFT))&LLWU_FILT1_FILTE_MASK)
-#define LLWU_FILT1_FILTF_MASK                    0x80u
-#define LLWU_FILT1_FILTF_SHIFT                   7
-/* FILT2 Bit Fields */
-#define LLWU_FILT2_FILTSEL_MASK                  0xFu
-#define LLWU_FILT2_FILTSEL_SHIFT                 0
-#define LLWU_FILT2_FILTSEL(x)                    (((uint8_t)(((uint8_t)(x))<<LLWU_FILT2_FILTSEL_SHIFT))&LLWU_FILT2_FILTSEL_MASK)
-#define LLWU_FILT2_FILTE_MASK                    0x60u
-#define LLWU_FILT2_FILTE_SHIFT                   5
-#define LLWU_FILT2_FILTE(x)                      (((uint8_t)(((uint8_t)(x))<<LLWU_FILT2_FILTE_SHIFT))&LLWU_FILT2_FILTE_MASK)
-#define LLWU_FILT2_FILTF_MASK                    0x80u
-#define LLWU_FILT2_FILTF_SHIFT                   7
-/* RST Bit Fields */
-#define LLWU_RST_RSTFILT_MASK                    0x1u
-#define LLWU_RST_RSTFILT_SHIFT                   0
-#define LLWU_RST_LLRSTE_MASK                     0x2u
-#define LLWU_RST_LLRSTE_SHIFT                    1
+/* CS Bit Fields */
+#define LLWU_CS_FLTR_MASK                        0x1u
+#define LLWU_CS_FLTR_SHIFT                       0
+#define LLWU_CS_FLTEP_MASK                       0x2u
+#define LLWU_CS_FLTEP_SHIFT                      1
+#define LLWU_CS_ACKISO_MASK                      0x80u
+#define LLWU_CS_ACKISO_SHIFT                     7
 
 /**
  * @}
@@ -2818,11 +4722,7 @@ typedef struct {
   __IO uint32_t CSR;                               /**< Low Power Timer Control Status Register, offset: 0x0 */
   __IO uint32_t PSR;                               /**< Low Power Timer Prescale Register, offset: 0x4 */
   __IO uint32_t CMR;                               /**< Low Power Timer Compare Register, offset: 0x8 */
-  /**
-   * !!! NOTE: Modification by Finn Wilke <finn.wilke@fu-berlin.de>
-   * This register was specified __I. This is wrong. It needs to be written in order to read any value.
-   */
-  __IO uint32_t CNR;                               /**< Low Power Timer Counter Register, offset: 0xC */
+  __I  uint32_t CNR;                               /**< Low Power Timer Counter Register, offset: 0xC */
 } LPTMR_Type;
 
 /* ----------------------------------------------------------------------------
@@ -2885,6 +4785,89 @@ typedef struct {
 
 
 /* ----------------------------------------------------------------------------
+   -- MC Peripheral Access Layer
+   ---------------------------------------------------------------------------- */
+
+/**
+ * @addtogroup MC_Peripheral_Access_Layer MC Peripheral Access Layer
+ * @{
+ */
+
+/** MC - Register Layout Typedef */
+typedef struct {
+  __I  uint8_t SRSH;                               /**< System Reset Status Register High, offset: 0x0 */
+  __I  uint8_t SRSL;                               /**< System Reset Status Register Low, offset: 0x1 */
+  __IO uint8_t PMPROT;                             /**< Power Mode Protection Register, offset: 0x2 */
+  __IO uint8_t PMCTRL;                             /**< Power Mode Control Register, offset: 0x3 */
+} MC_Type;
+
+/* ----------------------------------------------------------------------------
+   -- MC Register Masks
+   ---------------------------------------------------------------------------- */
+
+/**
+ * @addtogroup MC_Register_Masks MC Register Masks
+ * @{
+ */
+
+/* SRSH Bit Fields */
+#define MC_SRSH_JTAG_MASK                        0x1u
+#define MC_SRSH_JTAG_SHIFT                       0
+#define MC_SRSH_LOCKUP_MASK                      0x2u
+#define MC_SRSH_LOCKUP_SHIFT                     1
+#define MC_SRSH_SW_MASK                          0x4u
+#define MC_SRSH_SW_SHIFT                         2
+/* SRSL Bit Fields */
+#define MC_SRSL_WAKEUP_MASK                      0x1u
+#define MC_SRSL_WAKEUP_SHIFT                     0
+#define MC_SRSL_LVD_MASK                         0x2u
+#define MC_SRSL_LVD_SHIFT                        1
+#define MC_SRSL_LOC_MASK                         0x4u
+#define MC_SRSL_LOC_SHIFT                        2
+#define MC_SRSL_COP_MASK                         0x20u
+#define MC_SRSL_COP_SHIFT                        5
+#define MC_SRSL_PIN_MASK                         0x40u
+#define MC_SRSL_PIN_SHIFT                        6
+#define MC_SRSL_POR_MASK                         0x80u
+#define MC_SRSL_POR_SHIFT                        7
+/* PMPROT Bit Fields */
+#define MC_PMPROT_AVLLS1_MASK                    0x1u
+#define MC_PMPROT_AVLLS1_SHIFT                   0
+#define MC_PMPROT_AVLLS2_MASK                    0x2u
+#define MC_PMPROT_AVLLS2_SHIFT                   1
+#define MC_PMPROT_AVLLS3_MASK                    0x4u
+#define MC_PMPROT_AVLLS3_SHIFT                   2
+#define MC_PMPROT_ALLS_MASK                      0x10u
+#define MC_PMPROT_ALLS_SHIFT                     4
+#define MC_PMPROT_AVLP_MASK                      0x20u
+#define MC_PMPROT_AVLP_SHIFT                     5
+/* PMCTRL Bit Fields */
+#define MC_PMCTRL_LPLLSM_MASK                    0x7u
+#define MC_PMCTRL_LPLLSM_SHIFT                   0
+#define MC_PMCTRL_LPLLSM(x)                      (((uint8_t)(((uint8_t)(x))<<MC_PMCTRL_LPLLSM_SHIFT))&MC_PMCTRL_LPLLSM_MASK)
+#define MC_PMCTRL_RUNM_MASK                      0x60u
+#define MC_PMCTRL_RUNM_SHIFT                     5
+#define MC_PMCTRL_RUNM(x)                        (((uint8_t)(((uint8_t)(x))<<MC_PMCTRL_RUNM_SHIFT))&MC_PMCTRL_RUNM_MASK)
+#define MC_PMCTRL_LPWUI_MASK                     0x80u
+#define MC_PMCTRL_LPWUI_SHIFT                    7
+
+/**
+ * @}
+ */ /* end of group MC_Register_Masks */
+
+
+/* MC - Peripheral instance base addresses */
+/** Peripheral MC base address */
+#define MC_BASE                                  (0x4007E000u)
+/** Peripheral MC base pointer */
+#define MC                                       ((MC_Type *)MC_BASE)
+
+/**
+ * @}
+ */ /* end of group MC_Peripheral_Access_Layer */
+
+
+/* ----------------------------------------------------------------------------
    -- MCG Peripheral Access Layer
    ---------------------------------------------------------------------------- */
 
@@ -2903,12 +4886,10 @@ typedef struct {
   __IO uint8_t C6;                                 /**< MCG Control 6 Register, offset: 0x5 */
   __I  uint8_t S;                                  /**< MCG Status Register, offset: 0x6 */
        uint8_t RESERVED_0[1];
-  __IO uint8_t SC;                                 /**< MCG Status and Control Register, offset: 0x8 */
+  __IO uint8_t ATC;                                /**< MCG Auto Trim Control Register, offset: 0x8 */
        uint8_t RESERVED_1[1];
   __IO uint8_t ATCVH;                              /**< MCG Auto Trim Compare Value High Register, offset: 0xA */
   __IO uint8_t ATCVL;                              /**< MCG Auto Trim Compare Value Low Register, offset: 0xB */
-  __IO uint8_t C7;                                 /**< MCG Control 7 Register, offset: 0xC */
-  __IO uint8_t C8;                                 /**< MCG Control 8 Register, offset: 0xD */
 } MCG_Type;
 
 /* ----------------------------------------------------------------------------
@@ -2938,15 +4919,13 @@ typedef struct {
 #define MCG_C2_IRCS_SHIFT                        0
 #define MCG_C2_LP_MASK                           0x2u
 #define MCG_C2_LP_SHIFT                          1
-#define MCG_C2_EREFS0_MASK                       0x4u
-#define MCG_C2_EREFS0_SHIFT                      2
-#define MCG_C2_HGO0_MASK                         0x8u
-#define MCG_C2_HGO0_SHIFT                        3
-#define MCG_C2_RANGE0_MASK                       0x30u
-#define MCG_C2_RANGE0_SHIFT                      4
-#define MCG_C2_RANGE0(x)                         (((uint8_t)(((uint8_t)(x))<<MCG_C2_RANGE0_SHIFT))&MCG_C2_RANGE0_MASK)
-#define MCG_C2_LOCRE0_MASK                       0x80u
-#define MCG_C2_LOCRE0_SHIFT                      7
+#define MCG_C2_EREFS_MASK                        0x4u
+#define MCG_C2_EREFS_SHIFT                       2
+#define MCG_C2_HGO_MASK                          0x8u
+#define MCG_C2_HGO_SHIFT                         3
+#define MCG_C2_RANGE_MASK                        0x30u
+#define MCG_C2_RANGE_SHIFT                       4
+#define MCG_C2_RANGE(x)                          (((uint8_t)(((uint8_t)(x))<<MCG_C2_RANGE_SHIFT))&MCG_C2_RANGE_MASK)
 /* C3 Bit Fields */
 #define MCG_C3_SCTRIM_MASK                       0xFFu
 #define MCG_C3_SCTRIM_SHIFT                      0
@@ -2963,28 +4942,28 @@ typedef struct {
 #define MCG_C4_DMX32_MASK                        0x80u
 #define MCG_C4_DMX32_SHIFT                       7
 /* C5 Bit Fields */
-#define MCG_C5_PRDIV0_MASK                       0x1Fu
-#define MCG_C5_PRDIV0_SHIFT                      0
-#define MCG_C5_PRDIV0(x)                         (((uint8_t)(((uint8_t)(x))<<MCG_C5_PRDIV0_SHIFT))&MCG_C5_PRDIV0_MASK)
-#define MCG_C5_PLLSTEN0_MASK                     0x20u
-#define MCG_C5_PLLSTEN0_SHIFT                    5
-#define MCG_C5_PLLCLKEN0_MASK                    0x40u
-#define MCG_C5_PLLCLKEN0_SHIFT                   6
+#define MCG_C5_PRDIV_MASK                        0x1Fu
+#define MCG_C5_PRDIV_SHIFT                       0
+#define MCG_C5_PRDIV(x)                          (((uint8_t)(((uint8_t)(x))<<MCG_C5_PRDIV_SHIFT))&MCG_C5_PRDIV_MASK)
+#define MCG_C5_PLLSTEN_MASK                      0x20u
+#define MCG_C5_PLLSTEN_SHIFT                     5
+#define MCG_C5_PLLCLKEN_MASK                     0x40u
+#define MCG_C5_PLLCLKEN_SHIFT                    6
 /* C6 Bit Fields */
-#define MCG_C6_VDIV0_MASK                        0x1Fu
-#define MCG_C6_VDIV0_SHIFT                       0
-#define MCG_C6_VDIV0(x)                          (((uint8_t)(((uint8_t)(x))<<MCG_C6_VDIV0_SHIFT))&MCG_C6_VDIV0_MASK)
-#define MCG_C6_CME0_MASK                         0x20u
-#define MCG_C6_CME0_SHIFT                        5
+#define MCG_C6_VDIV_MASK                         0x1Fu
+#define MCG_C6_VDIV_SHIFT                        0
+#define MCG_C6_VDIV(x)                           (((uint8_t)(((uint8_t)(x))<<MCG_C6_VDIV_SHIFT))&MCG_C6_VDIV_MASK)
+#define MCG_C6_CME_MASK                          0x20u
+#define MCG_C6_CME_SHIFT                         5
 #define MCG_C6_PLLS_MASK                         0x40u
 #define MCG_C6_PLLS_SHIFT                        6
-#define MCG_C6_LOLIE0_MASK                       0x80u
-#define MCG_C6_LOLIE0_SHIFT                      7
+#define MCG_C6_LOLIE_MASK                        0x80u
+#define MCG_C6_LOLIE_SHIFT                       7
 /* S Bit Fields */
 #define MCG_S_IRCST_MASK                         0x1u
 #define MCG_S_IRCST_SHIFT                        0
-#define MCG_S_OSCINIT0_MASK                      0x2u
-#define MCG_S_OSCINIT0_SHIFT                     1
+#define MCG_S_OSCINIT_MASK                       0x2u
+#define MCG_S_OSCINIT_SHIFT                      1
 #define MCG_S_CLKST_MASK                         0xCu
 #define MCG_S_CLKST_SHIFT                        2
 #define MCG_S_CLKST(x)                           (((uint8_t)(((uint8_t)(x))<<MCG_S_CLKST_SHIFT))&MCG_S_CLKST_MASK)
@@ -2992,24 +4971,17 @@ typedef struct {
 #define MCG_S_IREFST_SHIFT                       4
 #define MCG_S_PLLST_MASK                         0x20u
 #define MCG_S_PLLST_SHIFT                        5
-#define MCG_S_LOCK0_MASK                         0x40u
-#define MCG_S_LOCK0_SHIFT                        6
-#define MCG_S_LOLS0_MASK                         0x80u
-#define MCG_S_LOLS0_SHIFT                        7
-/* SC Bit Fields */
-#define MCG_SC_LOCS0_MASK                        0x1u
-#define MCG_SC_LOCS0_SHIFT                       0
-#define MCG_SC_FCRDIV_MASK                       0xEu
-#define MCG_SC_FCRDIV_SHIFT                      1
-#define MCG_SC_FCRDIV(x)                         (((uint8_t)(((uint8_t)(x))<<MCG_SC_FCRDIV_SHIFT))&MCG_SC_FCRDIV_MASK)
-#define MCG_SC_FLTPRSRV_MASK                     0x10u
-#define MCG_SC_FLTPRSRV_SHIFT                    4
-#define MCG_SC_ATMF_MASK                         0x20u
-#define MCG_SC_ATMF_SHIFT                        5
-#define MCG_SC_ATMS_MASK                         0x40u
-#define MCG_SC_ATMS_SHIFT                        6
-#define MCG_SC_ATME_MASK                         0x80u
-#define MCG_SC_ATME_SHIFT                        7
+#define MCG_S_LOCK_MASK                          0x40u
+#define MCG_S_LOCK_SHIFT                         6
+#define MCG_S_LOLS_MASK                          0x80u
+#define MCG_S_LOLS_SHIFT                         7
+/* ATC Bit Fields */
+#define MCG_ATC_ATMF_MASK                        0x20u
+#define MCG_ATC_ATMF_SHIFT                       5
+#define MCG_ATC_ATMS_MASK                        0x40u
+#define MCG_ATC_ATMS_SHIFT                       6
+#define MCG_ATC_ATME_MASK                        0x80u
+#define MCG_ATC_ATME_SHIFT                       7
 /* ATCVH Bit Fields */
 #define MCG_ATCVH_ATCVH_MASK                     0xFFu
 #define MCG_ATCVH_ATCVH_SHIFT                    0
@@ -3018,18 +4990,6 @@ typedef struct {
 #define MCG_ATCVL_ATCVL_MASK                     0xFFu
 #define MCG_ATCVL_ATCVL_SHIFT                    0
 #define MCG_ATCVL_ATCVL(x)                       (((uint8_t)(((uint8_t)(x))<<MCG_ATCVL_ATCVL_SHIFT))&MCG_ATCVL_ATCVL_MASK)
-/* C7 Bit Fields */
-#define MCG_C7_OSCSEL_MASK                       0x1u
-#define MCG_C7_OSCSEL_SHIFT                      0
-/* C8 Bit Fields */
-#define MCG_C8_LOCS1_MASK                        0x1u
-#define MCG_C8_LOCS1_SHIFT                       0
-#define MCG_C8_CME1_MASK                         0x20u
-#define MCG_C8_CME1_SHIFT                        5
-#define MCG_C8_LOLRE_MASK                        0x40u
-#define MCG_C8_LOLRE_SHIFT                       6
-#define MCG_C8_LOCRE1_MASK                       0x80u
-#define MCG_C8_LOCRE1_SHIFT                      7
 
 /**
  * @}
@@ -3045,6 +5005,267 @@ typedef struct {
 /**
  * @}
  */ /* end of group MCG_Peripheral_Access_Layer */
+
+
+/* ----------------------------------------------------------------------------
+   -- MCM Peripheral Access Layer
+   ---------------------------------------------------------------------------- */
+
+/**
+ * @addtogroup MCM_Peripheral_Access_Layer MCM Peripheral Access Layer
+ * @{
+ */
+
+/** MCM - Register Layout Typedef */
+typedef struct {
+       uint8_t RESERVED_0[8];
+  __I  uint16_t PLASC;                             /**< Crossbar switch (AXBS) slave configuration, offset: 0x8 */
+  __I  uint16_t PLAMC;                             /**< Crossbar switch (AXBS) master configuration, offset: 0xA */
+  __IO uint32_t SRAMAP;                            /**< SRAM arbitration and protection, offset: 0xC */
+  __IO uint32_t ISR;                               /**< Interrupt status register, offset: 0x10 */
+  __IO uint32_t ETBCC;                             /**< ETB counter control register, offset: 0x14 */
+  __IO uint32_t ETBRL;                             /**< ETB reload register, offset: 0x18 */
+  __I  uint32_t ETBCNT;                            /**< ETB counter value register, offset: 0x1C */
+} MCM_Type;
+
+/* ----------------------------------------------------------------------------
+   -- MCM Register Masks
+   ---------------------------------------------------------------------------- */
+
+/**
+ * @addtogroup MCM_Register_Masks MCM Register Masks
+ * @{
+ */
+
+/* PLASC Bit Fields */
+#define MCM_PLASC_ASC_MASK                       0xFFu
+#define MCM_PLASC_ASC_SHIFT                      0
+#define MCM_PLASC_ASC(x)                         (((uint16_t)(((uint16_t)(x))<<MCM_PLASC_ASC_SHIFT))&MCM_PLASC_ASC_MASK)
+/* PLAMC Bit Fields */
+#define MCM_PLAMC_AMC_MASK                       0xFFu
+#define MCM_PLAMC_AMC_SHIFT                      0
+#define MCM_PLAMC_AMC(x)                         (((uint16_t)(((uint16_t)(x))<<MCM_PLAMC_AMC_SHIFT))&MCM_PLAMC_AMC_MASK)
+/* SRAMAP Bit Fields */
+#define MCM_SRAMAP_SRAMUAP_MASK                  0x3000000u
+#define MCM_SRAMAP_SRAMUAP_SHIFT                 24
+#define MCM_SRAMAP_SRAMUAP(x)                    (((uint32_t)(((uint32_t)(x))<<MCM_SRAMAP_SRAMUAP_SHIFT))&MCM_SRAMAP_SRAMUAP_MASK)
+#define MCM_SRAMAP_SRAMUWP_MASK                  0x4000000u
+#define MCM_SRAMAP_SRAMUWP_SHIFT                 26
+#define MCM_SRAMAP_SRAMLAP_MASK                  0x30000000u
+#define MCM_SRAMAP_SRAMLAP_SHIFT                 28
+#define MCM_SRAMAP_SRAMLAP(x)                    (((uint32_t)(((uint32_t)(x))<<MCM_SRAMAP_SRAMLAP_SHIFT))&MCM_SRAMAP_SRAMLAP_MASK)
+#define MCM_SRAMAP_SRAMLWP_MASK                  0x40000000u
+#define MCM_SRAMAP_SRAMLWP_SHIFT                 30
+/* ISR Bit Fields */
+#define MCM_ISR_IRQ_MASK                         0x2u
+#define MCM_ISR_IRQ_SHIFT                        1
+#define MCM_ISR_NMI_MASK                         0x4u
+#define MCM_ISR_NMI_SHIFT                        2
+/* ETBCC Bit Fields */
+#define MCM_ETBCC_CNTEN_MASK                     0x1u
+#define MCM_ETBCC_CNTEN_SHIFT                    0
+#define MCM_ETBCC_RSPT_MASK                      0x6u
+#define MCM_ETBCC_RSPT_SHIFT                     1
+#define MCM_ETBCC_RSPT(x)                        (((uint32_t)(((uint32_t)(x))<<MCM_ETBCC_RSPT_SHIFT))&MCM_ETBCC_RSPT_MASK)
+#define MCM_ETBCC_RLRQ_MASK                      0x8u
+#define MCM_ETBCC_RLRQ_SHIFT                     3
+#define MCM_ETBCC_ETDIS_MASK                     0x10u
+#define MCM_ETBCC_ETDIS_SHIFT                    4
+#define MCM_ETBCC_ITDIS_MASK                     0x20u
+#define MCM_ETBCC_ITDIS_SHIFT                    5
+/* ETBRL Bit Fields */
+#define MCM_ETBRL_RELOAD_MASK                    0x7FFu
+#define MCM_ETBRL_RELOAD_SHIFT                   0
+#define MCM_ETBRL_RELOAD(x)                      (((uint32_t)(((uint32_t)(x))<<MCM_ETBRL_RELOAD_SHIFT))&MCM_ETBRL_RELOAD_MASK)
+/* ETBCNT Bit Fields */
+#define MCM_ETBCNT_COUNTER_MASK                  0x7FFu
+#define MCM_ETBCNT_COUNTER_SHIFT                 0
+#define MCM_ETBCNT_COUNTER(x)                    (((uint32_t)(((uint32_t)(x))<<MCM_ETBCNT_COUNTER_SHIFT))&MCM_ETBCNT_COUNTER_MASK)
+
+/**
+ * @}
+ */ /* end of group MCM_Register_Masks */
+
+
+/* MCM - Peripheral instance base addresses */
+/** Peripheral MCM base address */
+#define MCM_BASE                                 (0xE0080000u)
+/** Peripheral MCM base pointer */
+#define MCM                                      ((MCM_Type *)MCM_BASE)
+
+/**
+ * @}
+ */ /* end of group MCM_Peripheral_Access_Layer */
+
+
+/* ----------------------------------------------------------------------------
+   -- MPU Peripheral Access Layer
+   ---------------------------------------------------------------------------- */
+
+/**
+ * @addtogroup MPU_Peripheral_Access_Layer MPU Peripheral Access Layer
+ * @{
+ */
+
+/** MPU - Register Layout Typedef */
+typedef struct {
+  __IO uint32_t CESR;                              /**< Control/Error Status Register, offset: 0x0 */
+       uint8_t RESERVED_0[12];
+  struct {                                         /* offset: 0x10, array step: 0x8 */
+    __I  uint32_t EAR;                               /**< Error Address Register, Slave Port n, array offset: 0x10, array step: 0x8 */
+    __I  uint32_t EDR;                               /**< Error Detail Register, Slave Port n, array offset: 0x14, array step: 0x8 */
+  } SP[5];
+       uint8_t RESERVED_1[968];
+  __IO uint32_t WORD[12][4];                       /**< Region Descriptor n, Word 0..Region Descriptor n, Word 3, array offset: 0x400, array step: index*0x10, index2*0x4 */
+       uint8_t RESERVED_2[832];
+  __IO uint32_t RGDAAC[12];                        /**< Region Descriptor Alternate Access Control n, array offset: 0x800, array step: 0x4 */
+} MPU_Type;
+
+/* ----------------------------------------------------------------------------
+   -- MPU Register Masks
+   ---------------------------------------------------------------------------- */
+
+/**
+ * @addtogroup MPU_Register_Masks MPU Register Masks
+ * @{
+ */
+
+/* CESR Bit Fields */
+#define MPU_CESR_VLD_MASK                        0x1u
+#define MPU_CESR_VLD_SHIFT                       0
+#define MPU_CESR_NRGD_MASK                       0xF00u
+#define MPU_CESR_NRGD_SHIFT                      8
+#define MPU_CESR_NRGD(x)                         (((uint32_t)(((uint32_t)(x))<<MPU_CESR_NRGD_SHIFT))&MPU_CESR_NRGD_MASK)
+#define MPU_CESR_NSP_MASK                        0xF000u
+#define MPU_CESR_NSP_SHIFT                       12
+#define MPU_CESR_NSP(x)                          (((uint32_t)(((uint32_t)(x))<<MPU_CESR_NSP_SHIFT))&MPU_CESR_NSP_MASK)
+#define MPU_CESR_HRL_MASK                        0xF0000u
+#define MPU_CESR_HRL_SHIFT                       16
+#define MPU_CESR_HRL(x)                          (((uint32_t)(((uint32_t)(x))<<MPU_CESR_HRL_SHIFT))&MPU_CESR_HRL_MASK)
+#define MPU_CESR_SPERR_MASK                      0xF8000000u
+#define MPU_CESR_SPERR_SHIFT                     27
+#define MPU_CESR_SPERR(x)                        (((uint32_t)(((uint32_t)(x))<<MPU_CESR_SPERR_SHIFT))&MPU_CESR_SPERR_MASK)
+/* EAR Bit Fields */
+#define MPU_EAR_EADDR_MASK                       0xFFFFFFFFu
+#define MPU_EAR_EADDR_SHIFT                      0
+#define MPU_EAR_EADDR(x)                         (((uint32_t)(((uint32_t)(x))<<MPU_EAR_EADDR_SHIFT))&MPU_EAR_EADDR_MASK)
+/* EDR Bit Fields */
+#define MPU_EDR_ERW_MASK                         0x1u
+#define MPU_EDR_ERW_SHIFT                        0
+#define MPU_EDR_EATTR_MASK                       0xEu
+#define MPU_EDR_EATTR_SHIFT                      1
+#define MPU_EDR_EATTR(x)                         (((uint32_t)(((uint32_t)(x))<<MPU_EDR_EATTR_SHIFT))&MPU_EDR_EATTR_MASK)
+#define MPU_EDR_EMN_MASK                         0xF0u
+#define MPU_EDR_EMN_SHIFT                        4
+#define MPU_EDR_EMN(x)                           (((uint32_t)(((uint32_t)(x))<<MPU_EDR_EMN_SHIFT))&MPU_EDR_EMN_MASK)
+#define MPU_EDR_EACD_MASK                        0xFFFF0000u
+#define MPU_EDR_EACD_SHIFT                       16
+#define MPU_EDR_EACD(x)                          (((uint32_t)(((uint32_t)(x))<<MPU_EDR_EACD_SHIFT))&MPU_EDR_EACD_MASK)
+/* WORD Bit Fields */
+#define MPU_WORD_M0UM_MASK                       0x7u
+#define MPU_WORD_M0UM_SHIFT                      0
+#define MPU_WORD_M0UM(x)                         (((uint32_t)(((uint32_t)(x))<<MPU_WORD_M0UM_SHIFT))&MPU_WORD_M0UM_MASK)
+#define MPU_WORD_VLD_MASK                        0x1u
+#define MPU_WORD_VLD_SHIFT                       0
+#define MPU_WORD_M0SM_MASK                       0x18u
+#define MPU_WORD_M0SM_SHIFT                      3
+#define MPU_WORD_M0SM(x)                         (((uint32_t)(((uint32_t)(x))<<MPU_WORD_M0SM_SHIFT))&MPU_WORD_M0SM_MASK)
+#define MPU_WORD_ENDADDR_MASK                    0xFFFFFFE0u
+#define MPU_WORD_ENDADDR_SHIFT                   5
+#define MPU_WORD_ENDADDR(x)                      (((uint32_t)(((uint32_t)(x))<<MPU_WORD_ENDADDR_SHIFT))&MPU_WORD_ENDADDR_MASK)
+#define MPU_WORD_SRTADDR_MASK                    0xFFFFFFE0u
+#define MPU_WORD_SRTADDR_SHIFT                   5
+#define MPU_WORD_SRTADDR(x)                      (((uint32_t)(((uint32_t)(x))<<MPU_WORD_SRTADDR_SHIFT))&MPU_WORD_SRTADDR_MASK)
+#define MPU_WORD_M1UM_MASK                       0x1C0u
+#define MPU_WORD_M1UM_SHIFT                      6
+#define MPU_WORD_M1UM(x)                         (((uint32_t)(((uint32_t)(x))<<MPU_WORD_M1UM_SHIFT))&MPU_WORD_M1UM_MASK)
+#define MPU_WORD_M1SM_MASK                       0x600u
+#define MPU_WORD_M1SM_SHIFT                      9
+#define MPU_WORD_M1SM(x)                         (((uint32_t)(((uint32_t)(x))<<MPU_WORD_M1SM_SHIFT))&MPU_WORD_M1SM_MASK)
+#define MPU_WORD_M2UM_MASK                       0x7000u
+#define MPU_WORD_M2UM_SHIFT                      12
+#define MPU_WORD_M2UM(x)                         (((uint32_t)(((uint32_t)(x))<<MPU_WORD_M2UM_SHIFT))&MPU_WORD_M2UM_MASK)
+#define MPU_WORD_M2SM_MASK                       0x18000u
+#define MPU_WORD_M2SM_SHIFT                      15
+#define MPU_WORD_M2SM(x)                         (((uint32_t)(((uint32_t)(x))<<MPU_WORD_M2SM_SHIFT))&MPU_WORD_M2SM_MASK)
+#define MPU_WORD_M3UM_MASK                       0x1C0000u
+#define MPU_WORD_M3UM_SHIFT                      18
+#define MPU_WORD_M3UM(x)                         (((uint32_t)(((uint32_t)(x))<<MPU_WORD_M3UM_SHIFT))&MPU_WORD_M3UM_MASK)
+#define MPU_WORD_M3SM_MASK                       0x600000u
+#define MPU_WORD_M3SM_SHIFT                      21
+#define MPU_WORD_M3SM(x)                         (((uint32_t)(((uint32_t)(x))<<MPU_WORD_M3SM_SHIFT))&MPU_WORD_M3SM_MASK)
+#define MPU_WORD_M4WE_MASK                       0x1000000u
+#define MPU_WORD_M4WE_SHIFT                      24
+#define MPU_WORD_M4RE_MASK                       0x2000000u
+#define MPU_WORD_M4RE_SHIFT                      25
+#define MPU_WORD_M5WE_MASK                       0x4000000u
+#define MPU_WORD_M5WE_SHIFT                      26
+#define MPU_WORD_M5RE_MASK                       0x8000000u
+#define MPU_WORD_M5RE_SHIFT                      27
+#define MPU_WORD_M6WE_MASK                       0x10000000u
+#define MPU_WORD_M6WE_SHIFT                      28
+#define MPU_WORD_M6RE_MASK                       0x20000000u
+#define MPU_WORD_M6RE_SHIFT                      29
+#define MPU_WORD_M7WE_MASK                       0x40000000u
+#define MPU_WORD_M7WE_SHIFT                      30
+#define MPU_WORD_M7RE_MASK                       0x80000000u
+#define MPU_WORD_M7RE_SHIFT                      31
+/* RGDAAC Bit Fields */
+#define MPU_RGDAAC_M0UM_MASK                     0x7u
+#define MPU_RGDAAC_M0UM_SHIFT                    0
+#define MPU_RGDAAC_M0UM(x)                       (((uint32_t)(((uint32_t)(x))<<MPU_RGDAAC_M0UM_SHIFT))&MPU_RGDAAC_M0UM_MASK)
+#define MPU_RGDAAC_M0SM_MASK                     0x18u
+#define MPU_RGDAAC_M0SM_SHIFT                    3
+#define MPU_RGDAAC_M0SM(x)                       (((uint32_t)(((uint32_t)(x))<<MPU_RGDAAC_M0SM_SHIFT))&MPU_RGDAAC_M0SM_MASK)
+#define MPU_RGDAAC_M1UM_MASK                     0x1C0u
+#define MPU_RGDAAC_M1UM_SHIFT                    6
+#define MPU_RGDAAC_M1UM(x)                       (((uint32_t)(((uint32_t)(x))<<MPU_RGDAAC_M1UM_SHIFT))&MPU_RGDAAC_M1UM_MASK)
+#define MPU_RGDAAC_M1SM_MASK                     0x600u
+#define MPU_RGDAAC_M1SM_SHIFT                    9
+#define MPU_RGDAAC_M1SM(x)                       (((uint32_t)(((uint32_t)(x))<<MPU_RGDAAC_M1SM_SHIFT))&MPU_RGDAAC_M1SM_MASK)
+#define MPU_RGDAAC_M2UM_MASK                     0x7000u
+#define MPU_RGDAAC_M2UM_SHIFT                    12
+#define MPU_RGDAAC_M2UM(x)                       (((uint32_t)(((uint32_t)(x))<<MPU_RGDAAC_M2UM_SHIFT))&MPU_RGDAAC_M2UM_MASK)
+#define MPU_RGDAAC_M2SM_MASK                     0x18000u
+#define MPU_RGDAAC_M2SM_SHIFT                    15
+#define MPU_RGDAAC_M2SM(x)                       (((uint32_t)(((uint32_t)(x))<<MPU_RGDAAC_M2SM_SHIFT))&MPU_RGDAAC_M2SM_MASK)
+#define MPU_RGDAAC_M3UM_MASK                     0x1C0000u
+#define MPU_RGDAAC_M3UM_SHIFT                    18
+#define MPU_RGDAAC_M3UM(x)                       (((uint32_t)(((uint32_t)(x))<<MPU_RGDAAC_M3UM_SHIFT))&MPU_RGDAAC_M3UM_MASK)
+#define MPU_RGDAAC_M3SM_MASK                     0x600000u
+#define MPU_RGDAAC_M3SM_SHIFT                    21
+#define MPU_RGDAAC_M3SM(x)                       (((uint32_t)(((uint32_t)(x))<<MPU_RGDAAC_M3SM_SHIFT))&MPU_RGDAAC_M3SM_MASK)
+#define MPU_RGDAAC_M4WE_MASK                     0x1000000u
+#define MPU_RGDAAC_M4WE_SHIFT                    24
+#define MPU_RGDAAC_M4RE_MASK                     0x2000000u
+#define MPU_RGDAAC_M4RE_SHIFT                    25
+#define MPU_RGDAAC_M5WE_MASK                     0x4000000u
+#define MPU_RGDAAC_M5WE_SHIFT                    26
+#define MPU_RGDAAC_M5RE_MASK                     0x8000000u
+#define MPU_RGDAAC_M5RE_SHIFT                    27
+#define MPU_RGDAAC_M6WE_MASK                     0x10000000u
+#define MPU_RGDAAC_M6WE_SHIFT                    28
+#define MPU_RGDAAC_M6RE_MASK                     0x20000000u
+#define MPU_RGDAAC_M6RE_SHIFT                    29
+#define MPU_RGDAAC_M7WE_MASK                     0x40000000u
+#define MPU_RGDAAC_M7WE_SHIFT                    30
+#define MPU_RGDAAC_M7RE_MASK                     0x80000000u
+#define MPU_RGDAAC_M7RE_SHIFT                    31
+
+/**
+ * @}
+ */ /* end of group MPU_Register_Masks */
+
+
+/* MPU - Peripheral instance base addresses */
+/** Peripheral MPU base address */
+#define MPU_BASE                                 (0x4000D000u)
+/** Peripheral MPU base pointer */
+#define MPU                                      ((MPU_Type *)MPU_BASE)
+
+/**
+ * @}
+ */ /* end of group MPU_Peripheral_Access_Layer */
 
 
 /* ----------------------------------------------------------------------------
@@ -3219,10 +5440,10 @@ typedef struct {
 
 
 /* OSC - Peripheral instance base addresses */
-/** Peripheral OSC0 base address */
-#define OSC0_BASE                                (0x40065000u)
-/** Peripheral OSC0 base pointer */
-#define OSC0                                     ((OSC_Type *)OSC0_BASE)
+/** Peripheral OSC base address */
+#define OSC_BASE                                 (0x40065000u)
+/** Peripheral OSC base pointer */
+#define OSC                                      ((OSC_Type *)OSC_BASE)
 
 /**
  * @}
@@ -3244,14 +5465,20 @@ typedef struct {
   __IO uint32_t MOD;                               /**< Modulus Register, offset: 0x4 */
   __I  uint32_t CNT;                               /**< Counter Register, offset: 0x8 */
   __IO uint32_t IDLY;                              /**< Interrupt Delay Register, offset: 0xC */
-  struct {                                         /* offset: 0x10, array step: 0x10 */
-    __IO uint32_t C1;                                /**< Channel n Control Register 1, array offset: 0x10, array step: 0x10 */
-    __IO uint32_t S;                                 /**< Channel n Status Register, array offset: 0x14, array step: 0x10 */
-    __IO uint32_t DLY[2];                            /**< Channel n Delay 0 Register..Channel n Delay 1 Register, array offset: 0x18, array step: index*0x10, index2*0x4 */
-  } CH[1];
-       uint8_t RESERVED_0[368];
+  struct {                                         /* offset: 0x10, array step: 0x28 */
+    __IO uint32_t C1;                                /**< Channel n Control Register 1, array offset: 0x10, array step: 0x28 */
+    __IO uint32_t S;                                 /**< Channel n Status Register, array offset: 0x14, array step: 0x28 */
+    __IO uint32_t DLY[2];                            /**< Channel n Delay 0 Register..Channel n Delay 1 Register, array offset: 0x18, array step: index*0x28, index2*0x4 */
+         uint8_t RESERVED_0[24];
+  } CH[2];
+       uint8_t RESERVED_0[240];
+  struct {                                         /* offset: 0x150, array step: 0x8 */
+    __IO uint32_t INTC;                              /**< DAC Interval Trigger n Control Register, array offset: 0x150, array step: 0x8 */
+    __IO uint32_t INT;                               /**< DAC Interval n Register, array offset: 0x154, array step: 0x8 */
+  } DAC[2];
+       uint8_t RESERVED_1[48];
   __IO uint32_t POEN;                              /**< Pulse-Out n Enable Register, offset: 0x190 */
-  __IO uint32_t PODLY[2];                          /**< Pulse-Out n Delay Register, array offset: 0x194, array step: 0x4 */
+  __IO uint32_t PODLY;                             /**< Pulse-Out n Delay Register, offset: 0x194 */
 } PDB_Type;
 
 /* ----------------------------------------------------------------------------
@@ -3325,6 +5552,15 @@ typedef struct {
 #define PDB_DLY_DLY_MASK                         0xFFFFu
 #define PDB_DLY_DLY_SHIFT                        0
 #define PDB_DLY_DLY(x)                           (((uint32_t)(((uint32_t)(x))<<PDB_DLY_DLY_SHIFT))&PDB_DLY_DLY_MASK)
+/* INTC Bit Fields */
+#define PDB_INTC_TOE_MASK                        0x1u
+#define PDB_INTC_TOE_SHIFT                       0
+#define PDB_INTC_EXT_MASK                        0x2u
+#define PDB_INTC_EXT_SHIFT                       1
+/* INT Bit Fields */
+#define PDB_INT_INT_MASK                         0xFFFFu
+#define PDB_INT_INT_SHIFT                        0
+#define PDB_INT_INT(x)                           (((uint32_t)(((uint32_t)(x))<<PDB_INT_INT_SHIFT))&PDB_INT_INT_MASK)
 /* POEN Bit Fields */
 #define PDB_POEN_POEN_MASK                       0xFFu
 #define PDB_POEN_POEN_SHIFT                      0
@@ -3473,8 +5709,10 @@ typedef struct {
 #define PMC_REGSC_BGBE_SHIFT                     0
 #define PMC_REGSC_REGONS_MASK                    0x4u
 #define PMC_REGSC_REGONS_SHIFT                   2
-#define PMC_REGSC_ACKISO_MASK                    0x8u
-#define PMC_REGSC_ACKISO_SHIFT                   3
+#define PMC_REGSC_VLPRS_MASK                     0x8u
+#define PMC_REGSC_VLPRS_SHIFT                    3
+#define PMC_REGSC_TRAMPO_MASK                    0x10u
+#define PMC_REGSC_TRAMPO_SHIFT                   4
 
 /**
  * @}
@@ -3606,93 +5844,6 @@ typedef struct {
 /**
  * @}
  */ /* end of group PORT_Peripheral_Access_Layer */
-
-
-/* ----------------------------------------------------------------------------
-   -- RCM Peripheral Access Layer
-   ---------------------------------------------------------------------------- */
-
-/**
- * @addtogroup RCM_Peripheral_Access_Layer RCM Peripheral Access Layer
- * @{
- */
-
-/** RCM - Register Layout Typedef */
-typedef struct {
-  __I  uint8_t SRS0;                               /**< System Reset Status Register 0, offset: 0x0 */
-  __I  uint8_t SRS1;                               /**< System Reset Status Register 1, offset: 0x1 */
-       uint8_t RESERVED_0[2];
-  __IO uint8_t RPFC;                               /**< Reset Pin Filter Control Register, offset: 0x4 */
-  __IO uint8_t RPFW;                               /**< Reset Pin Filter Width Register, offset: 0x5 */
-       uint8_t RESERVED_1[1];
-  __I  uint8_t MR;                                 /**< Mode Register, offset: 0x7 */
-} RCM_Type;
-
-/* ----------------------------------------------------------------------------
-   -- RCM Register Masks
-   ---------------------------------------------------------------------------- */
-
-/**
- * @addtogroup RCM_Register_Masks RCM Register Masks
- * @{
- */
-
-/* SRS0 Bit Fields */
-#define RCM_SRS0_WAKEUP_MASK                     0x1u
-#define RCM_SRS0_WAKEUP_SHIFT                    0
-#define RCM_SRS0_LVD_MASK                        0x2u
-#define RCM_SRS0_LVD_SHIFT                       1
-#define RCM_SRS0_LOC_MASK                        0x4u
-#define RCM_SRS0_LOC_SHIFT                       2
-#define RCM_SRS0_LOL_MASK                        0x8u
-#define RCM_SRS0_LOL_SHIFT                       3
-#define RCM_SRS0_WDOG_MASK                       0x20u
-#define RCM_SRS0_WDOG_SHIFT                      5
-#define RCM_SRS0_PIN_MASK                        0x40u
-#define RCM_SRS0_PIN_SHIFT                       6
-#define RCM_SRS0_POR_MASK                        0x80u
-#define RCM_SRS0_POR_SHIFT                       7
-/* SRS1 Bit Fields */
-#define RCM_SRS1_JTAG_MASK                       0x1u
-#define RCM_SRS1_JTAG_SHIFT                      0
-#define RCM_SRS1_LOCKUP_MASK                     0x2u
-#define RCM_SRS1_LOCKUP_SHIFT                    1
-#define RCM_SRS1_SW_MASK                         0x4u
-#define RCM_SRS1_SW_SHIFT                        2
-#define RCM_SRS1_MDM_AP_MASK                     0x8u
-#define RCM_SRS1_MDM_AP_SHIFT                    3
-#define RCM_SRS1_EZPT_MASK                       0x10u
-#define RCM_SRS1_EZPT_SHIFT                      4
-#define RCM_SRS1_SACKERR_MASK                    0x20u
-#define RCM_SRS1_SACKERR_SHIFT                   5
-/* RPFC Bit Fields */
-#define RCM_RPFC_RSTFLTSRW_MASK                  0x3u
-#define RCM_RPFC_RSTFLTSRW_SHIFT                 0
-#define RCM_RPFC_RSTFLTSRW(x)                    (((uint8_t)(((uint8_t)(x))<<RCM_RPFC_RSTFLTSRW_SHIFT))&RCM_RPFC_RSTFLTSRW_MASK)
-#define RCM_RPFC_RSTFLTSS_MASK                   0x4u
-#define RCM_RPFC_RSTFLTSS_SHIFT                  2
-/* RPFW Bit Fields */
-#define RCM_RPFW_RSTFLTSEL_MASK                  0x1Fu
-#define RCM_RPFW_RSTFLTSEL_SHIFT                 0
-#define RCM_RPFW_RSTFLTSEL(x)                    (((uint8_t)(((uint8_t)(x))<<RCM_RPFW_RSTFLTSEL_SHIFT))&RCM_RPFW_RSTFLTSEL_MASK)
-/* MR Bit Fields */
-#define RCM_MR_EZP_MS_MASK                       0x2u
-#define RCM_MR_EZP_MS_SHIFT                      1
-
-/**
- * @}
- */ /* end of group RCM_Register_Masks */
-
-
-/* RCM - Peripheral instance base addresses */
-/** Peripheral RCM base address */
-#define RCM_BASE                                 (0x4007F000u)
-/** Peripheral RCM base pointer */
-#define RCM                                      ((RCM_Type *)RCM_BASE)
-
-/**
- * @}
- */ /* end of group RCM_Peripheral_Access_Layer */
 
 
 /* ----------------------------------------------------------------------------
@@ -3905,8 +6056,6 @@ typedef struct {
 #define RTC_IER_TOIE_SHIFT                       1
 #define RTC_IER_TAIE_MASK                        0x4u
 #define RTC_IER_TAIE_SHIFT                       2
-#define RTC_IER_TSIE_MASK                        0x10u
-#define RTC_IER_TSIE_SHIFT                       4
 /* WAR Bit Fields */
 #define RTC_WAR_TSRW_MASK                        0x1u
 #define RTC_WAR_TSRW_SHIFT                       0
@@ -3959,6 +6108,444 @@ typedef struct {
 
 
 /* ----------------------------------------------------------------------------
+   -- SDHC Peripheral Access Layer
+   ---------------------------------------------------------------------------- */
+
+/**
+ * @addtogroup SDHC_Peripheral_Access_Layer SDHC Peripheral Access Layer
+ * @{
+ */
+
+/** SDHC - Register Layout Typedef */
+typedef struct {
+  __IO uint32_t DSADDR;                            /**< DMA System Address Register, offset: 0x0 */
+  __IO uint32_t BLKATTR;                           /**< Block Attributes Register, offset: 0x4 */
+  __IO uint32_t CMDARG;                            /**< Command Argument Register, offset: 0x8 */
+  __IO uint32_t XFERTYP;                           /**< Transfer Type Register, offset: 0xC */
+  __I  uint32_t CMDRSP[4];                         /**< Command Response 0..Command Response 3, array offset: 0x10, array step: 0x4 */
+  __IO uint32_t DATPORT;                           /**< Buffer Data Port Register, offset: 0x20 */
+  __I  uint32_t PRSSTAT;                           /**< Present State Register, offset: 0x24 */
+  __IO uint32_t PROCTL;                            /**< Protocol Control Register, offset: 0x28 */
+  __IO uint32_t SYSCTL;                            /**< System Control Register, offset: 0x2C */
+  __IO uint32_t IRQSTAT;                           /**< Interrupt Status Register, offset: 0x30 */
+  __IO uint32_t IRQSTATEN;                         /**< Interrupt Status Enable Register, offset: 0x34 */
+  __IO uint32_t IRQSIGEN;                          /**< Interrupt Signal Enable Register, offset: 0x38 */
+  __I  uint32_t AC12ERR;                           /**< Auto CMD12 Error Status Register, offset: 0x3C */
+  __I  uint32_t HTCAPBLT;                          /**< Host Controller Capabilities, offset: 0x40 */
+  __IO uint32_t WML;                               /**< Watermark Level Register, offset: 0x44 */
+       uint8_t RESERVED_0[8];
+  __O  uint32_t FEVT;                              /**< Force Event Register, offset: 0x50 */
+  __I  uint32_t ADMAES;                            /**< ADMA Error Status Register, offset: 0x54 */
+  __IO uint32_t ADSADDR;                           /**< ADMA System Address Register, offset: 0x58 */
+       uint8_t RESERVED_1[100];
+  __IO uint32_t VENDOR;                            /**< Vendor Specific Register, offset: 0xC0 */
+  __IO uint32_t MMCBOOT;                           /**< MMC Boot Register, offset: 0xC4 */
+       uint8_t RESERVED_2[52];
+  __I  uint32_t HOSTVER;                           /**< Host Controller Version, offset: 0xFC */
+} SDHC_Type;
+
+/* ----------------------------------------------------------------------------
+   -- SDHC Register Masks
+   ---------------------------------------------------------------------------- */
+
+/**
+ * @addtogroup SDHC_Register_Masks SDHC Register Masks
+ * @{
+ */
+
+/* DSADDR Bit Fields */
+#define SDHC_DSADDR_DSADDR_MASK                  0xFFFFFFFCu
+#define SDHC_DSADDR_DSADDR_SHIFT                 2
+#define SDHC_DSADDR_DSADDR(x)                    (((uint32_t)(((uint32_t)(x))<<SDHC_DSADDR_DSADDR_SHIFT))&SDHC_DSADDR_DSADDR_MASK)
+/* BLKATTR Bit Fields */
+#define SDHC_BLKATTR_BLKSIZE_MASK                0x1FFFu
+#define SDHC_BLKATTR_BLKSIZE_SHIFT               0
+#define SDHC_BLKATTR_BLKSIZE(x)                  (((uint32_t)(((uint32_t)(x))<<SDHC_BLKATTR_BLKSIZE_SHIFT))&SDHC_BLKATTR_BLKSIZE_MASK)
+#define SDHC_BLKATTR_BLKCNT_MASK                 0xFFFF0000u
+#define SDHC_BLKATTR_BLKCNT_SHIFT                16
+#define SDHC_BLKATTR_BLKCNT(x)                   (((uint32_t)(((uint32_t)(x))<<SDHC_BLKATTR_BLKCNT_SHIFT))&SDHC_BLKATTR_BLKCNT_MASK)
+/* CMDARG Bit Fields */
+#define SDHC_CMDARG_CMDARG_MASK                  0xFFFFFFFFu
+#define SDHC_CMDARG_CMDARG_SHIFT                 0
+#define SDHC_CMDARG_CMDARG(x)                    (((uint32_t)(((uint32_t)(x))<<SDHC_CMDARG_CMDARG_SHIFT))&SDHC_CMDARG_CMDARG_MASK)
+/* XFERTYP Bit Fields */
+#define SDHC_XFERTYP_DMAEN_MASK                  0x1u
+#define SDHC_XFERTYP_DMAEN_SHIFT                 0
+#define SDHC_XFERTYP_BCEN_MASK                   0x2u
+#define SDHC_XFERTYP_BCEN_SHIFT                  1
+#define SDHC_XFERTYP_AC12EN_MASK                 0x4u
+#define SDHC_XFERTYP_AC12EN_SHIFT                2
+#define SDHC_XFERTYP_DTDSEL_MASK                 0x10u
+#define SDHC_XFERTYP_DTDSEL_SHIFT                4
+#define SDHC_XFERTYP_MSBSEL_MASK                 0x20u
+#define SDHC_XFERTYP_MSBSEL_SHIFT                5
+#define SDHC_XFERTYP_RSPTYP_MASK                 0x30000u
+#define SDHC_XFERTYP_RSPTYP_SHIFT                16
+#define SDHC_XFERTYP_RSPTYP(x)                   (((uint32_t)(((uint32_t)(x))<<SDHC_XFERTYP_RSPTYP_SHIFT))&SDHC_XFERTYP_RSPTYP_MASK)
+#define SDHC_XFERTYP_CCCEN_MASK                  0x80000u
+#define SDHC_XFERTYP_CCCEN_SHIFT                 19
+#define SDHC_XFERTYP_CICEN_MASK                  0x100000u
+#define SDHC_XFERTYP_CICEN_SHIFT                 20
+#define SDHC_XFERTYP_DPSEL_MASK                  0x200000u
+#define SDHC_XFERTYP_DPSEL_SHIFT                 21
+#define SDHC_XFERTYP_CMDTYP_MASK                 0xC00000u
+#define SDHC_XFERTYP_CMDTYP_SHIFT                22
+#define SDHC_XFERTYP_CMDTYP(x)                   (((uint32_t)(((uint32_t)(x))<<SDHC_XFERTYP_CMDTYP_SHIFT))&SDHC_XFERTYP_CMDTYP_MASK)
+#define SDHC_XFERTYP_CMDINX_MASK                 0x3F000000u
+#define SDHC_XFERTYP_CMDINX_SHIFT                24
+#define SDHC_XFERTYP_CMDINX(x)                   (((uint32_t)(((uint32_t)(x))<<SDHC_XFERTYP_CMDINX_SHIFT))&SDHC_XFERTYP_CMDINX_MASK)
+/* CMDRSP Bit Fields */
+#define SDHC_CMDRSP_CMDRSP0_MASK                 0xFFFFFFFFu
+#define SDHC_CMDRSP_CMDRSP0_SHIFT                0
+#define SDHC_CMDRSP_CMDRSP0(x)                   (((uint32_t)(((uint32_t)(x))<<SDHC_CMDRSP_CMDRSP0_SHIFT))&SDHC_CMDRSP_CMDRSP0_MASK)
+#define SDHC_CMDRSP_CMDRSP1_MASK                 0xFFFFFFFFu
+#define SDHC_CMDRSP_CMDRSP1_SHIFT                0
+#define SDHC_CMDRSP_CMDRSP1(x)                   (((uint32_t)(((uint32_t)(x))<<SDHC_CMDRSP_CMDRSP1_SHIFT))&SDHC_CMDRSP_CMDRSP1_MASK)
+#define SDHC_CMDRSP_CMDRSP2_MASK                 0xFFFFFFFFu
+#define SDHC_CMDRSP_CMDRSP2_SHIFT                0
+#define SDHC_CMDRSP_CMDRSP2(x)                   (((uint32_t)(((uint32_t)(x))<<SDHC_CMDRSP_CMDRSP2_SHIFT))&SDHC_CMDRSP_CMDRSP2_MASK)
+#define SDHC_CMDRSP_CMDRSP3_MASK                 0xFFFFFFFFu
+#define SDHC_CMDRSP_CMDRSP3_SHIFT                0
+#define SDHC_CMDRSP_CMDRSP3(x)                   (((uint32_t)(((uint32_t)(x))<<SDHC_CMDRSP_CMDRSP3_SHIFT))&SDHC_CMDRSP_CMDRSP3_MASK)
+/* DATPORT Bit Fields */
+#define SDHC_DATPORT_DATCONT_MASK                0xFFFFFFFFu
+#define SDHC_DATPORT_DATCONT_SHIFT               0
+#define SDHC_DATPORT_DATCONT(x)                  (((uint32_t)(((uint32_t)(x))<<SDHC_DATPORT_DATCONT_SHIFT))&SDHC_DATPORT_DATCONT_MASK)
+/* PRSSTAT Bit Fields */
+#define SDHC_PRSSTAT_CIHB_MASK                   0x1u
+#define SDHC_PRSSTAT_CIHB_SHIFT                  0
+#define SDHC_PRSSTAT_CDIHB_MASK                  0x2u
+#define SDHC_PRSSTAT_CDIHB_SHIFT                 1
+#define SDHC_PRSSTAT_DLA_MASK                    0x4u
+#define SDHC_PRSSTAT_DLA_SHIFT                   2
+#define SDHC_PRSSTAT_SDSTB_MASK                  0x8u
+#define SDHC_PRSSTAT_SDSTB_SHIFT                 3
+#define SDHC_PRSSTAT_IPGOFF_MASK                 0x10u
+#define SDHC_PRSSTAT_IPGOFF_SHIFT                4
+#define SDHC_PRSSTAT_HCKOFF_MASK                 0x20u
+#define SDHC_PRSSTAT_HCKOFF_SHIFT                5
+#define SDHC_PRSSTAT_PEROFF_MASK                 0x40u
+#define SDHC_PRSSTAT_PEROFF_SHIFT                6
+#define SDHC_PRSSTAT_SDOFF_MASK                  0x80u
+#define SDHC_PRSSTAT_SDOFF_SHIFT                 7
+#define SDHC_PRSSTAT_WTA_MASK                    0x100u
+#define SDHC_PRSSTAT_WTA_SHIFT                   8
+#define SDHC_PRSSTAT_RTA_MASK                    0x200u
+#define SDHC_PRSSTAT_RTA_SHIFT                   9
+#define SDHC_PRSSTAT_BWEN_MASK                   0x400u
+#define SDHC_PRSSTAT_BWEN_SHIFT                  10
+#define SDHC_PRSSTAT_BREN_MASK                   0x800u
+#define SDHC_PRSSTAT_BREN_SHIFT                  11
+#define SDHC_PRSSTAT_CINS_MASK                   0x10000u
+#define SDHC_PRSSTAT_CINS_SHIFT                  16
+#define SDHC_PRSSTAT_CLSL_MASK                   0x800000u
+#define SDHC_PRSSTAT_CLSL_SHIFT                  23
+#define SDHC_PRSSTAT_DLSL_MASK                   0xFF000000u
+#define SDHC_PRSSTAT_DLSL_SHIFT                  24
+#define SDHC_PRSSTAT_DLSL(x)                     (((uint32_t)(((uint32_t)(x))<<SDHC_PRSSTAT_DLSL_SHIFT))&SDHC_PRSSTAT_DLSL_MASK)
+/* PROCTL Bit Fields */
+#define SDHC_PROCTL_LCTL_MASK                    0x1u
+#define SDHC_PROCTL_LCTL_SHIFT                   0
+#define SDHC_PROCTL_DTW_MASK                     0x6u
+#define SDHC_PROCTL_DTW_SHIFT                    1
+#define SDHC_PROCTL_DTW(x)                       (((uint32_t)(((uint32_t)(x))<<SDHC_PROCTL_DTW_SHIFT))&SDHC_PROCTL_DTW_MASK)
+#define SDHC_PROCTL_D3CD_MASK                    0x8u
+#define SDHC_PROCTL_D3CD_SHIFT                   3
+#define SDHC_PROCTL_EMODE_MASK                   0x30u
+#define SDHC_PROCTL_EMODE_SHIFT                  4
+#define SDHC_PROCTL_EMODE(x)                     (((uint32_t)(((uint32_t)(x))<<SDHC_PROCTL_EMODE_SHIFT))&SDHC_PROCTL_EMODE_MASK)
+#define SDHC_PROCTL_CDTL_MASK                    0x40u
+#define SDHC_PROCTL_CDTL_SHIFT                   6
+#define SDHC_PROCTL_CDSS_MASK                    0x80u
+#define SDHC_PROCTL_CDSS_SHIFT                   7
+#define SDHC_PROCTL_DMAS_MASK                    0x300u
+#define SDHC_PROCTL_DMAS_SHIFT                   8
+#define SDHC_PROCTL_DMAS(x)                      (((uint32_t)(((uint32_t)(x))<<SDHC_PROCTL_DMAS_SHIFT))&SDHC_PROCTL_DMAS_MASK)
+#define SDHC_PROCTL_SABGREQ_MASK                 0x10000u
+#define SDHC_PROCTL_SABGREQ_SHIFT                16
+#define SDHC_PROCTL_CREQ_MASK                    0x20000u
+#define SDHC_PROCTL_CREQ_SHIFT                   17
+#define SDHC_PROCTL_RWCTL_MASK                   0x40000u
+#define SDHC_PROCTL_RWCTL_SHIFT                  18
+#define SDHC_PROCTL_IABG_MASK                    0x80000u
+#define SDHC_PROCTL_IABG_SHIFT                   19
+#define SDHC_PROCTL_WECINT_MASK                  0x1000000u
+#define SDHC_PROCTL_WECINT_SHIFT                 24
+#define SDHC_PROCTL_WECINS_MASK                  0x2000000u
+#define SDHC_PROCTL_WECINS_SHIFT                 25
+#define SDHC_PROCTL_WECRM_MASK                   0x4000000u
+#define SDHC_PROCTL_WECRM_SHIFT                  26
+/* SYSCTL Bit Fields */
+#define SDHC_SYSCTL_IPGEN_MASK                   0x1u
+#define SDHC_SYSCTL_IPGEN_SHIFT                  0
+#define SDHC_SYSCTL_HCKEN_MASK                   0x2u
+#define SDHC_SYSCTL_HCKEN_SHIFT                  1
+#define SDHC_SYSCTL_PEREN_MASK                   0x4u
+#define SDHC_SYSCTL_PEREN_SHIFT                  2
+#define SDHC_SYSCTL_SDCLKEN_MASK                 0x8u
+#define SDHC_SYSCTL_SDCLKEN_SHIFT                3
+#define SDHC_SYSCTL_DVS_MASK                     0xF0u
+#define SDHC_SYSCTL_DVS_SHIFT                    4
+#define SDHC_SYSCTL_DVS(x)                       (((uint32_t)(((uint32_t)(x))<<SDHC_SYSCTL_DVS_SHIFT))&SDHC_SYSCTL_DVS_MASK)
+#define SDHC_SYSCTL_SDCLKFS_MASK                 0xFF00u
+#define SDHC_SYSCTL_SDCLKFS_SHIFT                8
+#define SDHC_SYSCTL_SDCLKFS(x)                   (((uint32_t)(((uint32_t)(x))<<SDHC_SYSCTL_SDCLKFS_SHIFT))&SDHC_SYSCTL_SDCLKFS_MASK)
+#define SDHC_SYSCTL_DTOCV_MASK                   0xF0000u
+#define SDHC_SYSCTL_DTOCV_SHIFT                  16
+#define SDHC_SYSCTL_DTOCV(x)                     (((uint32_t)(((uint32_t)(x))<<SDHC_SYSCTL_DTOCV_SHIFT))&SDHC_SYSCTL_DTOCV_MASK)
+#define SDHC_SYSCTL_RSTA_MASK                    0x1000000u
+#define SDHC_SYSCTL_RSTA_SHIFT                   24
+#define SDHC_SYSCTL_RSTC_MASK                    0x2000000u
+#define SDHC_SYSCTL_RSTC_SHIFT                   25
+#define SDHC_SYSCTL_RSTD_MASK                    0x4000000u
+#define SDHC_SYSCTL_RSTD_SHIFT                   26
+#define SDHC_SYSCTL_INITA_MASK                   0x8000000u
+#define SDHC_SYSCTL_INITA_SHIFT                  27
+/* IRQSTAT Bit Fields */
+#define SDHC_IRQSTAT_CC_MASK                     0x1u
+#define SDHC_IRQSTAT_CC_SHIFT                    0
+#define SDHC_IRQSTAT_TC_MASK                     0x2u
+#define SDHC_IRQSTAT_TC_SHIFT                    1
+#define SDHC_IRQSTAT_BGE_MASK                    0x4u
+#define SDHC_IRQSTAT_BGE_SHIFT                   2
+#define SDHC_IRQSTAT_DINT_MASK                   0x8u
+#define SDHC_IRQSTAT_DINT_SHIFT                  3
+#define SDHC_IRQSTAT_BWR_MASK                    0x10u
+#define SDHC_IRQSTAT_BWR_SHIFT                   4
+#define SDHC_IRQSTAT_BRR_MASK                    0x20u
+#define SDHC_IRQSTAT_BRR_SHIFT                   5
+#define SDHC_IRQSTAT_CINS_MASK                   0x40u
+#define SDHC_IRQSTAT_CINS_SHIFT                  6
+#define SDHC_IRQSTAT_CRM_MASK                    0x80u
+#define SDHC_IRQSTAT_CRM_SHIFT                   7
+#define SDHC_IRQSTAT_CINT_MASK                   0x100u
+#define SDHC_IRQSTAT_CINT_SHIFT                  8
+#define SDHC_IRQSTAT_CTOE_MASK                   0x10000u
+#define SDHC_IRQSTAT_CTOE_SHIFT                  16
+#define SDHC_IRQSTAT_CCE_MASK                    0x20000u
+#define SDHC_IRQSTAT_CCE_SHIFT                   17
+#define SDHC_IRQSTAT_CEBE_MASK                   0x40000u
+#define SDHC_IRQSTAT_CEBE_SHIFT                  18
+#define SDHC_IRQSTAT_CIE_MASK                    0x80000u
+#define SDHC_IRQSTAT_CIE_SHIFT                   19
+#define SDHC_IRQSTAT_DTOE_MASK                   0x100000u
+#define SDHC_IRQSTAT_DTOE_SHIFT                  20
+#define SDHC_IRQSTAT_DCE_MASK                    0x200000u
+#define SDHC_IRQSTAT_DCE_SHIFT                   21
+#define SDHC_IRQSTAT_DEBE_MASK                   0x400000u
+#define SDHC_IRQSTAT_DEBE_SHIFT                  22
+#define SDHC_IRQSTAT_AC12E_MASK                  0x1000000u
+#define SDHC_IRQSTAT_AC12E_SHIFT                 24
+#define SDHC_IRQSTAT_DMAE_MASK                   0x10000000u
+#define SDHC_IRQSTAT_DMAE_SHIFT                  28
+/* IRQSTATEN Bit Fields */
+#define SDHC_IRQSTATEN_CCSEN_MASK                0x1u
+#define SDHC_IRQSTATEN_CCSEN_SHIFT               0
+#define SDHC_IRQSTATEN_TCSEN_MASK                0x2u
+#define SDHC_IRQSTATEN_TCSEN_SHIFT               1
+#define SDHC_IRQSTATEN_BGESEN_MASK               0x4u
+#define SDHC_IRQSTATEN_BGESEN_SHIFT              2
+#define SDHC_IRQSTATEN_DINTSEN_MASK              0x8u
+#define SDHC_IRQSTATEN_DINTSEN_SHIFT             3
+#define SDHC_IRQSTATEN_BWRSEN_MASK               0x10u
+#define SDHC_IRQSTATEN_BWRSEN_SHIFT              4
+#define SDHC_IRQSTATEN_BRRSEN_MASK               0x20u
+#define SDHC_IRQSTATEN_BRRSEN_SHIFT              5
+#define SDHC_IRQSTATEN_CINSEN_MASK               0x40u
+#define SDHC_IRQSTATEN_CINSEN_SHIFT              6
+#define SDHC_IRQSTATEN_CRMSEN_MASK               0x80u
+#define SDHC_IRQSTATEN_CRMSEN_SHIFT              7
+#define SDHC_IRQSTATEN_CINTSEN_MASK              0x100u
+#define SDHC_IRQSTATEN_CINTSEN_SHIFT             8
+#define SDHC_IRQSTATEN_CTOESEN_MASK              0x10000u
+#define SDHC_IRQSTATEN_CTOESEN_SHIFT             16
+#define SDHC_IRQSTATEN_CCESEN_MASK               0x20000u
+#define SDHC_IRQSTATEN_CCESEN_SHIFT              17
+#define SDHC_IRQSTATEN_CEBESEN_MASK              0x40000u
+#define SDHC_IRQSTATEN_CEBESEN_SHIFT             18
+#define SDHC_IRQSTATEN_CIESEN_MASK               0x80000u
+#define SDHC_IRQSTATEN_CIESEN_SHIFT              19
+#define SDHC_IRQSTATEN_DTOESEN_MASK              0x100000u
+#define SDHC_IRQSTATEN_DTOESEN_SHIFT             20
+#define SDHC_IRQSTATEN_DCESEN_MASK               0x200000u
+#define SDHC_IRQSTATEN_DCESEN_SHIFT              21
+#define SDHC_IRQSTATEN_DEBESEN_MASK              0x400000u
+#define SDHC_IRQSTATEN_DEBESEN_SHIFT             22
+#define SDHC_IRQSTATEN_AC12ESEN_MASK             0x1000000u
+#define SDHC_IRQSTATEN_AC12ESEN_SHIFT            24
+#define SDHC_IRQSTATEN_DMAESEN_MASK              0x10000000u
+#define SDHC_IRQSTATEN_DMAESEN_SHIFT             28
+/* IRQSIGEN Bit Fields */
+#define SDHC_IRQSIGEN_CCIEN_MASK                 0x1u
+#define SDHC_IRQSIGEN_CCIEN_SHIFT                0
+#define SDHC_IRQSIGEN_TCIEN_MASK                 0x2u
+#define SDHC_IRQSIGEN_TCIEN_SHIFT                1
+#define SDHC_IRQSIGEN_BGEIEN_MASK                0x4u
+#define SDHC_IRQSIGEN_BGEIEN_SHIFT               2
+#define SDHC_IRQSIGEN_DINTIEN_MASK               0x8u
+#define SDHC_IRQSIGEN_DINTIEN_SHIFT              3
+#define SDHC_IRQSIGEN_BWRIEN_MASK                0x10u
+#define SDHC_IRQSIGEN_BWRIEN_SHIFT               4
+#define SDHC_IRQSIGEN_BRRIEN_MASK                0x20u
+#define SDHC_IRQSIGEN_BRRIEN_SHIFT               5
+#define SDHC_IRQSIGEN_CINSIEN_MASK               0x40u
+#define SDHC_IRQSIGEN_CINSIEN_SHIFT              6
+#define SDHC_IRQSIGEN_CRMIEN_MASK                0x80u
+#define SDHC_IRQSIGEN_CRMIEN_SHIFT               7
+#define SDHC_IRQSIGEN_CINTIEN_MASK               0x100u
+#define SDHC_IRQSIGEN_CINTIEN_SHIFT              8
+#define SDHC_IRQSIGEN_CTOEIEN_MASK               0x10000u
+#define SDHC_IRQSIGEN_CTOEIEN_SHIFT              16
+#define SDHC_IRQSIGEN_CCEIEN_MASK                0x20000u
+#define SDHC_IRQSIGEN_CCEIEN_SHIFT               17
+#define SDHC_IRQSIGEN_CEBEIEN_MASK               0x40000u
+#define SDHC_IRQSIGEN_CEBEIEN_SHIFT              18
+#define SDHC_IRQSIGEN_CIEIEN_MASK                0x80000u
+#define SDHC_IRQSIGEN_CIEIEN_SHIFT               19
+#define SDHC_IRQSIGEN_DTOEIEN_MASK               0x100000u
+#define SDHC_IRQSIGEN_DTOEIEN_SHIFT              20
+#define SDHC_IRQSIGEN_DCEIEN_MASK                0x200000u
+#define SDHC_IRQSIGEN_DCEIEN_SHIFT               21
+#define SDHC_IRQSIGEN_DEBEIEN_MASK               0x400000u
+#define SDHC_IRQSIGEN_DEBEIEN_SHIFT              22
+#define SDHC_IRQSIGEN_AC12EIEN_MASK              0x1000000u
+#define SDHC_IRQSIGEN_AC12EIEN_SHIFT             24
+#define SDHC_IRQSIGEN_DMAEIEN_MASK               0x10000000u
+#define SDHC_IRQSIGEN_DMAEIEN_SHIFT              28
+/* AC12ERR Bit Fields */
+#define SDHC_AC12ERR_AC12NE_MASK                 0x1u
+#define SDHC_AC12ERR_AC12NE_SHIFT                0
+#define SDHC_AC12ERR_AC12TOE_MASK                0x2u
+#define SDHC_AC12ERR_AC12TOE_SHIFT               1
+#define SDHC_AC12ERR_AC12EBE_MASK                0x4u
+#define SDHC_AC12ERR_AC12EBE_SHIFT               2
+#define SDHC_AC12ERR_AC12CE_MASK                 0x8u
+#define SDHC_AC12ERR_AC12CE_SHIFT                3
+#define SDHC_AC12ERR_AC12IE_MASK                 0x10u
+#define SDHC_AC12ERR_AC12IE_SHIFT                4
+#define SDHC_AC12ERR_CNIBAC12E_MASK              0x80u
+#define SDHC_AC12ERR_CNIBAC12E_SHIFT             7
+/* HTCAPBLT Bit Fields */
+#define SDHC_HTCAPBLT_MBL_MASK                   0x70000u
+#define SDHC_HTCAPBLT_MBL_SHIFT                  16
+#define SDHC_HTCAPBLT_MBL(x)                     (((uint32_t)(((uint32_t)(x))<<SDHC_HTCAPBLT_MBL_SHIFT))&SDHC_HTCAPBLT_MBL_MASK)
+#define SDHC_HTCAPBLT_ADMAS_MASK                 0x100000u
+#define SDHC_HTCAPBLT_ADMAS_SHIFT                20
+#define SDHC_HTCAPBLT_HSS_MASK                   0x200000u
+#define SDHC_HTCAPBLT_HSS_SHIFT                  21
+#define SDHC_HTCAPBLT_DMAS_MASK                  0x400000u
+#define SDHC_HTCAPBLT_DMAS_SHIFT                 22
+#define SDHC_HTCAPBLT_SRS_MASK                   0x800000u
+#define SDHC_HTCAPBLT_SRS_SHIFT                  23
+#define SDHC_HTCAPBLT_VS33_MASK                  0x1000000u
+#define SDHC_HTCAPBLT_VS33_SHIFT                 24
+#define SDHC_HTCAPBLT_VS30_MASK                  0x2000000u
+#define SDHC_HTCAPBLT_VS30_SHIFT                 25
+#define SDHC_HTCAPBLT_VS18_MASK                  0x4000000u
+#define SDHC_HTCAPBLT_VS18_SHIFT                 26
+/* WML Bit Fields */
+#define SDHC_WML_RDWML_MASK                      0xFFu
+#define SDHC_WML_RDWML_SHIFT                     0
+#define SDHC_WML_RDWML(x)                        (((uint32_t)(((uint32_t)(x))<<SDHC_WML_RDWML_SHIFT))&SDHC_WML_RDWML_MASK)
+#define SDHC_WML_WRWML_MASK                      0xFF0000u
+#define SDHC_WML_WRWML_SHIFT                     16
+#define SDHC_WML_WRWML(x)                        (((uint32_t)(((uint32_t)(x))<<SDHC_WML_WRWML_SHIFT))&SDHC_WML_WRWML_MASK)
+#define SDHC_WML_WRBRSTLEN_MASK                  0x1F000000u
+#define SDHC_WML_WRBRSTLEN_SHIFT                 24
+#define SDHC_WML_WRBRSTLEN(x)                    (((uint32_t)(((uint32_t)(x))<<SDHC_WML_WRBRSTLEN_SHIFT))&SDHC_WML_WRBRSTLEN_MASK)
+/* FEVT Bit Fields */
+#define SDHC_FEVT_AC12NE_MASK                    0x1u
+#define SDHC_FEVT_AC12NE_SHIFT                   0
+#define SDHC_FEVT_AC12TOE_MASK                   0x2u
+#define SDHC_FEVT_AC12TOE_SHIFT                  1
+#define SDHC_FEVT_AC12CE_MASK                    0x4u
+#define SDHC_FEVT_AC12CE_SHIFT                   2
+#define SDHC_FEVT_AC12EBE_MASK                   0x8u
+#define SDHC_FEVT_AC12EBE_SHIFT                  3
+#define SDHC_FEVT_AC12IE_MASK                    0x10u
+#define SDHC_FEVT_AC12IE_SHIFT                   4
+#define SDHC_FEVT_CNIBAC12E_MASK                 0x80u
+#define SDHC_FEVT_CNIBAC12E_SHIFT                7
+#define SDHC_FEVT_CTOE_MASK                      0x10000u
+#define SDHC_FEVT_CTOE_SHIFT                     16
+#define SDHC_FEVT_CCE_MASK                       0x20000u
+#define SDHC_FEVT_CCE_SHIFT                      17
+#define SDHC_FEVT_CEBE_MASK                      0x40000u
+#define SDHC_FEVT_CEBE_SHIFT                     18
+#define SDHC_FEVT_CIE_MASK                       0x80000u
+#define SDHC_FEVT_CIE_SHIFT                      19
+#define SDHC_FEVT_DTOE_MASK                      0x100000u
+#define SDHC_FEVT_DTOE_SHIFT                     20
+#define SDHC_FEVT_DCE_MASK                       0x200000u
+#define SDHC_FEVT_DCE_SHIFT                      21
+#define SDHC_FEVT_DEBE_MASK                      0x400000u
+#define SDHC_FEVT_DEBE_SHIFT                     22
+#define SDHC_FEVT_AC12E_MASK                     0x1000000u
+#define SDHC_FEVT_AC12E_SHIFT                    24
+#define SDHC_FEVT_DMAE_MASK                      0x10000000u
+#define SDHC_FEVT_DMAE_SHIFT                     28
+#define SDHC_FEVT_CINT_MASK                      0x80000000u
+#define SDHC_FEVT_CINT_SHIFT                     31
+/* ADMAES Bit Fields */
+#define SDHC_ADMAES_ADMAES_MASK                  0x3u
+#define SDHC_ADMAES_ADMAES_SHIFT                 0
+#define SDHC_ADMAES_ADMAES(x)                    (((uint32_t)(((uint32_t)(x))<<SDHC_ADMAES_ADMAES_SHIFT))&SDHC_ADMAES_ADMAES_MASK)
+#define SDHC_ADMAES_ADMALME_MASK                 0x4u
+#define SDHC_ADMAES_ADMALME_SHIFT                2
+#define SDHC_ADMAES_ADMADCE_MASK                 0x8u
+#define SDHC_ADMAES_ADMADCE_SHIFT                3
+/* ADSADDR Bit Fields */
+#define SDHC_ADSADDR_ADSADDR_MASK                0xFFFFFFFCu
+#define SDHC_ADSADDR_ADSADDR_SHIFT               2
+#define SDHC_ADSADDR_ADSADDR(x)                  (((uint32_t)(((uint32_t)(x))<<SDHC_ADSADDR_ADSADDR_SHIFT))&SDHC_ADSADDR_ADSADDR_MASK)
+/* VENDOR Bit Fields */
+#define SDHC_VENDOR_EXTDMAEN_MASK                0x1u
+#define SDHC_VENDOR_EXTDMAEN_SHIFT               0
+#define SDHC_VENDOR_EXBLKNU_MASK                 0x2u
+#define SDHC_VENDOR_EXBLKNU_SHIFT                1
+#define SDHC_VENDOR_INTSTVAL_MASK                0xFF0000u
+#define SDHC_VENDOR_INTSTVAL_SHIFT               16
+#define SDHC_VENDOR_INTSTVAL(x)                  (((uint32_t)(((uint32_t)(x))<<SDHC_VENDOR_INTSTVAL_SHIFT))&SDHC_VENDOR_INTSTVAL_MASK)
+/* MMCBOOT Bit Fields */
+#define SDHC_MMCBOOT_DTOCVACK_MASK               0xFu
+#define SDHC_MMCBOOT_DTOCVACK_SHIFT              0
+#define SDHC_MMCBOOT_DTOCVACK(x)                 (((uint32_t)(((uint32_t)(x))<<SDHC_MMCBOOT_DTOCVACK_SHIFT))&SDHC_MMCBOOT_DTOCVACK_MASK)
+#define SDHC_MMCBOOT_BOOTACK_MASK                0x10u
+#define SDHC_MMCBOOT_BOOTACK_SHIFT               4
+#define SDHC_MMCBOOT_BOOTMODE_MASK               0x20u
+#define SDHC_MMCBOOT_BOOTMODE_SHIFT              5
+#define SDHC_MMCBOOT_BOOTEN_MASK                 0x40u
+#define SDHC_MMCBOOT_BOOTEN_SHIFT                6
+#define SDHC_MMCBOOT_AUTOSABGEN_MASK             0x80u
+#define SDHC_MMCBOOT_AUTOSABGEN_SHIFT            7
+#define SDHC_MMCBOOT_BOOTBLKCNT_MASK             0xFFFF0000u
+#define SDHC_MMCBOOT_BOOTBLKCNT_SHIFT            16
+#define SDHC_MMCBOOT_BOOTBLKCNT(x)               (((uint32_t)(((uint32_t)(x))<<SDHC_MMCBOOT_BOOTBLKCNT_SHIFT))&SDHC_MMCBOOT_BOOTBLKCNT_MASK)
+/* HOSTVER Bit Fields */
+#define SDHC_HOSTVER_SVN_MASK                    0xFFu
+#define SDHC_HOSTVER_SVN_SHIFT                   0
+#define SDHC_HOSTVER_SVN(x)                      (((uint32_t)(((uint32_t)(x))<<SDHC_HOSTVER_SVN_SHIFT))&SDHC_HOSTVER_SVN_MASK)
+#define SDHC_HOSTVER_VVN_MASK                    0xFF00u
+#define SDHC_HOSTVER_VVN_SHIFT                   8
+#define SDHC_HOSTVER_VVN(x)                      (((uint32_t)(((uint32_t)(x))<<SDHC_HOSTVER_VVN_SHIFT))&SDHC_HOSTVER_VVN_MASK)
+
+/**
+ * @}
+ */ /* end of group SDHC_Register_Masks */
+
+
+/* SDHC - Peripheral instance base addresses */
+/** Peripheral SDHC base address */
+#define SDHC_BASE                                (0x400B1000u)
+/** Peripheral SDHC base pointer */
+#define SDHC                                     ((SDHC_Type *)SDHC_BASE)
+
+/**
+ * @}
+ */ /* end of group SDHC_Peripheral_Access_Layer */
+
+
+/* ----------------------------------------------------------------------------
    -- SIM Peripheral Access Layer
    ---------------------------------------------------------------------------- */
 
@@ -3970,24 +6557,25 @@ typedef struct {
 /** SIM - Register Layout Typedef */
 typedef struct {
   __IO uint32_t SOPT1;                             /**< System Options Register 1, offset: 0x0 */
-  __IO uint32_t SOPT1CFG;                          /**< SOPT1 Configuration Register, offset: 0x4 */
-       uint8_t RESERVED_0[4092];
+       uint8_t RESERVED_0[4096];
   __IO uint32_t SOPT2;                             /**< System Options Register 2, offset: 0x1004 */
        uint8_t RESERVED_1[4];
   __IO uint32_t SOPT4;                             /**< System Options Register 4, offset: 0x100C */
   __IO uint32_t SOPT5;                             /**< System Options Register 5, offset: 0x1010 */
-       uint8_t RESERVED_2[4];
+  __IO uint32_t SOPT6;                             /**< System Options Register 6, offset: 0x1014 */
   __IO uint32_t SOPT7;                             /**< System Options Register 7, offset: 0x1018 */
-       uint8_t RESERVED_3[8];
+       uint8_t RESERVED_2[8];
   __I  uint32_t SDID;                              /**< System Device Identification Register, offset: 0x1024 */
-       uint8_t RESERVED_4[12];
+  __IO uint32_t SCGC1;                             /**< System Clock Gating Control Register 1, offset: 0x1028 */
+  __IO uint32_t SCGC2;                             /**< System Clock Gating Control Register 2, offset: 0x102C */
+  __IO uint32_t SCGC3;                             /**< System Clock Gating Control Register 3, offset: 0x1030 */
   __IO uint32_t SCGC4;                             /**< System Clock Gating Control Register 4, offset: 0x1034 */
   __IO uint32_t SCGC5;                             /**< System Clock Gating Control Register 5, offset: 0x1038 */
   __IO uint32_t SCGC6;                             /**< System Clock Gating Control Register 6, offset: 0x103C */
   __IO uint32_t SCGC7;                             /**< System Clock Gating Control Register 7, offset: 0x1040 */
   __IO uint32_t CLKDIV1;                           /**< System Clock Divider Register 1, offset: 0x1044 */
   __IO uint32_t CLKDIV2;                           /**< System Clock Divider Register 2, offset: 0x1048 */
-  __IO uint32_t FCFG1;                             /**< Flash Configuration Register 1, offset: 0x104C */
+  __I  uint32_t FCFG1;                             /**< Flash Configuration Register 1, offset: 0x104C */
   __I  uint32_t FCFG2;                             /**< Flash Configuration Register 2, offset: 0x1050 */
   __I  uint32_t UIDH;                              /**< Unique Identification Register High, offset: 0x1054 */
   __I  uint32_t UIDMH;                             /**< Unique Identification Register Mid-High, offset: 0x1058 */
@@ -4008,63 +6596,77 @@ typedef struct {
 #define SIM_SOPT1_RAMSIZE_MASK                   0xF000u
 #define SIM_SOPT1_RAMSIZE_SHIFT                  12
 #define SIM_SOPT1_RAMSIZE(x)                     (((uint32_t)(((uint32_t)(x))<<SIM_SOPT1_RAMSIZE_SHIFT))&SIM_SOPT1_RAMSIZE_MASK)
-#define SIM_SOPT1_OSC32KSEL_MASK                 0xC0000u
-#define SIM_SOPT1_OSC32KSEL_SHIFT                18
-#define SIM_SOPT1_OSC32KSEL(x)                   (((uint32_t)(((uint32_t)(x))<<SIM_SOPT1_OSC32KSEL_SHIFT))&SIM_SOPT1_OSC32KSEL_MASK)
-#define SIM_SOPT1_USBVSTBY_MASK                  0x20000000u
-#define SIM_SOPT1_USBVSTBY_SHIFT                 29
-#define SIM_SOPT1_USBSSTBY_MASK                  0x40000000u
-#define SIM_SOPT1_USBSSTBY_SHIFT                 30
+#define SIM_SOPT1_OSC32KSEL_MASK                 0x80000u
+#define SIM_SOPT1_OSC32KSEL_SHIFT                19
+#define SIM_SOPT1_MS_MASK                        0x800000u
+#define SIM_SOPT1_MS_SHIFT                       23
+#define SIM_SOPT1_USBSTBY_MASK                   0x40000000u
+#define SIM_SOPT1_USBSTBY_SHIFT                  30
 #define SIM_SOPT1_USBREGEN_MASK                  0x80000000u
 #define SIM_SOPT1_USBREGEN_SHIFT                 31
-/* SOPT1CFG Bit Fields */
-#define SIM_SOPT1CFG_URWE_MASK                   0x1000000u
-#define SIM_SOPT1CFG_URWE_SHIFT                  24
-#define SIM_SOPT1CFG_UVSWE_MASK                  0x2000000u
-#define SIM_SOPT1CFG_UVSWE_SHIFT                 25
-#define SIM_SOPT1CFG_USSWE_MASK                  0x4000000u
-#define SIM_SOPT1CFG_USSWE_SHIFT                 26
 /* SOPT2 Bit Fields */
-#define SIM_SOPT2_RTCCLKOUTSEL_MASK              0x10u
-#define SIM_SOPT2_RTCCLKOUTSEL_SHIFT             4
-#define SIM_SOPT2_CLKOUTSEL_MASK                 0xE0u
-#define SIM_SOPT2_CLKOUTSEL_SHIFT                5
-#define SIM_SOPT2_CLKOUTSEL(x)                   (((uint32_t)(((uint32_t)(x))<<SIM_SOPT2_CLKOUTSEL_SHIFT))&SIM_SOPT2_CLKOUTSEL_MASK)
-#define SIM_SOPT2_PTD7PAD_MASK                   0x800u
-#define SIM_SOPT2_PTD7PAD_SHIFT                  11
+#define SIM_SOPT2_MCGCLKSEL_MASK                 0x1u
+#define SIM_SOPT2_MCGCLKSEL_SHIFT                0
+#define SIM_SOPT2_FBSL_MASK                      0x300u
+#define SIM_SOPT2_FBSL_SHIFT                     8
+#define SIM_SOPT2_FBSL(x)                        (((uint32_t)(((uint32_t)(x))<<SIM_SOPT2_FBSL_SHIFT))&SIM_SOPT2_FBSL_MASK)
+#define SIM_SOPT2_CMTUARTPAD_MASK                0x800u
+#define SIM_SOPT2_CMTUARTPAD_SHIFT               11
 #define SIM_SOPT2_TRACECLKSEL_MASK               0x1000u
 #define SIM_SOPT2_TRACECLKSEL_SHIFT              12
 #define SIM_SOPT2_PLLFLLSEL_MASK                 0x10000u
 #define SIM_SOPT2_PLLFLLSEL_SHIFT                16
 #define SIM_SOPT2_USBSRC_MASK                    0x40000u
 #define SIM_SOPT2_USBSRC_SHIFT                   18
+#define SIM_SOPT2_I2SSRC_MASK                    0x3000000u
+#define SIM_SOPT2_I2SSRC_SHIFT                   24
+#define SIM_SOPT2_I2SSRC(x)                      (((uint32_t)(((uint32_t)(x))<<SIM_SOPT2_I2SSRC_SHIFT))&SIM_SOPT2_I2SSRC_MASK)
+#define SIM_SOPT2_SDHCSRC_MASK                   0x30000000u
+#define SIM_SOPT2_SDHCSRC_SHIFT                  28
+#define SIM_SOPT2_SDHCSRC(x)                     (((uint32_t)(((uint32_t)(x))<<SIM_SOPT2_SDHCSRC_SHIFT))&SIM_SOPT2_SDHCSRC_MASK)
 /* SOPT4 Bit Fields */
 #define SIM_SOPT4_FTM0FLT0_MASK                  0x1u
 #define SIM_SOPT4_FTM0FLT0_SHIFT                 0
 #define SIM_SOPT4_FTM0FLT1_MASK                  0x2u
 #define SIM_SOPT4_FTM0FLT1_SHIFT                 1
+#define SIM_SOPT4_FTM0FLT2_MASK                  0x4u
+#define SIM_SOPT4_FTM0FLT2_SHIFT                 2
 #define SIM_SOPT4_FTM1FLT0_MASK                  0x10u
 #define SIM_SOPT4_FTM1FLT0_SHIFT                 4
+#define SIM_SOPT4_FTM2FLT0_MASK                  0x100u
+#define SIM_SOPT4_FTM2FLT0_SHIFT                 8
 #define SIM_SOPT4_FTM1CH0SRC_MASK                0xC0000u
 #define SIM_SOPT4_FTM1CH0SRC_SHIFT               18
 #define SIM_SOPT4_FTM1CH0SRC(x)                  (((uint32_t)(((uint32_t)(x))<<SIM_SOPT4_FTM1CH0SRC_SHIFT))&SIM_SOPT4_FTM1CH0SRC_MASK)
+#define SIM_SOPT4_FTM2CH0SRC_MASK                0x300000u
+#define SIM_SOPT4_FTM2CH0SRC_SHIFT               20
+#define SIM_SOPT4_FTM2CH0SRC(x)                  (((uint32_t)(((uint32_t)(x))<<SIM_SOPT4_FTM2CH0SRC_SHIFT))&SIM_SOPT4_FTM2CH0SRC_MASK)
 #define SIM_SOPT4_FTM0CLKSEL_MASK                0x1000000u
 #define SIM_SOPT4_FTM0CLKSEL_SHIFT               24
 #define SIM_SOPT4_FTM1CLKSEL_MASK                0x2000000u
 #define SIM_SOPT4_FTM1CLKSEL_SHIFT               25
-#define SIM_SOPT4_FTM0TRG0SRC_MASK               0x10000000u
-#define SIM_SOPT4_FTM0TRG0SRC_SHIFT              28
+#define SIM_SOPT4_FTM2CLKSEL_MASK                0x4000000u
+#define SIM_SOPT4_FTM2CLKSEL_SHIFT               26
 /* SOPT5 Bit Fields */
-#define SIM_SOPT5_UART0TXSRC_MASK                0x1u
+#define SIM_SOPT5_UART0TXSRC_MASK                0x3u
 #define SIM_SOPT5_UART0TXSRC_SHIFT               0
+#define SIM_SOPT5_UART0TXSRC(x)                  (((uint32_t)(((uint32_t)(x))<<SIM_SOPT5_UART0TXSRC_SHIFT))&SIM_SOPT5_UART0TXSRC_MASK)
 #define SIM_SOPT5_UART0RXSRC_MASK                0xCu
 #define SIM_SOPT5_UART0RXSRC_SHIFT               2
 #define SIM_SOPT5_UART0RXSRC(x)                  (((uint32_t)(((uint32_t)(x))<<SIM_SOPT5_UART0RXSRC_SHIFT))&SIM_SOPT5_UART0RXSRC_MASK)
-#define SIM_SOPT5_UART1TXSRC_MASK                0x10u
-#define SIM_SOPT5_UART1TXSRC_SHIFT               4
+#define SIM_SOPT5_UARTTXSRC_MASK                 0x30u
+#define SIM_SOPT5_UARTTXSRC_SHIFT                4
+#define SIM_SOPT5_UARTTXSRC(x)                   (((uint32_t)(((uint32_t)(x))<<SIM_SOPT5_UARTTXSRC_SHIFT))&SIM_SOPT5_UARTTXSRC_MASK)
 #define SIM_SOPT5_UART1RXSRC_MASK                0xC0u
 #define SIM_SOPT5_UART1RXSRC_SHIFT               6
 #define SIM_SOPT5_UART1RXSRC(x)                  (((uint32_t)(((uint32_t)(x))<<SIM_SOPT5_UART1RXSRC_SHIFT))&SIM_SOPT5_UART1RXSRC_MASK)
+/* SOPT6 Bit Fields */
+#define SIM_SOPT6_RSTFLTSEL_MASK                 0x1F000000u
+#define SIM_SOPT6_RSTFLTSEL_SHIFT                24
+#define SIM_SOPT6_RSTFLTSEL(x)                   (((uint32_t)(((uint32_t)(x))<<SIM_SOPT6_RSTFLTSEL_SHIFT))&SIM_SOPT6_RSTFLTSEL_MASK)
+#define SIM_SOPT6_RSTFLTEN_MASK                  0xE0000000u
+#define SIM_SOPT6_RSTFLTEN_SHIFT                 29
+#define SIM_SOPT6_RSTFLTEN(x)                    (((uint32_t)(((uint32_t)(x))<<SIM_SOPT6_RSTFLTEN_SHIFT))&SIM_SOPT6_RSTFLTEN_MASK)
 /* SOPT7 Bit Fields */
 #define SIM_SOPT7_ADC0TRGSEL_MASK                0xFu
 #define SIM_SOPT7_ADC0TRGSEL_SHIFT               0
@@ -4073,6 +6675,13 @@ typedef struct {
 #define SIM_SOPT7_ADC0PRETRGSEL_SHIFT            4
 #define SIM_SOPT7_ADC0ALTTRGEN_MASK              0x80u
 #define SIM_SOPT7_ADC0ALTTRGEN_SHIFT             7
+#define SIM_SOPT7_ADC1TRGSEL_MASK                0xF00u
+#define SIM_SOPT7_ADC1TRGSEL_SHIFT               8
+#define SIM_SOPT7_ADC1TRGSEL(x)                  (((uint32_t)(((uint32_t)(x))<<SIM_SOPT7_ADC1TRGSEL_SHIFT))&SIM_SOPT7_ADC1TRGSEL_MASK)
+#define SIM_SOPT7_ADC1PRETRGSEL_MASK             0x1000u
+#define SIM_SOPT7_ADC1PRETRGSEL_SHIFT            12
+#define SIM_SOPT7_ADC1ALTTRGEN_MASK              0x8000u
+#define SIM_SOPT7_ADC1ALTTRGEN_SHIFT             15
 /* SDID Bit Fields */
 #define SIM_SDID_PINID_MASK                      0xFu
 #define SIM_SDID_PINID_SHIFT                     0
@@ -4083,6 +6692,27 @@ typedef struct {
 #define SIM_SDID_REVID_MASK                      0xF000u
 #define SIM_SDID_REVID_SHIFT                     12
 #define SIM_SDID_REVID(x)                        (((uint32_t)(((uint32_t)(x))<<SIM_SDID_REVID_SHIFT))&SIM_SDID_REVID_MASK)
+/* SCGC1 Bit Fields */
+#define SIM_SCGC1_UART4_MASK                     0x400u
+#define SIM_SCGC1_UART4_SHIFT                    10
+#define SIM_SCGC1_UART5_MASK                     0x800u
+#define SIM_SCGC1_UART5_SHIFT                    11
+/* SCGC2 Bit Fields */
+#define SIM_SCGC2_DAC0_MASK                      0x1000u
+#define SIM_SCGC2_DAC0_SHIFT                     12
+#define SIM_SCGC2_DAC1_MASK                      0x2000u
+#define SIM_SCGC2_DAC1_SHIFT                     13
+/* SCGC3 Bit Fields */
+#define SIM_SCGC3_FLEXCAN1_MASK                  0x10u
+#define SIM_SCGC3_FLEXCAN1_SHIFT                 4
+#define SIM_SCGC3_SPI2_MASK                      0x1000u
+#define SIM_SCGC3_SPI2_SHIFT                     12
+#define SIM_SCGC3_SDHC_MASK                      0x20000u
+#define SIM_SCGC3_SDHC_SHIFT                     17
+#define SIM_SCGC3_FTM2_MASK                      0x1000000u
+#define SIM_SCGC3_FTM2_SHIFT                     24
+#define SIM_SCGC3_ADC1_MASK                      0x8000000u
+#define SIM_SCGC3_ADC1_SHIFT                     27
 /* SCGC4 Bit Fields */
 #define SIM_SCGC4_EWM_MASK                       0x2u
 #define SIM_SCGC4_EWM_SHIFT                      1
@@ -4090,21 +6720,29 @@ typedef struct {
 #define SIM_SCGC4_CMT_SHIFT                      2
 #define SIM_SCGC4_I2C0_MASK                      0x40u
 #define SIM_SCGC4_I2C0_SHIFT                     6
+#define SIM_SCGC4_I2C1_MASK                      0x80u
+#define SIM_SCGC4_I2C1_SHIFT                     7
 #define SIM_SCGC4_UART0_MASK                     0x400u
 #define SIM_SCGC4_UART0_SHIFT                    10
 #define SIM_SCGC4_UART1_MASK                     0x800u
 #define SIM_SCGC4_UART1_SHIFT                    11
 #define SIM_SCGC4_UART2_MASK                     0x1000u
 #define SIM_SCGC4_UART2_SHIFT                    12
+#define SIM_SCGC4_UART3_MASK                     0x2000u
+#define SIM_SCGC4_UART3_SHIFT                    13
 #define SIM_SCGC4_USBOTG_MASK                    0x40000u
 #define SIM_SCGC4_USBOTG_SHIFT                   18
 #define SIM_SCGC4_CMP_MASK                       0x80000u
 #define SIM_SCGC4_CMP_SHIFT                      19
 #define SIM_SCGC4_VREF_MASK                      0x100000u
 #define SIM_SCGC4_VREF_SHIFT                     20
+#define SIM_SCGC4_LLWU_MASK                      0x10000000u
+#define SIM_SCGC4_LLWU_SHIFT                     28
 /* SCGC5 Bit Fields */
 #define SIM_SCGC5_LPTIMER_MASK                   0x1u
 #define SIM_SCGC5_LPTIMER_SHIFT                  0
+#define SIM_SCGC5_REGFILE_MASK                   0x2u
+#define SIM_SCGC5_REGFILE_SHIFT                  1
 #define SIM_SCGC5_TSI_MASK                       0x20u
 #define SIM_SCGC5_TSI_SHIFT                      5
 #define SIM_SCGC5_PORTA_MASK                     0x200u
@@ -4122,8 +6760,12 @@ typedef struct {
 #define SIM_SCGC6_FTFL_SHIFT                     0
 #define SIM_SCGC6_DMAMUX_MASK                    0x2u
 #define SIM_SCGC6_DMAMUX_SHIFT                   1
-#define SIM_SCGC6_SPI0_MASK                      0x1000u
-#define SIM_SCGC6_SPI0_SHIFT                     12
+#define SIM_SCGC6_FLEXCAN0_MASK                  0x10u
+#define SIM_SCGC6_FLEXCAN0_SHIFT                 4
+#define SIM_SCGC6_DSPI0_MASK                     0x1000u
+#define SIM_SCGC6_DSPI0_SHIFT                    12
+#define SIM_SCGC6_SPI1_MASK                      0x2000u
+#define SIM_SCGC6_SPI1_SHIFT                     13
 #define SIM_SCGC6_I2S_MASK                       0x8000u
 #define SIM_SCGC6_I2S_SHIFT                      15
 #define SIM_SCGC6_CRC_MASK                       0x40000u
@@ -4143,12 +6785,19 @@ typedef struct {
 #define SIM_SCGC6_RTC_MASK                       0x20000000u
 #define SIM_SCGC6_RTC_SHIFT                      29
 /* SCGC7 Bit Fields */
+#define SIM_SCGC7_FLEXBUS_MASK                   0x1u
+#define SIM_SCGC7_FLEXBUS_SHIFT                  0
 #define SIM_SCGC7_DMA_MASK                       0x2u
 #define SIM_SCGC7_DMA_SHIFT                      1
+#define SIM_SCGC7_MPU_MASK                       0x4u
+#define SIM_SCGC7_MPU_SHIFT                      2
 /* CLKDIV1 Bit Fields */
 #define SIM_CLKDIV1_OUTDIV4_MASK                 0xF0000u
 #define SIM_CLKDIV1_OUTDIV4_SHIFT                16
 #define SIM_CLKDIV1_OUTDIV4(x)                   (((uint32_t)(((uint32_t)(x))<<SIM_CLKDIV1_OUTDIV4_SHIFT))&SIM_CLKDIV1_OUTDIV4_MASK)
+#define SIM_CLKDIV1_OUTDIV3_MASK                 0xF00000u
+#define SIM_CLKDIV1_OUTDIV3_SHIFT                20
+#define SIM_CLKDIV1_OUTDIV3(x)                   (((uint32_t)(((uint32_t)(x))<<SIM_CLKDIV1_OUTDIV3_SHIFT))&SIM_CLKDIV1_OUTDIV3_MASK)
 #define SIM_CLKDIV1_OUTDIV2_MASK                 0xF000000u
 #define SIM_CLKDIV1_OUTDIV2_SHIFT                24
 #define SIM_CLKDIV1_OUTDIV2(x)                   (((uint32_t)(((uint32_t)(x))<<SIM_CLKDIV1_OUTDIV2_SHIFT))&SIM_CLKDIV1_OUTDIV2_MASK)
@@ -4161,11 +6810,13 @@ typedef struct {
 #define SIM_CLKDIV2_USBDIV_MASK                  0xEu
 #define SIM_CLKDIV2_USBDIV_SHIFT                 1
 #define SIM_CLKDIV2_USBDIV(x)                    (((uint32_t)(((uint32_t)(x))<<SIM_CLKDIV2_USBDIV_SHIFT))&SIM_CLKDIV2_USBDIV_MASK)
+#define SIM_CLKDIV2_I2SFRAC_MASK                 0xFF00u
+#define SIM_CLKDIV2_I2SFRAC_SHIFT                8
+#define SIM_CLKDIV2_I2SFRAC(x)                   (((uint32_t)(((uint32_t)(x))<<SIM_CLKDIV2_I2SFRAC_SHIFT))&SIM_CLKDIV2_I2SFRAC_MASK)
+#define SIM_CLKDIV2_I2SDIV_MASK                  0xFFF00000u
+#define SIM_CLKDIV2_I2SDIV_SHIFT                 20
+#define SIM_CLKDIV2_I2SDIV(x)                    (((uint32_t)(((uint32_t)(x))<<SIM_CLKDIV2_I2SDIV_SHIFT))&SIM_CLKDIV2_I2SDIV_MASK)
 /* FCFG1 Bit Fields */
-#define SIM_FCFG1_FLASHDIS_MASK                  0x1u
-#define SIM_FCFG1_FLASHDIS_SHIFT                 0
-#define SIM_FCFG1_FLASHDOZE_MASK                 0x2u
-#define SIM_FCFG1_FLASHDOZE_SHIFT                1
 #define SIM_FCFG1_DEPART_MASK                    0xF00u
 #define SIM_FCFG1_DEPART_SHIFT                   8
 #define SIM_FCFG1_DEPART(x)                      (((uint32_t)(((uint32_t)(x))<<SIM_FCFG1_DEPART_SHIFT))&SIM_FCFG1_DEPART_MASK)
@@ -4179,14 +6830,16 @@ typedef struct {
 #define SIM_FCFG1_NVMSIZE_SHIFT                  28
 #define SIM_FCFG1_NVMSIZE(x)                     (((uint32_t)(((uint32_t)(x))<<SIM_FCFG1_NVMSIZE_SHIFT))&SIM_FCFG1_NVMSIZE_MASK)
 /* FCFG2 Bit Fields */
-#define SIM_FCFG2_MAXADDR1_MASK                  0x7F0000u
+#define SIM_FCFG2_MAXADDR1_MASK                  0x3F0000u
 #define SIM_FCFG2_MAXADDR1_SHIFT                 16
 #define SIM_FCFG2_MAXADDR1(x)                    (((uint32_t)(((uint32_t)(x))<<SIM_FCFG2_MAXADDR1_SHIFT))&SIM_FCFG2_MAXADDR1_MASK)
 #define SIM_FCFG2_PFLSH_MASK                     0x800000u
 #define SIM_FCFG2_PFLSH_SHIFT                    23
-#define SIM_FCFG2_MAXADDR0_MASK                  0x7F000000u
+#define SIM_FCFG2_MAXADDR0_MASK                  0x3F000000u
 #define SIM_FCFG2_MAXADDR0_SHIFT                 24
 #define SIM_FCFG2_MAXADDR0(x)                    (((uint32_t)(((uint32_t)(x))<<SIM_FCFG2_MAXADDR0_SHIFT))&SIM_FCFG2_MAXADDR0_MASK)
+#define SIM_FCFG2_SWAPPFLSH_MASK                 0x80000000u
+#define SIM_FCFG2_SWAPPFLSH_SHIFT                31
 /* UIDH Bit Fields */
 #define SIM_UIDH_UID_MASK                        0xFFFFFFFFu
 #define SIM_UIDH_UID_SHIFT                       0
@@ -4218,77 +6871,6 @@ typedef struct {
 /**
  * @}
  */ /* end of group SIM_Peripheral_Access_Layer */
-
-
-/* ----------------------------------------------------------------------------
-   -- SMC Peripheral Access Layer
-   ---------------------------------------------------------------------------- */
-
-/**
- * @addtogroup SMC_Peripheral_Access_Layer SMC Peripheral Access Layer
- * @{
- */
-
-/** SMC - Register Layout Typedef */
-typedef struct {
-  __IO uint8_t PMPROT;                             /**< Power Mode Protection Register, offset: 0x0 */
-  __IO uint8_t PMCTRL;                             /**< Power Mode Control Register, offset: 0x1 */
-  __IO uint8_t VLLSCTRL;                           /**< VLLS Control Register, offset: 0x2 */
-  __I  uint8_t PMSTAT;                             /**< Power Mode Status Register, offset: 0x3 */
-} SMC_Type;
-
-/* ----------------------------------------------------------------------------
-   -- SMC Register Masks
-   ---------------------------------------------------------------------------- */
-
-/**
- * @addtogroup SMC_Register_Masks SMC Register Masks
- * @{
- */
-
-/* PMPROT Bit Fields */
-#define SMC_PMPROT_AVLLS_MASK                    0x2u
-#define SMC_PMPROT_AVLLS_SHIFT                   1
-#define SMC_PMPROT_ALLS_MASK                     0x8u
-#define SMC_PMPROT_ALLS_SHIFT                    3
-#define SMC_PMPROT_AVLP_MASK                     0x20u
-#define SMC_PMPROT_AVLP_SHIFT                    5
-/* PMCTRL Bit Fields */
-#define SMC_PMCTRL_STOPM_MASK                    0x7u
-#define SMC_PMCTRL_STOPM_SHIFT                   0
-#define SMC_PMCTRL_STOPM(x)                      (((uint8_t)(((uint8_t)(x))<<SMC_PMCTRL_STOPM_SHIFT))&SMC_PMCTRL_STOPM_MASK)
-#define SMC_PMCTRL_STOPA_MASK                    0x8u
-#define SMC_PMCTRL_STOPA_SHIFT                   3
-#define SMC_PMCTRL_RUNM_MASK                     0x60u
-#define SMC_PMCTRL_RUNM_SHIFT                    5
-#define SMC_PMCTRL_RUNM(x)                       (((uint8_t)(((uint8_t)(x))<<SMC_PMCTRL_RUNM_SHIFT))&SMC_PMCTRL_RUNM_MASK)
-#define SMC_PMCTRL_LPWUI_MASK                    0x80u
-#define SMC_PMCTRL_LPWUI_SHIFT                   7
-/* VLLSCTRL Bit Fields */
-#define SMC_VLLSCTRL_VLLSM_MASK                  0x7u
-#define SMC_VLLSCTRL_VLLSM_SHIFT                 0
-#define SMC_VLLSCTRL_VLLSM(x)                    (((uint8_t)(((uint8_t)(x))<<SMC_VLLSCTRL_VLLSM_SHIFT))&SMC_VLLSCTRL_VLLSM_MASK)
-#define SMC_VLLSCTRL_PORPO_MASK                  0x20u
-#define SMC_VLLSCTRL_PORPO_SHIFT                 5
-/* PMSTAT Bit Fields */
-#define SMC_PMSTAT_PMSTAT_MASK                   0x7Fu
-#define SMC_PMSTAT_PMSTAT_SHIFT                  0
-#define SMC_PMSTAT_PMSTAT(x)                     (((uint8_t)(((uint8_t)(x))<<SMC_PMSTAT_PMSTAT_SHIFT))&SMC_PMSTAT_PMSTAT_MASK)
-
-/**
- * @}
- */ /* end of group SMC_Register_Masks */
-
-
-/* SMC - Peripheral instance base addresses */
-/** Peripheral SMC base address */
-#define SMC_BASE                                 (0x4007E000u)
-/** Peripheral SMC base pointer */
-#define SMC                                      ((SMC_Type *)SMC_BASE)
-
-/**
- * @}
- */ /* end of group SMC_Peripheral_Access_Layer */
 
 
 /* ----------------------------------------------------------------------------
@@ -4544,6 +7126,14 @@ typedef struct {
 #define SPI0_BASE                                (0x4002C000u)
 /** Peripheral SPI0 base pointer */
 #define SPI0                                     ((SPI_Type *)SPI0_BASE)
+/** Peripheral SPI1 base address */
+#define SPI1_BASE                                (0x4002D000u)
+/** Peripheral SPI1 base pointer */
+#define SPI1                                     ((SPI_Type *)SPI1_BASE)
+/** Peripheral SPI2 base address */
+#define SPI2_BASE                                (0x400AC000u)
+/** Peripheral SPI2 base pointer */
+#define SPI2                                     ((SPI_Type *)SPI2_BASE)
 
 /**
  * @}
@@ -4562,9 +7152,9 @@ typedef struct {
 /** TSI - Register Layout Typedef */
 typedef struct {
   __IO uint32_t GENCS;                             /**< General Control and Status Register, offset: 0x0 */
-  __IO uint32_t SCANC;                             /**< SCAN Control Register, offset: 0x4 */
-  __IO uint32_t PEN;                               /**< Pin Enable Register, offset: 0x8 */
-  __I  uint32_t WUCNTR;                            /**< Wake-Up Channel Counter Register, offset: 0xC */
+  __IO uint32_t SCANC;                             /**< SCAN control register, offset: 0x4 */
+  __IO uint32_t PEN;                               /**< Pin enable register, offset: 0x8 */
+  __IO uint32_t STATUS;                            /**< Status Register, offset: 0xC */
        uint8_t RESERVED_0[240];
   __I  uint32_t CNTR1;                             /**< Counter Register, offset: 0x100 */
   __I  uint32_t CNTR3;                             /**< Counter Register, offset: 0x104 */
@@ -4574,7 +7164,7 @@ typedef struct {
   __I  uint32_t CNTR11;                            /**< Counter Register, offset: 0x114 */
   __I  uint32_t CNTR13;                            /**< Counter Register, offset: 0x118 */
   __I  uint32_t CNTR15;                            /**< Counter Register, offset: 0x11C */
-  __IO uint32_t THRESHOLD;                         /**< Low Power Channel Threshold Register, offset: 0x120 */
+  __IO uint32_t THRESHLD[16];                      /**< Channel n threshold register, array offset: 0x120, array step: 0x4 */
 } TSI_Type;
 
 /* ----------------------------------------------------------------------------
@@ -4629,14 +7219,22 @@ typedef struct {
 #define TSI_SCANC_AMCLKS_MASK                    0x18u
 #define TSI_SCANC_AMCLKS_SHIFT                   3
 #define TSI_SCANC_AMCLKS(x)                      (((uint32_t)(((uint32_t)(x))<<TSI_SCANC_AMCLKS_SHIFT))&TSI_SCANC_AMCLKS_MASK)
+#define TSI_SCANC_AMCLKDIV_MASK                  0x20u
+#define TSI_SCANC_AMCLKDIV_SHIFT                 5
 #define TSI_SCANC_SMOD_MASK                      0xFF00u
 #define TSI_SCANC_SMOD_SHIFT                     8
 #define TSI_SCANC_SMOD(x)                        (((uint32_t)(((uint32_t)(x))<<TSI_SCANC_SMOD_SHIFT))&TSI_SCANC_SMOD_MASK)
-#define TSI_SCANC_EXTCHRG_MASK                   0xF0000u
-#define TSI_SCANC_EXTCHRG_SHIFT                  16
+#define TSI_SCANC_DELVOL_MASK                    0x70000u
+#define TSI_SCANC_DELVOL_SHIFT                   16
+#define TSI_SCANC_DELVOL(x)                      (((uint32_t)(((uint32_t)(x))<<TSI_SCANC_DELVOL_SHIFT))&TSI_SCANC_DELVOL_MASK)
+#define TSI_SCANC_EXTCHRG_MASK                   0xF80000u
+#define TSI_SCANC_EXTCHRG_SHIFT                  19
 #define TSI_SCANC_EXTCHRG(x)                     (((uint32_t)(((uint32_t)(x))<<TSI_SCANC_EXTCHRG_SHIFT))&TSI_SCANC_EXTCHRG_MASK)
-#define TSI_SCANC_REFCHRG_MASK                   0xF000000u
-#define TSI_SCANC_REFCHRG_SHIFT                  24
+#define TSI_SCANC_CAPTRM_MASK                    0x7000000u
+#define TSI_SCANC_CAPTRM_SHIFT                   24
+#define TSI_SCANC_CAPTRM(x)                      (((uint32_t)(((uint32_t)(x))<<TSI_SCANC_CAPTRM_SHIFT))&TSI_SCANC_CAPTRM_MASK)
+#define TSI_SCANC_REFCHRG_MASK                   0xF8000000u
+#define TSI_SCANC_REFCHRG_SHIFT                  27
 #define TSI_SCANC_REFCHRG(x)                     (((uint32_t)(((uint32_t)(x))<<TSI_SCANC_REFCHRG_SHIFT))&TSI_SCANC_REFCHRG_MASK)
 /* PEN Bit Fields */
 #define TSI_PEN_PEN0_MASK                        0x1u
@@ -4674,10 +7272,71 @@ typedef struct {
 #define TSI_PEN_LPSP_MASK                        0xF0000u
 #define TSI_PEN_LPSP_SHIFT                       16
 #define TSI_PEN_LPSP(x)                          (((uint32_t)(((uint32_t)(x))<<TSI_PEN_LPSP_SHIFT))&TSI_PEN_LPSP_MASK)
-/* WUCNTR Bit Fields */
-#define TSI_WUCNTR_WUCNT_MASK                    0xFFFFu
-#define TSI_WUCNTR_WUCNT_SHIFT                   0
-#define TSI_WUCNTR_WUCNT(x)                      (((uint32_t)(((uint32_t)(x))<<TSI_WUCNTR_WUCNT_SHIFT))&TSI_WUCNTR_WUCNT_MASK)
+/* STATUS Bit Fields */
+#define TSI_STATUS_ORNGF0_MASK                   0x1u
+#define TSI_STATUS_ORNGF0_SHIFT                  0
+#define TSI_STATUS_ORNGF1_MASK                   0x2u
+#define TSI_STATUS_ORNGF1_SHIFT                  1
+#define TSI_STATUS_ORNGF2_MASK                   0x4u
+#define TSI_STATUS_ORNGF2_SHIFT                  2
+#define TSI_STATUS_ORNGF3_MASK                   0x8u
+#define TSI_STATUS_ORNGF3_SHIFT                  3
+#define TSI_STATUS_ORNGF4_MASK                   0x10u
+#define TSI_STATUS_ORNGF4_SHIFT                  4
+#define TSI_STATUS_ORNGF5_MASK                   0x20u
+#define TSI_STATUS_ORNGF5_SHIFT                  5
+#define TSI_STATUS_ORNGF6_MASK                   0x40u
+#define TSI_STATUS_ORNGF6_SHIFT                  6
+#define TSI_STATUS_ORNGF7_MASK                   0x80u
+#define TSI_STATUS_ORNGF7_SHIFT                  7
+#define TSI_STATUS_ORNGF8_MASK                   0x100u
+#define TSI_STATUS_ORNGF8_SHIFT                  8
+#define TSI_STATUS_ORNGF9_MASK                   0x200u
+#define TSI_STATUS_ORNGF9_SHIFT                  9
+#define TSI_STATUS_ORNGF10_MASK                  0x400u
+#define TSI_STATUS_ORNGF10_SHIFT                 10
+#define TSI_STATUS_ORNGF11_MASK                  0x800u
+#define TSI_STATUS_ORNGF11_SHIFT                 11
+#define TSI_STATUS_ORNGF12_MASK                  0x1000u
+#define TSI_STATUS_ORNGF12_SHIFT                 12
+#define TSI_STATUS_ORNGF13_MASK                  0x2000u
+#define TSI_STATUS_ORNGF13_SHIFT                 13
+#define TSI_STATUS_ORNGF14_MASK                  0x4000u
+#define TSI_STATUS_ORNGF14_SHIFT                 14
+#define TSI_STATUS_ORNGF15_MASK                  0x8000u
+#define TSI_STATUS_ORNGF15_SHIFT                 15
+#define TSI_STATUS_ERROF0_MASK                   0x10000u
+#define TSI_STATUS_ERROF0_SHIFT                  16
+#define TSI_STATUS_ERROF1_MASK                   0x20000u
+#define TSI_STATUS_ERROF1_SHIFT                  17
+#define TSI_STATUS_ERROF2_MASK                   0x40000u
+#define TSI_STATUS_ERROF2_SHIFT                  18
+#define TSI_STATUS_ERROF3_MASK                   0x80000u
+#define TSI_STATUS_ERROF3_SHIFT                  19
+#define TSI_STATUS_ERROF4_MASK                   0x100000u
+#define TSI_STATUS_ERROF4_SHIFT                  20
+#define TSI_STATUS_ERROF5_MASK                   0x200000u
+#define TSI_STATUS_ERROF5_SHIFT                  21
+#define TSI_STATUS_ERROF6_MASK                   0x400000u
+#define TSI_STATUS_ERROF6_SHIFT                  22
+#define TSI_STATUS_ERROF7_MASK                   0x800000u
+#define TSI_STATUS_ERROF7_SHIFT                  23
+#define TSI_STATUS_ERROF8_MASK                   0x1000000u
+#define TSI_STATUS_ERROF8_SHIFT                  24
+#define TSI_STATUS_ERROF9_MASK                   0x2000000u
+#define TSI_STATUS_ERROF9_SHIFT                  25
+#define TSI_STATUS_ERROF10_MASK                  0x4000000u
+#define TSI_STATUS_ERROF10_SHIFT                 26
+#define TSI_STATUS_ERROF11_MASK                  0x8000000u
+#define TSI_STATUS_ERROF11_SHIFT                 27
+#define TSI_STATUS_ERROF12_MASK                  0x10000000u
+#define TSI_STATUS_ERROF12_SHIFT                 28
+#define TSI_STATUS_ERROF13_MASK                  0x20000000u
+#define TSI_STATUS_ERROF13_SHIFT                 29
+#define TSI_STATUS_ERROF14_MASK                  0x40000000u
+#define TSI_STATUS_ERROF14_SHIFT                 30
+#define TSI_STATUS_ERROF15_MASK                  0x80000000u
+#define TSI_STATUS_ERROF15_SHIFT                 31
 /* CNTR1 Bit Fields */
 #define TSI_CNTR1_CTN1_MASK                      0xFFFFu
 #define TSI_CNTR1_CTN1_SHIFT                     0
@@ -4734,13 +7393,13 @@ typedef struct {
 #define TSI_CNTR15_CTN_MASK                      0xFFFF0000u
 #define TSI_CNTR15_CTN_SHIFT                     16
 #define TSI_CNTR15_CTN(x)                        (((uint32_t)(((uint32_t)(x))<<TSI_CNTR15_CTN_SHIFT))&TSI_CNTR15_CTN_MASK)
-/* THRESHOLD Bit Fields */
-#define TSI_THRESHOLD_HTHH_MASK                  0xFFFFu
-#define TSI_THRESHOLD_HTHH_SHIFT                 0
-#define TSI_THRESHOLD_HTHH(x)                    (((uint32_t)(((uint32_t)(x))<<TSI_THRESHOLD_HTHH_SHIFT))&TSI_THRESHOLD_HTHH_MASK)
-#define TSI_THRESHOLD_LTHH_MASK                  0xFFFF0000u
-#define TSI_THRESHOLD_LTHH_SHIFT                 16
-#define TSI_THRESHOLD_LTHH(x)                    (((uint32_t)(((uint32_t)(x))<<TSI_THRESHOLD_LTHH_SHIFT))&TSI_THRESHOLD_LTHH_MASK)
+/* THRESHLD Bit Fields */
+#define TSI_THRESHLD_HTHH_MASK                   0xFFFFu
+#define TSI_THRESHLD_HTHH_SHIFT                  0
+#define TSI_THRESHLD_HTHH(x)                     (((uint32_t)(((uint32_t)(x))<<TSI_THRESHLD_HTHH_SHIFT))&TSI_THRESHLD_HTHH_MASK)
+#define TSI_THRESHLD_LTHH_MASK                   0xFFFF0000u
+#define TSI_THRESHLD_LTHH_SHIFT                  16
+#define TSI_THRESHLD_LTHH(x)                     (((uint32_t)(((uint32_t)(x))<<TSI_THRESHLD_LTHH_SHIFT))&TSI_THRESHLD_LTHH_MASK)
 
 /**
  * @}
@@ -4804,24 +7463,6 @@ typedef struct {
   __IO uint8_t WF7816;                             /**< UART 7816 Wait FD Register, offset: 0x1D */
   __IO uint8_t ET7816;                             /**< UART 7816 Error Threshold Register, offset: 0x1E */
   __IO uint8_t TL7816;                             /**< UART 7816 Transmit Length Register, offset: 0x1F */
-       uint8_t RESERVED_2[1];
-  __IO uint8_t C6;                                 /**< UART CEA709.1-B Control Register 6, offset: 0x21 */
-  __IO uint8_t PCTH;                               /**< UART CEA709.1-B Packet Cycle Time Counter High, offset: 0x22 */
-  __IO uint8_t PCTL;                               /**< UART CEA709.1-B Packet Cycle Time Counter Low, offset: 0x23 */
-  __IO uint8_t B1T;                                /**< UART CEA709.1-B Beta1 Timer, offset: 0x24 */
-  __IO uint8_t SDTH;                               /**< UART CEA709.1-B Secondary Delay Timer High, offset: 0x25 */
-  __IO uint8_t SDTL;                               /**< UART CEA709.1-B Secondary Delay Timer Low, offset: 0x26 */
-  __IO uint8_t PRE;                                /**< UART CEA709.1-B Preamble, offset: 0x27 */
-  __IO uint8_t TPL;                                /**< UART CEA709.1-B Transmit Packet Length, offset: 0x28 */
-  __IO uint8_t IE;                                 /**< UART CEA709.1-B Interrupt Enable Register, offset: 0x29 */
-  __IO uint8_t WB;                                 /**< UART CEA709.1-B WBASE, offset: 0x2A */
-  __IO uint8_t S3;                                 /**< UART CEA709.1-B Status Register, offset: 0x2B */
-  __IO uint8_t S4;                                 /**< UART CEA709.1-B Status Register, offset: 0x2C */
-  __I  uint8_t RPL;                                /**< UART CEA709.1-B Received Packet Length, offset: 0x2D */
-  __I  uint8_t RPREL;                              /**< UART CEA709.1-B Received Preamble Length, offset: 0x2E */
-  __IO uint8_t CPW;                                /**< UART CEA709.1-B Collision Pulse Width, offset: 0x2F */
-  __IO uint8_t RIDT;                               /**< UART CEA709.1-B Receive Indeterminate Time, offset: 0x30 */
-  __IO uint8_t TIDT;                               /**< UART CEA709.1-B Transmit Indeterminate Time, offset: 0x31 */
 } UART_Type;
 
 /* ----------------------------------------------------------------------------
@@ -5093,109 +7734,6 @@ typedef struct {
 #define UART_TL7816_TLEN_MASK                    0xFFu
 #define UART_TL7816_TLEN_SHIFT                   0
 #define UART_TL7816_TLEN(x)                      (((uint8_t)(((uint8_t)(x))<<UART_TL7816_TLEN_SHIFT))&UART_TL7816_TLEN_MASK)
-/* C6 Bit Fields */
-#define UART_C6_CP_MASK                          0x10u
-#define UART_C6_CP_SHIFT                         4
-#define UART_C6_CE_MASK                          0x20u
-#define UART_C6_CE_SHIFT                         5
-#define UART_C6_TX709_MASK                       0x40u
-#define UART_C6_TX709_SHIFT                      6
-#define UART_C6_EN709_MASK                       0x80u
-#define UART_C6_EN709_SHIFT                      7
-/* PCTH Bit Fields */
-#define UART_PCTH_PCTH_MASK                      0xFFu
-#define UART_PCTH_PCTH_SHIFT                     0
-#define UART_PCTH_PCTH(x)                        (((uint8_t)(((uint8_t)(x))<<UART_PCTH_PCTH_SHIFT))&UART_PCTH_PCTH_MASK)
-/* PCTL Bit Fields */
-#define UART_PCTL_PCTL_MASK                      0xFFu
-#define UART_PCTL_PCTL_SHIFT                     0
-#define UART_PCTL_PCTL(x)                        (((uint8_t)(((uint8_t)(x))<<UART_PCTL_PCTL_SHIFT))&UART_PCTL_PCTL_MASK)
-/* B1T Bit Fields */
-#define UART_B1T_B1T_MASK                        0xFFu
-#define UART_B1T_B1T_SHIFT                       0
-#define UART_B1T_B1T(x)                          (((uint8_t)(((uint8_t)(x))<<UART_B1T_B1T_SHIFT))&UART_B1T_B1T_MASK)
-/* SDTH Bit Fields */
-#define UART_SDTH_SDTH_MASK                      0xFFu
-#define UART_SDTH_SDTH_SHIFT                     0
-#define UART_SDTH_SDTH(x)                        (((uint8_t)(((uint8_t)(x))<<UART_SDTH_SDTH_SHIFT))&UART_SDTH_SDTH_MASK)
-/* SDTL Bit Fields */
-#define UART_SDTL_SDTL_MASK                      0xFFu
-#define UART_SDTL_SDTL_SHIFT                     0
-#define UART_SDTL_SDTL(x)                        (((uint8_t)(((uint8_t)(x))<<UART_SDTL_SDTL_SHIFT))&UART_SDTL_SDTL_MASK)
-/* PRE Bit Fields */
-#define UART_PRE_PREAMBLE_MASK                   0xFFu
-#define UART_PRE_PREAMBLE_SHIFT                  0
-#define UART_PRE_PREAMBLE(x)                     (((uint8_t)(((uint8_t)(x))<<UART_PRE_PREAMBLE_SHIFT))&UART_PRE_PREAMBLE_MASK)
-/* TPL Bit Fields */
-#define UART_TPL_TPL_MASK                        0xFFu
-#define UART_TPL_TPL_SHIFT                       0
-#define UART_TPL_TPL(x)                          (((uint8_t)(((uint8_t)(x))<<UART_TPL_TPL_SHIFT))&UART_TPL_TPL_MASK)
-/* IE Bit Fields */
-#define UART_IE_TXFIE_MASK                       0x1u
-#define UART_IE_TXFIE_SHIFT                      0
-#define UART_IE_PSIE_MASK                        0x2u
-#define UART_IE_PSIE_SHIFT                       1
-#define UART_IE_PCTEIE_MASK                      0x4u
-#define UART_IE_PCTEIE_SHIFT                     2
-#define UART_IE_PTXIE_MASK                       0x8u
-#define UART_IE_PTXIE_SHIFT                      3
-#define UART_IE_PRXIE_MASK                       0x10u
-#define UART_IE_PRXIE_SHIFT                      4
-#define UART_IE_ISDIE_MASK                       0x20u
-#define UART_IE_ISDIE_SHIFT                      5
-#define UART_IE_WBEIE_MASK                       0x40u
-#define UART_IE_WBEIE_SHIFT                      6
-/* WB Bit Fields */
-#define UART_WB_WBASE_MASK                       0xFFu
-#define UART_WB_WBASE_SHIFT                      0
-#define UART_WB_WBASE(x)                         (((uint8_t)(((uint8_t)(x))<<UART_WB_WBASE_SHIFT))&UART_WB_WBASE_MASK)
-/* S3 Bit Fields */
-#define UART_S3_TXFF_MASK                        0x1u
-#define UART_S3_TXFF_SHIFT                       0
-#define UART_S3_PSF_MASK                         0x2u
-#define UART_S3_PSF_SHIFT                        1
-#define UART_S3_PCTEF_MASK                       0x4u
-#define UART_S3_PCTEF_SHIFT                      2
-#define UART_S3_PTXF_MASK                        0x8u
-#define UART_S3_PTXF_SHIFT                       3
-#define UART_S3_PRXF_MASK                        0x10u
-#define UART_S3_PRXF_SHIFT                       4
-#define UART_S3_ISD_MASK                         0x20u
-#define UART_S3_ISD_SHIFT                        5
-#define UART_S3_WBEF_MASK                        0x40u
-#define UART_S3_WBEF_SHIFT                       6
-#define UART_S3_PEF_MASK                         0x80u
-#define UART_S3_PEF_SHIFT                        7
-/* S4 Bit Fields */
-#define UART_S4_FE_MASK                          0x1u
-#define UART_S4_FE_SHIFT                         0
-#define UART_S4_ILCV_MASK                        0x2u
-#define UART_S4_ILCV_SHIFT                       1
-#define UART_S4_CDET_MASK                        0xCu
-#define UART_S4_CDET_SHIFT                       2
-#define UART_S4_CDET(x)                          (((uint8_t)(((uint8_t)(x))<<UART_S4_CDET_SHIFT))&UART_S4_CDET_MASK)
-#define UART_S4_INITF_MASK                       0x10u
-#define UART_S4_INITF_SHIFT                      4
-/* RPL Bit Fields */
-#define UART_RPL_RPL_MASK                        0xFFu
-#define UART_RPL_RPL_SHIFT                       0
-#define UART_RPL_RPL(x)                          (((uint8_t)(((uint8_t)(x))<<UART_RPL_RPL_SHIFT))&UART_RPL_RPL_MASK)
-/* RPREL Bit Fields */
-#define UART_RPREL_RPREL_MASK                    0xFFu
-#define UART_RPREL_RPREL_SHIFT                   0
-#define UART_RPREL_RPREL(x)                      (((uint8_t)(((uint8_t)(x))<<UART_RPREL_RPREL_SHIFT))&UART_RPREL_RPREL_MASK)
-/* CPW Bit Fields */
-#define UART_CPW_CPW_MASK                        0xFFu
-#define UART_CPW_CPW_SHIFT                       0
-#define UART_CPW_CPW(x)                          (((uint8_t)(((uint8_t)(x))<<UART_CPW_CPW_SHIFT))&UART_CPW_CPW_MASK)
-/* RIDT Bit Fields */
-#define UART_RIDT_RIDT_MASK                      0xFFu
-#define UART_RIDT_RIDT_SHIFT                     0
-#define UART_RIDT_RIDT(x)                        (((uint8_t)(((uint8_t)(x))<<UART_RIDT_RIDT_SHIFT))&UART_RIDT_RIDT_MASK)
-/* TIDT Bit Fields */
-#define UART_TIDT_TIDT_MASK                      0xFFu
-#define UART_TIDT_TIDT_SHIFT                     0
-#define UART_TIDT_TIDT(x)                        (((uint8_t)(((uint8_t)(x))<<UART_TIDT_TIDT_SHIFT))&UART_TIDT_TIDT_MASK)
 
 /**
  * @}
@@ -5215,6 +7753,18 @@ typedef struct {
 #define UART2_BASE                               (0x4006C000u)
 /** Peripheral UART2 base pointer */
 #define UART2                                    ((UART_Type *)UART2_BASE)
+/** Peripheral UART3 base address */
+#define UART3_BASE                               (0x4006D000u)
+/** Peripheral UART3 base pointer */
+#define UART3                                    ((UART_Type *)UART3_BASE)
+/** Peripheral UART4 base address */
+#define UART4_BASE                               (0x400EA000u)
+/** Peripheral UART4 base pointer */
+#define UART4                                    ((UART_Type *)UART4_BASE)
+/** Peripheral UART5 base address */
+#define UART5_BASE                               (0x400EB000u)
+/** Peripheral UART5 base pointer */
+#define UART5                                    ((UART_Type *)UART5_BASE)
 
 /**
  * @}
@@ -5287,8 +7837,6 @@ typedef struct {
   __IO uint8_t CONTROL;                            /**< USB OTG Control Register, offset: 0x108 */
        uint8_t RESERVED_24[3];
   __IO uint8_t USBTRC0;                            /**< USB Transceiver Control Register 0, offset: 0x10C */
-       uint8_t RESERVED_25[7];
-  __IO uint8_t USBFRMADJUST;                       /**< Frame Adjust Register, offset: 0x114 */
 } USB_Type;
 
 /* ----------------------------------------------------------------------------
@@ -5531,10 +8079,6 @@ typedef struct {
 #define USB_USBTRC0_USBRESMEN_SHIFT              5
 #define USB_USBTRC0_USBRESET_MASK                0x80u
 #define USB_USBTRC0_USBRESET_SHIFT               7
-/* USBFRMADJUST Bit Fields */
-#define USB_USBFRMADJUST_ADJ_MASK                0xFFu
-#define USB_USBFRMADJUST_ADJ_SHIFT               0
-#define USB_USBFRMADJUST_ADJ(x)                  (((uint8_t)(((uint8_t)(x))<<USB_USBFRMADJUST_ADJ_SHIFT))&USB_USBFRMADJUST_ADJ_MASK)
 
 /**
  * @}
@@ -5677,8 +8221,6 @@ typedef struct {
 #define VREF_TRM_TRIM_MASK                       0x3Fu
 #define VREF_TRM_TRIM_SHIFT                      0
 #define VREF_TRM_TRIM(x)                         (((uint8_t)(((uint8_t)(x))<<VREF_TRM_TRIM_SHIFT))&VREF_TRM_TRIM_MASK)
-#define VREF_TRM_CHOPEN_MASK                     0x40u
-#define VREF_TRM_CHOPEN_SHIFT                    6
 /* SC Bit Fields */
 #define VREF_SC_MODE_LV_MASK                     0x3u
 #define VREF_SC_MODE_LV_SHIFT                    0
@@ -5757,6 +8299,8 @@ typedef struct {
 #define WDOG_STCTRLH_STOPEN_SHIFT                6
 #define WDOG_STCTRLH_WAITEN_MASK                 0x80u
 #define WDOG_STCTRLH_WAITEN_SHIFT                7
+#define WDOG_STCTRLH_STNDBYEN_MASK               0x100u
+#define WDOG_STCTRLH_STNDBYEN_SHIFT              8
 #define WDOG_STCTRLH_TESTWDOG_MASK               0x400u
 #define WDOG_STCTRLH_TESTWDOG_SHIFT              10
 #define WDOG_STCTRLH_TESTSEL_MASK                0x800u
@@ -5856,15 +8400,78 @@ typedef struct {
  * @{
  */
 
-/* No backward compatibility issues. */
+#define FB_CSCR_EXALE_MASK                       FB_CSCR_EXTS_MASK
+#define FB_CSCR_EXALE_SHIFT                      FB_CSCR_EXTS_SHIFT
+#define RTC_CCR_CONFIG_MASK                      This_symb_has_been_deprecated
+#define RTC_CCR_CONFIG_SHIFT                     This_symb_has_been_deprecated
+#define RTC_CCR_CONFIG                           This_symb_has_been_deprecated
+#define RTC_WAR_CCRW_MASK                        This_symb_has_been_deprecated
+#define RTC_WAR_CCRW_SHIFT                       This_symb_has_been_deprecated
+#define RTC_RAR_CCRR_MASK                        This_symb_has_been_deprecated
+#define RTC_RAR_CCRR_SHIFT                       This_symb_has_been_deprecated
+#define SIM_FCFG1_FSIZE_MASK                     This_symb_has_been_deprecated
+#define SIM_FCFG1_FSIZE_SHIFT                    This_symb_has_been_deprecated
+#define I2S_CR_SSIEN_MASK                        I2S_CR_I2SEN_MASK
+#define I2S_CR_SSIEN_SHIFT                       I2S_CR_I2SEN_SHIFT
+#define SDHC_VENDOR_VOLTSEL_MASK                 This_symb_has_been_deprecated
+#define SDHC_VENDOR_VOLTSEL_SHIFT                This_symb_has_been_deprecated
+#define INT_Reserved4                            INT_Mem_Manage_Fault
+#define TSI_CNTR1_CNTN_MASK                      TSI_CNTR1_CTN1_MASK
+#define TSI_CNTR1_CNTN_SHIFT                     TSI_CNTR1_CTN1_SHIFT
+#define TSI_CNTR1_CNTN(x)                        TSI_CNTR1_CTN1(x)
+#define TSI_CNTR1_CNTN1_MASK                     TSI_CNTR1_CTN_MASK
+#define TSI_CNTR1_CNTN1_SHIFT                    TSI_CNTR1_CTN_SHIFT
+#define TSI_CNTR1_CNTN1(x)                       TSI_CNTR1_CTN(x)
+#define TSI_CNTR3_CNTN_MASK                      TSI_CNTR3_CTN1_MASK
+#define TSI_CNTR3_CNTN_SHIFT                     TSI_CNTR3_CTN1_SHIFT
+#define TSI_CNTR3_CNTN(x)                        TSI_CNTR3_CTN1(x)
+#define TSI_CNTR3_CNTN1_MASK                     TSI_CNTR3_CTN_MASK
+#define TSI_CNTR3_CNTN1_SHIFT                    TSI_CNTR3_CTN_SHIFT
+#define TSI_CNTR3_CNTN1(x)                       TSI_CNTR3_CTN(x)
+#define TSI_CNTR5_CNTN_MASK                      TSI_CNTR5_CTN1_MASK
+#define TSI_CNTR5_CNTN_SHIFT                     TSI_CNTR5_CTN1_SHIFT
+#define TSI_CNTR5_CNTN(x)                        TSI_CNTR5_CTN1(x)
+#define TSI_CNTR5_CNTN1_MASK                     TSI_CNTR5_CTN_MASK
+#define TSI_CNTR5_CNTN1_SHIFT                    TSI_CNTR5_CTN_SHIFT
+#define TSI_CNTR5_CNTN1(x)                       TSI_CNTR5_CTN(x)
+#define TSI_CNTR7_CNTN_MASK                      TSI_CNTR7_CTN1_MASK
+#define TSI_CNTR7_CNTN_SHIFT                     TSI_CNTR7_CTN1_SHIFT
+#define TSI_CNTR7_CNTN(x)                        TSI_CNTR7_CTN1(x)
+#define TSI_CNTR7_CNTN1_MASK                     TSI_CNTR7_CTN_MASK
+#define TSI_CNTR7_CNTN1_SHIFT                    TSI_CNTR7_CTN_SHIFT
+#define TSI_CNTR7_CNTN1(x)                       TSI_CNTR7_CTN(x)
+#define TSI_CNTR9_CNTN_MASK                      TSI_CNTR9_CTN1_MASK
+#define TSI_CNTR9_CNTN_SHIFT                     TSI_CNTR9_CTN1_SHIFT
+#define TSI_CNTR9_CNTN(x)                        TSI_CNTR9_CTN1(x)
+#define TSI_CNTR9_CNTN1_MASK                     TSI_CNTR9_CTN_MASK
+#define TSI_CNTR9_CNTN1_SHIFT                    TSI_CNTR9_CTN_SHIFT
+#define TSI_CNTR9_CNTN1(x)                       TSI_CNTR9_CTN(x)
+#define TSI_CNTR11_CNTN_MASK                     TSI_CNTR11_CTN1_MASK
+#define TSI_CNTR11_CNTN_SHIFT                    TSI_CNTR11_CTN1_SHIFT
+#define TSI_CNTR11_CNTN(x)                       TSI_CNTR11_CTN1(x)
+#define TSI_CNTR11_CNTN1_MASK                    TSI_CNTR11_CTN_MASK
+#define TSI_CNTR11_CNTN1_SHIFT                   TSI_CNTR11_CTN_SHIFT
+#define TSI_CNTR11_CNTN1(x)                      TSI_CNTR11_CTN(x)
+#define TSI_CNTR13_CNTN_MASK                     TSI_CNTR13_CTN1_MASK
+#define TSI_CNTR13_CNTN_SHIFT                    TSI_CNTR13_CTN1_SHIFT
+#define TSI_CNTR13_CNTN(x)                       TSI_CNTR13_CTN1(x)
+#define TSI_CNTR13_CNTN1_MASK                    TSI_CNTR13_CTN_MASK
+#define TSI_CNTR13_CNTN1_SHIFT                   TSI_CNTR13_CTN_SHIFT
+#define TSI_CNTR13_CNTN1(x)                      TSI_CNTR13_CTN(x)
+#define TSI_CNTR15_CNTN_MASK                     TSI_CNTR15_CTN1_MASK
+#define TSI_CNTR15_CNTN_SHIFT                    TSI_CNTR15_CTN1_SHIFT
+#define TSI_CNTR15_CNTN(x)                       TSI_CNTR15_CTN1(x)
+#define TSI_CNTR15_CNTN1_MASK                    TSI_CNTR15_CTN_MASK
+#define TSI_CNTR15_CNTN1_SHIFT                   TSI_CNTR15_CTN_SHIFT
+#define TSI_CNTR15_CNTN1(x)                      TSI_CNTR15_CTN(x)
 
 /**
  * @}
  */ /* end of group Backward_Compatibility_Symbols */
 
 
-#endif  /* #if !defined(MK20D5_H_) */
+#endif  /* #if !defined(MK20DZ10_H_) */
 
 /** @} */
 
-/* MK20D5.h, eof. */
+/* MK20DZ10.h, eof. */

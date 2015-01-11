@@ -23,7 +23,6 @@
 #include <stdint.h>
 
 #include "board.h"
-#include "kinetis_sim.h"
 #include "k20_gpio.h"
 
 #include "cpu.h"
@@ -91,6 +90,9 @@ __attribute__((noreturn)) void panic_blink(void)
  */
 void reset_handler(void)
 {
+    /* Set vector location */
+    SCB->VTOR = _sfixed;
+
     /* Disable Watchdog */
     WDOG->UNLOCK = 0xc520;
     WDOG->UNLOCK = 0xd928;

@@ -24,7 +24,6 @@
 #include "thread.h"
 #include "periph/gpio.h"
 #include "periph_conf.h"
-#include "kinetis_sim.h"
 
 
 int k20_gpio_direction(GPIO_Type *gpio, uint8_t pinid, bool output)
@@ -56,23 +55,23 @@ static int _gpio_pin_activate(GPIO_Type *gpio, uint8_t pinid, bool high_power)
 
     /* Enable the clock gate for the corresponding port first */
     if (gpio == PTA) {
-        kinetis_clock_gate_enable(K20_CGATE_PORTA);
+        PORTA_CLKEN();
         port = PORTA;
     }
     else if (gpio == PTB) {
-        kinetis_clock_gate_enable(K20_CGATE_PORTB);
+        PORTB_CLKEN();
         port = PORTB;
     }
     else if (gpio == PTC) {
-        kinetis_clock_gate_enable(K20_CGATE_PORTC);
+        PORTC_CLKEN();
         port = PORTC;
     }
     else if (gpio == PTD) {
-        kinetis_clock_gate_enable(K20_CGATE_PORTD);
+        PORTD_CLKEN();
         port = PORTD;
     }
     else if (gpio == PTE) {
-        kinetis_clock_gate_enable(K20_CGATE_PORTE);
+        PORTE_CLKEN();
         port = PORTE;
     }
     else {

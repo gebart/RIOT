@@ -28,6 +28,10 @@ MODEL = $(shell echo $(CPU_MODEL)|tr 'a-z' 'A-Z')
 export CPU_MODEL_CFLAG = -DCPU_MODEL_$(MODEL)
 export CFLAGS += $(CPU_MODEL_CFLAG)
 
+# Bootloader offset
+CPU_BOOTLOADER_OFFSET ?= 0x0
+export CFLAGS += -DCPU_BOOTLOADER_OFFSET=$(CPU_BOOTLOADER_OFFSET)
+
 # include CPU specific includes
 export INCLUDES += -I$(RIOTCPU)/$(CPU)/include
 

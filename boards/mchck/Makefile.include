@@ -1,7 +1,7 @@
 # define the cpu used by the mchck board
 export CPU = k20
 export CPU_MODEL = mk20dx32vlf5
-export CPU_BOOTLOADER_OFFSET = 0xC00
+export CPU_BOOTLOADER_OFFSET = 0xc00
 
 #define the default port depending on the host OS
 OS := $(shell uname)
