@@ -176,31 +176,35 @@
  * @name SPI configuration
  * @{
  */
-#define SPI_NUMOF           0
+#define SPI_NUMOF           1
 #define SPI_0_EN            1
 #define SPI_1_EN            0
 
 /* SPI 0 device config */
-#define SPI_0_DEV           SPI0
-#define SPI_0_CLKEN()       (SIM->SCGC6 |= SIM_SCGC6_SPI0_MASK)
-#define SPI_0_CLKDIS()      (SIM->SCGC6 &= ~(SIM_SCGC6_SPI0_MASK))
-#define SPI_0_IRQ           SPI0_IRQn
-#define SPI_0_ISR           isr_spi0
-#define SPI_0_IRQ_PRIO      1
-#define SPI_0_FREQ          SystemSysClock
+#define SPI_0_DEV               SPI0
+#define SPI_0_CLKEN()           (SIM->SCGC6 |= SIM_SCGC6_SPI0_MASK)
+#define SPI_0_CLKDIS()          (SIM->SCGC6 &= ~(SIM_SCGC6_SPI0_MASK))
+#define SPI_0_IRQ               SPI0_IRQn
+#define SPI_0_ISR               isr_spi0
+#define SPI_0_IRQ_PRIO          1
+#define SPI_0_FREQ              SystemSysClock
 /* SPI 0 pin configuration */
-#define SPI_0_SCLK_PIN      1
-#define SPI_0_SCLK_PORT     PORTD
-#define SPI_0_SCLK_PORT_CLKEN() (SIM->SCGC5 |= SIM_SCGC5_PORTD_MASK)
-#define SPI_0_SCLK_PCR_MUX  2
-#define SPI_0_MISO_PIN      3
-#define SPI_0_MISO_PORT     PORTD
-#define SPI_0_MISO_PORT_CLKEN() (SIM->SCGC5 |= SIM_SCGC5_PORTD_MASK)
-#define SPI_0_MISO_PCR_MUX  2
-#define SPI_0_MOSI_PIN      2
-#define SPI_0_MOSI_PORT     PORTD
-#define SPI_0_MOSI_PORT_CLKEN() (SIM->SCGC5 |= SIM_SCGC5_PORTD_MASK)
-#define SPI_0_MOSI_PCR_MUX  2
+#define SPI_0_SCK_PIN           1
+#define SPI_0_SCK_PORT          PORTD
+#define SPI_0_SCK_PORT_CLKEN()  (SIM->SCGC5 |= SIM_SCGC5_PORTD_MASK)
+#define SPI_0_SCK_AF            2
+#define SPI_0_SIN_PIN           3
+#define SPI_0_SIN_PORT          PORTD
+#define SPI_0_SIN_PORT_CLKEN()  (SIM->SCGC5 |= SIM_SCGC5_PORTD_MASK)
+#define SPI_0_SIN_AF            2
+#define SPI_0_SOUT_PIN          2
+#define SPI_0_SOUT_PORT         PORTD
+#define SPI_0_SOUT_PORT_CLKEN() (SIM->SCGC5 |= SIM_SCGC5_PORTD_MASK)
+#define SPI_0_SOUT_AF  2
+#define SPI_0_PCS0_PIN          0
+#define SPI_0_PCS0_PORT         PORTD
+#define SPI_0_PCS0_PORT_CLKEN() (SIM->SCGC5 |= SIM_SCGC5_PORTD_MASK)
+#define SPI_0_PCS0_AF           2
 /** @} */
 
 
