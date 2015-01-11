@@ -23,7 +23,6 @@
 #define __BOARD_H
 
 #include "cpu.h"
-#include "MK20DZ10.h"
 #include "periph_conf.h"
 
 #ifdef __cplusplus
@@ -33,7 +32,7 @@ extern "C" {
 /**
  * Define the nominal CPU core clock in this board
  */
-#define F_CPU               48000000 // 48 Mhz
+#define F_CPU               CLOCK_CORECLOCK // typically ~48 Mhz
 
 /**
  * @name Define UART device and baudrate for stdio
@@ -48,9 +47,9 @@ extern "C" {
  * @name Define LED commands for compatability to other boards
  * @{
  */
-#define LED_GREEN_ON        GPIOB_PSOR = (1 << 16);
-#define LED_GREEN_OFF       GPIOB_PCOR = (1 << 16);
-#define LED_GREEN_TOGGLE    GPIOB_PTOR |= (1 << 16);
+#define LED_GREEN_ON        PTB->PSOR = (1 << 16);
+#define LED_GREEN_OFF       PTB->PCOR = (1 << 16);
+#define LED_GREEN_TOGGLE    PTB->PTOR |= (1 << 16);
 
 /* We don't have a second LED :( */
 #define LED_RED_ON

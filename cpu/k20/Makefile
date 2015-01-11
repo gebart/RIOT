@@ -7,6 +7,8 @@ DIRS = periph $(KINETIS_COMMON) $(CORTEX_M4_COMMON)
 # Bootloader offset
 CPU_BOOTLOADER_OFFSET ?= 0x0
 
+include $(RIOTCPU)/$(CPU)/Makefile.include
+
 # Run the linker script through the C preprocessor. Reason: We want to be able
 # to dynamically define the bootloader offset in the RAM memory section. This is
 # not possible with LD
@@ -18,7 +20,6 @@ CPU_BOOTLOADER_OFFSET ?= 0x0
 # ..nothing is required because otherwise the linkerscript would not build at
 # all. This is because nothing depends on this rule.
 $(BINDIR)k20_linkerscript.ld: all ..nothing
-	$(AD)$(PREFIX)cpp -DASSEMBLY -P ld/k20.lds -I include -DCPU_BOOTLOADER_OFFSET=0xC00 -o $(BINDIR)k20_linkerscript.ld
+	$(AD)$(PREFIX)cpp $(CPU_MODEL_CFLAG) -DCPU_BOOTLOADER_OFFSET=$(CPU_BOOTLOADER_OFFSET) -DASSEMBLY -P ld/k20.lds -I include -o $(BINDIR)k20_linkerscript.ld
 
 include $(RIOTBASE)/Makefile.base
-

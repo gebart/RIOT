@@ -17,6 +17,10 @@
  *
  * @author          Finn Wilke <finn.wilke@fu-berlin.de>
  * @author          Hauke Petersen <hauke.peterse@fu-berlin.de>
+ *
+ * @note    This implementation currently only supports the k20_50 subfamily without FPU
+ *          and a max frequency of 50 Mhz. The newer K20 devices with higher frequencies
+ *          can probably be added easily.
  */
 
 #ifndef __CPU_CONF_H
@@ -28,10 +32,18 @@ extern "C" {
 #endif
 
 
-#include "k20_interrupts.h"
-#include "k20_memory.h"
-#include "core_cm4.h"
+/**
+ * @brief Select the k20 CPU family header
+ */
+#include "k20_family.h"
 
+#ifdef CPU_FAMILY_MK20D5
+#include "cmsis/MK20D5.h"
+#endif
+
+#include "periph_conf.h"
+#include "k20_interrupts.h"
+#include "core_cm4.h"
 
 /**
  * @name Kernel configuration
@@ -74,9 +86,8 @@ extern "C" {
  * @{
  */
 #define __CM4_REV                 0x0001  /*!< Core revision r0p1                                */
-#define __MPU_PRESENT             1       /*!< K20 provides an MPU                               */
 #define __Vendor_SysTickConfig    0       /*!< Set to 1 if different SysTick Config is used      */
-#define __FPU_PRESENT             1       /*!< FPU present                                       */
+#define __FPU_PRESENT             0       /*!< FPU present                                       */
 /** @{ */
 
 /**
@@ -84,18 +95,157 @@ extern "C" {
  * @{
  */
 
-/**
- * @name lptmr definition
- */
-#define LPTMR_NUM 1
 
-typedef enum {
-    KINETIS_LPTMR_CLOCK_MCGIRCLK = 0,
-    KINETIS_LPTMR_CLOCK_LPO      = 1,
-    KINETIS_LPTMR_CLOCK_ERCLK32K = 2,
-    KINETIS_LPTMR_CLOCK_OSCERCLK = 3
-} kinetis_lptmr_clock_t;
+/**
+ * @name kinetis_common definitions
+ * @{
+ */
+
+/**
+ * @name misc
+ */
+#define CPUID_ID_PTR ((void *)(&(SIM->UIDH)))
+#define CPUID_ID_LEN 16
+
+/**
+ * @name LPTMR
+ */
+
+/* work around header differences */
+#define SIM_SCGC5_LPTMR_MASK SIM_SCGC5_LPTIMER_MASK
+
+/** clocks */
+#define LPTIMER_CLKSRC_MCGIRCLK          0    /**< internal reference clock (4MHz) */
+#define LPTIMER_CLKSRC_LPO               1    /**< PMC 1kHz output */
+#define LPTIMER_CLKSRC_ERCLK32K          2    /**< RTC clock 32768Hz */
+#define LPTIMER_CLKSRC_OSCERCLK          3    /**< system oscillator output, clock from RF-Part */
+
+#ifndef LPTIMER_CLKSRC
+#define LPTIMER_CLKSRC                   LPTIMER_CLKSRC_LPO    /**< default clock source */
+#endif
+
+#if (LPTIMER_CLKSRC == LPTIMER_CLKSRC_MCGIRCLK)
+#define LPTIMER_CLK_PRESCALE    1
+#define LPTIMER_SPEED           1000000
+#elif (LPTIMER_CLKSRC == LPTIMER_CLKSRC_OSCERCLK)
+#define LPTIMER_CLK_PRESCALE    1
+#define LPTIMER_SPEED           1000000
+#elif (LPTIMER_CLKSRC == LPTIMER_CLKSRC_ERCLK32K)
+#define LPTIMER_CLK_PRESCALE    0
+#define LPTIMER_SPEED           32768
+#else
+#define LPTIMER_CLK_PRESCALE    0
+#define LPTIMER_SPEED           1000
+#endif
 /** @} */
+
+/**
+ * @name PIT timer (currently not working)
+ */
+static __INLINE void TIMER_0_CLKEN(void)
+{
+    SIM->SCGC6 |= SIM_SCGC6_PIT_MASK;
+}
+
+
+#define TIMER_0_IRQ_CHAN PIT1_IRQn
+#define TIMER_1_IRQ_CHAN PIT3_IRQn
+#define TIMER_0_DEV PIT
+
+/* I don't know?!?! */
+#define TIMER_0_CLOCK 1
+/** @} */
+
+/**
+ * @name UART
+ * @{
+ */
+#define UART_0_DEV UART0
+#define UART_0_ISR isr_uart0_status
+#define UART_0_IRQ_CHAN UART0_RX_TX_IRQn
+#define UART_0_CLK CLOCK_CORECLOCK
+static __INLINE void UART_0_CLKEN(void) {
+    SIM->SCGC4 |= SIM_SCGC4_UART0_MASK;
+}
+
+/** We ifdef these things as there are different UART0 pins. If you define PORT you define everything */
+#ifndef UART_0_PORT
+
+#if defined(K20_UART0_OUTPUT_PTA_1_2)
+#define UART_0_PORT PORTA
+#define UART_0_SCG5_PORT_MASK SIM_SCGC5_PORTA_MASK
+#define UART_0_TX_PIN 1
+#define UART_0_RX_PIN 2
+#define UART_0_AF 2
+
+#elif defined(K20_UART0_OUTPUT_PTB_16_17)
+#define UART_0_PORT PORTB
+#define UART_0_SCG5_PORT_MASK SIM_SCGC5_PORTB_MASK
+#define UART_0_TX_PIN 16
+#define UART_0_RX_PIN 17
+#define UART_0_AF 3
+
+#elif defined(K20_UART0_OUTPUT_PTD_6_7)
+#define UART_0_PORT PORTD
+#define UART_0_SCG5_PORT_MASK SIM_SCGC5_PORTD_MASK
+#define UART_0_TX_PIN 6
+#define UART_0_RX_PIN 7
+#define UART_0_AF 3
+
+#else
+#error "You need to define K20_UART0_OUTPUT_PTA_1_2, K20_UART0_OUTPUT_PTB_16_17 or K20_UART0_OUTPUT_PTD_6_7 depending on which output you want to use"
+#endif
+
+static __INLINE void UART_0_PORT_CLKEN(void) {
+    SIM->SCGC5 |= UART_0_SCG5_PORT_MASK;
+}
+
+#endif // UART_0_PORT
+
+#define UART_1_DEV UART1
+#define UART_1_ISR isr_uart1_status
+#define UART_1_IRQ_CHAN UART1_RX_TX_IRQn
+#define UART_1_CLK CLOCK_CORECLOCK
+static __INLINE void UART_1_CLKEN(void) {
+    SIM->SCGC4 |= SIM_SCGC4_UART1_MASK;
+}
+
+#ifndef UART_1_PORT
+#define UART_1_PORT PORTC
+#define UART_1_TX_PIN 3
+#define UART_1_RX_PIN 4
+#define UART_1_AF 3
+
+static __INLINE void UART_1_PORT_CLKEN(void) {
+    SIM->SCGC5 |= SIM_SCGC5_PORTC_MASK;
+}
+#endif
+
+#define UART_2_DEV UART1
+#define UART_2_IRQ_CHAN UART1_RX_TX_IRQn
+#define UART_2_CLK F_MCGOUTCLK
+static __INLINE void UART_2_CLKEN(void)
+{
+    SIM->SCGC4 |= SIM_SCGC4_UART2_MASK;
+}
+
+#ifndef UART_2_PORT
+#define UART_2_ISR isr_uart1_status
+#define UART_2_PORT PORTD
+#define UART_2_TX_PIN 2
+#define UART_2_RX_PIN 3
+#define UART_2_AF 3
+
+static __INLINE void UART_2_PORT_CLKEN(void) {
+    SIM->SCGC5 |= SIM_SCGC5_PORTD_MASK;
+}
+#endif
+/** @} */
+
+
+
+/** @} */
+
 
 /**
  * @name Clock gate definition used by the kinetis SIM driver

@@ -26,7 +26,6 @@
 #include "kinetis_sim.h"
 #include "k20_gpio.h"
 
-#include "MK20DZ10.h"
 #include "cpu.h"
 
 #define ENABLE_DEBUG (1)
@@ -93,9 +92,9 @@ __attribute__((noreturn)) void panic_blink(void)
 void reset_handler(void)
 {
     /* Disable Watchdog */
-    WDOG_UNLOCK = 0xc520;
-    WDOG_UNLOCK = 0xd928;
-    WDOG_STCTRLH &= ~WDOG_STCTRLH_WDOGEN_MASK;
+    WDOG->UNLOCK = 0xc520;
+    WDOG->UNLOCK = 0xd928;
+    WDOG->STCTRLH &= ~WDOG_STCTRLH_WDOGEN_MASK;
 
     /* load data section from flash to ram */
     uint32_t *dst;
@@ -164,12 +163,14 @@ void isr_usage_fault(void)
     panic_blink();
 }
 
+
+
 /* Cortex-M specific interrupt vectors */
 void isr_svc(void)                  __attribute__ ((weak, alias("dummy_handler")));
 void isr_pendsv(void)               __attribute__ ((weak, alias("dummy_handler")));
 void isr_systick(void)              __attribute__ ((weak, alias("dummy_handler")));
 
-/* K20 specific interrupt vector */
+/* K20 specific interrupt vectors */
 void isr_dma0(void) __attribute__ ((weak, alias("dummy_handler")));
 void isr_dma1(void) __attribute__ ((weak, alias("dummy_handler")));
 void isr_dma2(void) __attribute__ ((weak, alias("dummy_handler")));
@@ -211,7 +212,7 @@ void isr_usb_otg(void) __attribute__ ((weak, alias("dummy_handler")));
 void isr_usb_chrg(void) __attribute__ ((weak, alias("dummy_handler"))); // charger detect
 void isr_tsi(void) __attribute__ ((weak, alias("dummy_handler")));
 void isr_mcg(void) __attribute__ ((weak, alias("dummy_handler")));
-void isr_lptmr(void) __attribute__ ((weak, alias("dummy_handler"))); // low power timer
+void isr_lptmr0(void) __attribute__ ((weak, alias("dummy_handler"))); // low power timer
 void isr_port_a(void) __attribute__ ((weak, alias("dummy_handler"))); // pin detect port a
 void isr_port_b(void) __attribute__ ((weak, alias("dummy_handler")));
 void isr_port_c(void) __attribute__ ((weak, alias("dummy_handler")));
@@ -280,7 +281,7 @@ const void *interrupt_vector[] = {
     (void*) isr_usb_chrg, // charger detect
     (void*) isr_tsi,
     (void*) isr_mcg,
-    (void*) isr_lptmr, // low power timer
+    (void*) isr_lptmr0, // low power timer
     (void*) isr_port_a, // pin detect port a
     (void*) isr_port_b,
     (void*) isr_port_c,

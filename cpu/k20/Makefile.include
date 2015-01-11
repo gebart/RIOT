@@ -5,7 +5,7 @@ export CFLAGS += -DCOREIF_NG=1
 export CFLAGS += -mcpu=cortex-m4 -msoft-float
 
 # export the peripheral drivers to be linked into the final binary
-export USEMODULE += kinetis periph
+export USEMODULE += kinetis_common periph
 
 # tell the build system that the CPU depends on the Cortex-M common files
 export USEMODULE += cortex-m4_common
@@ -25,7 +25,8 @@ export LINKERSCRIPT ?= $(BINDIR)k20_linkerscript.ld
 
 #export the CPU model
 MODEL = $(shell echo $(CPU_MODEL)|tr 'a-z' 'A-Z')
-export CFLAGS += -DCPU_MODEL_$(MODEL)
+export CPU_MODEL_CFLAG = -DCPU_MODEL_$(MODEL)
+export CFLAGS += $(CPU_MODEL_CFLAG)
 
 # include CPU specific includes
 export INCLUDES += -I$(RIOTCPU)/$(CPU)/include

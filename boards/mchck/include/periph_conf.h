@@ -27,18 +27,34 @@ extern "C" {
 
 /**
  * @name Clock system configuration.
+ * @note Consider cpu/k20/cpu.c for reference.
  * @{
  */
-#define CLOCK_CORECLOCK     (48000000U)         /* desired core clock frequency. currently unused. */
+
+/**
+ * As the 'original' mchck firmware does this too we think it is not too
+ * dangerous to use this option. At the very least people using this board have
+ * already tested this multiple times and would have already ended up with a
+ * damaged MCU if this were a problem.
+ */
+#define K20_SUPPRESS_UNSAFE_FLL_FACTOR_WARNING
+#define K20_USE_UNSAFE_FLL_FACTOR_ON_INTERNAL_OSCILLATOR
+
+
+#ifdef K20_USE_UNSAFE_FLL_FACTOR_ON_INTERNAL_OSCILLATOR
+#define CLOCK_CORECLOCK     (47972352U)
+#else
+#define CLOCK_CORECLOCK     (41943040U)
+#endif
 /** @} */
 
 /**
  * @name Timer configuration
  * @{
  */
-#define TIMER_NUMOF         (1)
+/*#define TIMER_NUMOF         (1)
 #define TIMER_0_EN          1
-#define TIMER_IRQ_PRIO      1
+#define TIMER_IRQ_PRIO      1*/
 /** @} */
 
 /**

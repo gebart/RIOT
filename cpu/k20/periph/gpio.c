@@ -25,24 +25,9 @@
 #include "periph/gpio.h"
 #include "periph_conf.h"
 #include "kinetis_sim.h"
-#include "MK20DZ10.h"
 
 
-/**
- * @brief Reconfigures a GPIO as input/output
- *
- * @see k20_gpio_enable_output(GPIO_MemMapPtr, uint8_t, bool)
- * @see k20_gpio_enable_input(GPIO_MemMapPtr, uint8_t)
- *
- * @param[in]  gpio         A pointer to the GPIO. Obtain with the macro PORTx_BASE_PTR
- * @param[in]  pinid        The number of the pin to be set. Must be between 0 and 31
- * @param[in]  output       Evaluates to true if reconfiguring as output, false if
- *                          reconfiguring as input
- *
- * @return 0 if setting the GPIO was successful, -1 otherwise.
- * @{
- */
-int k20_gpio_direction(GPIO_MemMapPtr gpio, uint8_t pinid, bool output)
+int k20_gpio_direction(GPIO_Type *gpio, uint8_t pinid, bool output)
 {
     if (pinid >= 32) {
         return -1;
@@ -60,36 +45,35 @@ int k20_gpio_direction(GPIO_MemMapPtr gpio, uint8_t pinid, bool output)
 
     return -1;
 }
-/** @{ */
 
-static int _gpio_pin_activate(GPIO_MemMapPtr gpio, uint8_t pinid, bool high_power)
+static int _gpio_pin_activate(GPIO_Type *gpio, uint8_t pinid, bool high_power)
 {
     if (pinid >= 32) {
         return -1;
     }
 
-    PORT_MemMapPtr port;
+    PORT_Type *port;
 
     /* Enable the clock gate for the corresponding port first */
-    if (gpio == PTA_BASE_PTR) {
+    if (gpio == PTA) {
         kinetis_clock_gate_enable(K20_CGATE_PORTA);
-        port = PORTA_BASE_PTR;
+        port = PORTA;
     }
-    else if (gpio == PTB_BASE_PTR) {
+    else if (gpio == PTB) {
         kinetis_clock_gate_enable(K20_CGATE_PORTB);
-        port = PORTB_BASE_PTR;
+        port = PORTB;
     }
-    else if (gpio == PTC_BASE_PTR) {
+    else if (gpio == PTC) {
         kinetis_clock_gate_enable(K20_CGATE_PORTC);
-        port = PORTC_BASE_PTR;
+        port = PORTC;
     }
-    else if (gpio == PTD_BASE_PTR) {
+    else if (gpio == PTD) {
         kinetis_clock_gate_enable(K20_CGATE_PORTD);
-        port = PORTD_BASE_PTR;
+        port = PORTD;
     }
-    else if (gpio == PTE_BASE_PTR) {
+    else if (gpio == PTE) {
         kinetis_clock_gate_enable(K20_CGATE_PORTE);
-        port = PORTE_BASE_PTR;
+        port = PORTE;
     }
     else {
         return -1;
@@ -101,7 +85,7 @@ static int _gpio_pin_activate(GPIO_MemMapPtr gpio, uint8_t pinid, bool high_powe
     return 0;
 }
 
-static int _gpio_enable(GPIO_MemMapPtr gpio, uint8_t pinid, bool output, bool high_power)
+static int _gpio_enable(GPIO_Type *gpio, uint8_t pinid, bool output, bool high_power)
 {
     if(_gpio_pin_activate(gpio, pinid, high_power) != 0) {
         return -1;
@@ -110,39 +94,11 @@ static int _gpio_enable(GPIO_MemMapPtr gpio, uint8_t pinid, bool output, bool hi
     return k20_gpio_direction(gpio, pinid, output);
 }
 
-/**
- * @brief Enables a GPIO as output
- *
- * @see k20_gpio_enable_input(GPIO_MemMapPtr, uint8_t)
- * @see k20_gpio_direction(GPIO_MemMapPtr, uint8_t, bool)
- *
- * @param[in]  gpio         A pointer to the GPIO. Obtain with the macro PORTx_BASE_PTR
- * @param[in]  pinid        The number of the pin to be set. Must be between 0 and 31
- * @param[in]  high_power   Use high power mode (for driving LEDs and similar peripherals)
- *
- * @return 0 if setting the GPIO was successful, -1 otherwise.
- * @{
- */
-int k20_gpio_enable_output(GPIO_MemMapPtr gpio, uint8_t pinid, bool high_power)
+int k20_gpio_enable_output(GPIO_Type *gpio, uint8_t pinid, bool high_power)
 {
     return _gpio_enable(gpio, pinid, true, high_power);
 }
-/** @} */
-
-/**
- * @brief Enables a GPIO as input
- *
- * @see k20_gpio_enable_output(GPIO_MemMapPtr, uint8_t, bool)
- * @see k20_gpio_direction(GPIO_MemMapPtr, uint8_t, bool)
- *
- * @param[in]  gpio         A pointer to the GPIO. Obtain with the macro PORTx_BASE_PTR
- * @param[in]  pinid        The number of the pin to be set. Must be between 0 and 31
- *
- * @return 0 if setting the GPIO was successful, -1 otherwise.
- * @{
- */
-int k20_gpio_enable_input(GPIO_MemMapPtr gpio, uint8_t pinid)
+int k20_gpio_enable_input(GPIO_Type *gpio, uint8_t pinid)
 {
     return _gpio_enable(gpio, pinid, false, false);
 }
-/** @} */

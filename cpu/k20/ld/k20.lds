@@ -1,5 +1,5 @@
 /* Memory Spaces Definitions */
-#include "k20_memory.h"
+#include "k20_family.h"
 
 MEMORY
 {

@@ -22,9 +22,7 @@
 #include <stdlib.h>
 
 #include "board.h"
-#include "MK20DZ10.h"
 #include <k20_gpio.h>
-#include <k20_uart.h>
 #include <periph/uart.h>
 
 static void leds_init(void);
@@ -40,9 +38,6 @@ void board_init(void)
 
     /* initialize the CPU */
     cpu_init();
-
-    /* select the UART0 at PIN PA1/2 */
-    k20_uart0_select_output(K20_UART0_OUTPUT_PTA_1_2);
 }
 
 /**
@@ -55,5 +50,5 @@ void board_init(void)
  */
 static void leds_init(void)
 {
-    k20_gpio_enable_output(PTB_BASE_PTR, 16, true);
+    k20_gpio_enable_output(PTB, 16, true);
 }
