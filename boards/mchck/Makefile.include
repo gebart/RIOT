@@ -2,6 +2,7 @@
 export CPU = k20
 export CPU_MODEL = mk20dx32vlf5
 export CPU_BOOTLOADER_OFFSET = 0xc00
+export CLOCK_DESIRED_CORECLOCK = 50000000 # 50 Mhz
 
 #define the default port depending on the host OS
 OS := $(shell uname)

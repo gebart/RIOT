@@ -3,9 +3,13 @@
  * @ingroup         cpu
  * @brief           Freescale Kinetis K20 CPU family
  *
- * @note    This implementation currently only supports the k20_50 subfamily without FPU
- *          and a max frequency of 50 Mhz. The newer K20 devices with higher frequencies
- *          can probably be added easily.
+ * @note This implementation currently only supports the k20_50 subfamily
+ *       without FPU and a max frequency of 50 Mhz. The newer K20 devices with
+ *       higher frequencies can probably be added easily. In theory you just
+ *       need to add the device serial numbers to k20_family.h and define the
+ *       variables configured there.
+ *       This implementation also lacks configuration options for external
+ *       clocks, see cpu.c for details.
  */
 
 /**

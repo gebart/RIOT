@@ -32,6 +32,10 @@ export CFLAGS += $(CPU_MODEL_CFLAG)
 CPU_BOOTLOADER_OFFSET ?= 0x0
 export CFLAGS += -DCPU_BOOTLOADER_OFFSET=$(CPU_BOOTLOADER_OFFSET)
 
+# Desired core clock. Be on the safe side
+CLOCK_DESIRED_CORE_CLOCK ?= 25000000
+export CFLAGS += -DCLOCK_DESIRED_CORECLOCK=$(CLOCK_DESIRED_CORECLOCK)
+
 # include CPU specific includes
 export INCLUDES += -I$(RIOTCPU)/$(CPU)/include
 

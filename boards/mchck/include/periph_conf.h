@@ -26,27 +26,16 @@ extern "C" {
 #endif
 
 /**
- * @name Clock system configuration.
- * @note Consider cpu/k20/cpu.c for reference.
- * @{
- */
-
-/**
  * As the 'original' mchck firmware does this too we think it is not too
  * dangerous to use this option. At the very least people using this board have
  * already tested this multiple times and would have already ended up with a
  * damaged MCU if this were a problem.
  */
-#define K20_SUPPRESS_UNSAFE_FLL_FACTOR_WARNING
 #define K20_USE_UNSAFE_FLL_FACTOR_ON_INTERNAL_OSCILLATOR
+#define K20_SUPPRESS_UNSAFE_FLL_FACTOR_WARNING
 
-
-#ifdef K20_USE_UNSAFE_FLL_FACTOR_ON_INTERNAL_OSCILLATOR
-#define CLOCK_CORECLOCK     (47972352U)
-#else
-#define CLOCK_CORECLOCK     (41943040U)
-#endif
-/** @} */
+/* desired clock of 50 MHz */
+#define CLOCK_DESIRED_CORECLOCK 50000000
 
 /**
  * @name Timer configuration

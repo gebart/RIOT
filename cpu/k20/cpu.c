@@ -19,7 +19,6 @@
 
 #include <stdint.h>
 #include "cpu.h"
-#include "periph_conf.h"
 
 static void cpu_clock_init(void);
 
@@ -36,10 +35,9 @@ void cpu_init(void)
 /**
  * @brief Configure the controllers clock system
  *
- * @note This currently only supports a fixed 48 Mhz internal clock source.
- *       This should at least have the option to support an external
- *       reference clock. As one wasn't available on the testing hardware this
- *       isn't implemented yet.
+ * @note This currently only supports the internal clock source. This should at
+ *       least have the option to support an external reference clock. As one
+ *       wasn't available on the testing hardware this isn't implemented yet.
  *
  * "In FBI and FEI modes, setting C4[DMX32] bit is not recommended. If the
  * internal reference is trimmed to a frequency above 32.768 kHz, the
@@ -72,12 +70,12 @@ void cpu_init(void)
 static void cpu_clock_init(void)
 {
     /**
-     * Set the FLL to ~42 or 48 Mhz as configured:
+     * Set the FLL to as configured in cpu-conf.h:
      */
 #ifdef K20_USE_UNSAFE_FLL_FACTOR_ON_INTERNAL_OSCILLATOR
-    MCG->C4 = (01 << MCG_C4_DRST_DRS_SHIFT) | (1 << MCG_C4_DMX32_SHIFT);
+    MCG->C4 = (CLOCK_MCG_DRST_CONFIG << MCG_C4_DRST_DRS_SHIFT) | (1 << MCG_C4_DMX32_SHIFT);
 #else
-    MCG->C4 = (01 << MCG_C4_DRST_DRS_SHIFT)
+    MCG->C4 = (CLOCK_MCG_DRST_CONFIG << MCG_C4_DRST_DRS_SHIFT)
 #endif
 
     SIM->SOPT2 &= ~(0 << SIM_SOPT2_PLLFLLSEL_SHIFT);
@@ -96,7 +94,7 @@ static void cpu_clock_init(void)
 }
 
 
-#if defined(K20_USE_UNSAFE_FLL_FACTOR_ON_INTERNAL_OSCILLATOR) && defined(K20_SUPPRESS_UNSAFE_FLL_FACTOR_WARNING)
+#if defined(K20_USE_UNSAFE_FLL_FACTOR_ON_INTERNAL_OSCILLATOR) && !defined(K20_SUPPRESS_UNSAFE_FLL_FACTOR_WARNING)
 #warning "This MCU uses an internal oscillator with a frequency very close to the max specified value. If the internal oscillator is not correctly calibrated this MIGHT damage your hardware. Check /cpu/k20/cpu.c:cpu_clock_init() for further details on this matter. Define K20_SUPPRESS_UNSAFE_FLL_FACTOR_WARNING to supress this warning. Undefine K20_USE_UNSAFE_FLL_FACTOR_ON_INTERNAL_OSCILLATOR to use safe defaults."
 #endif
 
