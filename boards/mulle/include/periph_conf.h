@@ -205,6 +205,12 @@
 #define SPI_0_PCS0_PORT         PORTD
 #define SPI_0_PCS0_PORT_CLKEN() (SIM->SCGC5 |= SIM_SCGC5_PORTD_MASK)
 #define SPI_0_PCS0_AF           2
+/* SPI chip select polarity */
+#define SPI_0_PCS0_ACTIVE_LOW   1
+#define SPI_0_PCS1_ACTIVE_LOW   1
+#define SPI_0_PCS2_ACTIVE_LOW   1
+#define SPI_0_PCS3_ACTIVE_LOW   1
+
 /** @} */
 
 
