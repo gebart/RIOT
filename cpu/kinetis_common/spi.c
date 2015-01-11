@@ -106,7 +106,10 @@ int spi_init_master(spi_t dev, spi_conf_t conf, spi_speed_t speed)
 
     /* enable SPI */
     spi_dev->MCR = SPI_MCR_MSTR_MASK
-                   | SPI_MCR_PCSIS(1)
+                   | SPI_MCR_PCSIS((SPI_0_PCS0_ACTIVE_LOW << 0) |
+                                   (SPI_0_PCS1_ACTIVE_LOW << 1) |
+                                   (SPI_0_PCS2_ACTIVE_LOW << 2) |
+                                   (SPI_0_PCS3_ACTIVE_LOW << 3))
                    | SPI_MCR_DOZE_MASK
                    | SPI_MCR_CLR_TXF_MASK
                    | SPI_MCR_CLR_RXF_MASK;
