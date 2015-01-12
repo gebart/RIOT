@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Eistec AB
+ * Copyright (C) 2015 Eistec AB
  *
  * This file is subject to the terms and conditions of the GNU Lesser General
  * Public License v2.1. See the file LICENSE in the top level directory for more
@@ -92,7 +92,7 @@
 #define PIN_INTERRUPT_EDGE 0b1011
 
 /**
- * @name Kernel configuration
+ * @name Kernel stack size configuration
  *
  * TODO: Tune this
  * @{
@@ -107,10 +107,12 @@
 /** @} */
 
 /**
- * @name Length for reading CPU_ID (named UID in Freescale documents)
+ * @name Length and address for reading CPU_ID (named UID in Freescale documents)
+ * @{
  */
 #define CPUID_ID_LEN                    (16)
 #define CPUID_ID_PTR                    ((void *)(&(SIM->UIDH)))
+/** @} */
 
 
 /**
@@ -125,7 +127,8 @@
 /** @} */
 
 /**
- * @name Clock settings for the lptmr timer
+ * @name Clock settings for the LPTMR0 timer
+ * @{
  */
 #define LPTIMER_CLKSRC_MCGIRCLK          0    /**< internal reference clock (4MHz) */
 #define LPTIMER_CLKSRC_LPO               1    /**< PMC 1kHz output */
@@ -149,6 +152,7 @@
 #define LPTIMER_CLK_PRESCALE    0
 #define LPTIMER_SPEED           1000
 #endif
+/** @} */
 
 
 #endif /* __CPU_CONF_H */

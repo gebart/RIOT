@@ -1,21 +1,11 @@
 /*
- * Copyright (C) 2014 Eistec AB
+ * Copyright (C) 2015 Eistec AB
  *
  * This file is subject to the terms and conditions of the GNU Lesser General
  * Public License v2.1. See the file LICENSE in the top level directory for more
  * details.
  */
-/**
- * @ingroup     cpu_k60
- * @{
- *
- * @file        startup.c
- * @brief       Startup code and interrupt vector definition
- *
- * @author      Joakim Gebart <joakim.gebart@eistec.se>
- *
- * @}
- */
+
 #include <stdint.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -23,7 +13,17 @@
 #include "board.h"
 
 /**
- * @brief functions for initializing the board, std-lib and kernel
+ * @ingroup     cpu_k60
+ * @{
+ *
+ * @file
+ * @brief       Startup code for K60 CPUs
+ *
+ * @author      Joakim Gebart <joakim.gebart@eistec.se>
+ */
+
+/**
+ * @brief functions for initializing the board, libc and kernel
  */
 extern void board_init(void);
 extern void kernel_init(void);
@@ -77,8 +77,8 @@ extern uint32_t _ramcode_start[];
 extern uint32_t _ramcode_end[];
 /* Start of .ramcode section in flash */
 extern uint32_t _ramcode_load[];
-/*
- * Copy the ramcode section to RAM.
+/**
+ * @brief Copy the ramcode section to RAM.
  */
 static inline void
 copy_ramcode(void)
@@ -100,8 +100,8 @@ extern void *_vector_ram_start[];
 extern void *_vector_ram_end[];
 /* Start of .vector_table section in flash */
 extern void *_vector_rom[];
-/*
- * Copy the interrupt vector table to RAM.
+/**
+ * @brief Copy the interrupt vector table to RAM.
  */
 static inline void
 copy_isr_vector(void)
@@ -114,7 +114,9 @@ copy_isr_vector(void)
 }
 
 
-/* Initialize all data used by the C runtime. */
+/**
+ * @brief Initialize all data used by the C runtime.
+ */
 static inline void
 init_data(void)
 {
@@ -127,9 +129,9 @@ init_data(void)
   copy_isr_vector();
 }
 
-/* our local copy of newlib init */
-void call_init_array(void);
-
+/**
+ * @brief Reset handler for K60 CPU.
+ */
 /* Stack pointer will be set to _stack_start by the hardware at reset/power on */
 void
 reset_handler(void)
@@ -184,3 +186,4 @@ reset_handler(void)
   /* main should never return, but just in case... */
   while(1);
 }
+/** @} */

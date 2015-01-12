@@ -1,12 +1,23 @@
-/**
- * \file
- *         Implementation of debugging fault handlers for ARM Cortex M3/M4 CPUs.
+/*
+ * Copyright (C) 2015 Eistec AB
  *
- * \author
- *         Joakim Gebart <joakim.gebart@eistec.se>
+ * This file is subject to the terms and conditions of the GNU Lesser General
+ * Public License v2.1. See the file LICENSE in the top level directory for more
+ * details.
  */
+
 #include <stdint.h>
 #include <stdio.h>
+
+/**
+ * @ingroup         cpu_k60
+ * @{
+ *
+ * @file
+ * @brief           Implementation of debugging fault handlers for ARM Cortex M3/M4 CPUs.
+ *
+ * @author          Joakim Gebart <joakim.gebart@eistec.se>
+ */
 
 /**
  * Hard fault handler (C part)
@@ -77,3 +88,4 @@ void hard_fault_handler_c(uint32_t * hardfault_args)
   __asm volatile ("bkpt #0\n");
   while(1);
 }
+/** @} */

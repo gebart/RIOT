@@ -1,24 +1,24 @@
 /*
- * Copyright (C) 2014 Freie Universität Berlin
+ * Copyright (C) 2015 Eistec AB
  *
  * This file is subject to the terms and conditions of the GNU Lesser General
  * Public License v2.1. See the file LICENSE in the top level directory for more
  * details.
  */
 
+#include <stdint.h>
+#include "cpu.h"
+
 /**
  * @ingroup     cpu_k60
  * @{
  *
  * @file
- * @brief       Implementation of the CPU initialization
+ * @brief       Implementation of K60 CPU initialization.
  *
- * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
+ * @author      Joakim Gebart <joakim.gebart@eistec.se>
  * @}
  */
-
-#include <stdint.h>
-#include "cpu.h"
 
 extern void *_vector_rom[];
 
@@ -33,3 +33,4 @@ void cpu_init(void)
     /* set pendSV interrupt to lowest possible priority */
     NVIC_SetPriority(PendSV_IRQn, 0xff);
 }
+/** @} */

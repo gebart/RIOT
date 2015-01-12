@@ -1,10 +1,30 @@
 /*
- * Interrupt vector for K60 MCU.
+ * Copyright (C) 2015 Eistec AB
  *
- * Note: It is not necessary to modify this file to define custom interrupt
+ * This file is subject to the terms and conditions of the GNU Lesser General
+ * Public License v2.1. See the file LICENSE in the top level directory for more
+ * details.
+ */
+
+/**
+ * @ingroup         cpu_k60
+ * @{
+ *
+ * @file
+ *
+ * @brief Interrupt vector for K60 MCU.
+ *
+ * @author Joakim Gebart <joakim.gebart@eistec.se>
+ *
+ * @note It is not necessary to modify this file to define custom interrupt
  * service routines. All symbols are defined weak, it is only necessary to
  * define a function with the same name in another file to override the default
  * interrupt handlers.
+ */
+
+/**
+ * @name Interrupt vector definition
+ * @{
  */
 
 #define ISR_VECTOR_SECTION __attribute__ ((used,section(".vector_table")))
@@ -143,6 +163,9 @@ extern void* _estack[];
 
 typedef void (*ISR_func)(void);
 
+/**
+ * @brief Interrupt vector definition
+ */
 const ISR_func isr_vector[111] ISR_VECTOR_SECTION =
 {
   /* ARM Cortex defined interrupt vectors */
@@ -261,12 +284,18 @@ const ISR_func isr_vector[111] ISR_VECTOR_SECTION =
   isr_software
 };
 
+/**
+ * @brief Default handler for Non-Maskable Interrupt
+ */
 void
 dNMI_handler(void)
 {
   while(1);
 }
 
+/**
+ * @brief Default handler for unhandled interrupts.
+ */
 static void
 unhandled_interrupt(void)
 {
@@ -315,3 +344,6 @@ dBusFault_handler(void)
 {
   while(1);
 }
+/** @} */
+
+/** @} */
