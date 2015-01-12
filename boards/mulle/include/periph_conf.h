@@ -212,6 +212,13 @@
 #define SPI_0_PCS2_ACTIVE_LOW   1
 #define SPI_0_PCS3_ACTIVE_LOW   1
 
+/* SPI delay timing configuration */
+/* These values are necessary for communicating with the AT86RF212B when running
+ * the MCU core at high clock frequencies. */
+#define SPI_0_TCSC_FREQ (5555555) /* It looks silly, but this is correct. 1/180e-9 */
+#define SPI_0_TASC_FREQ (5454545) /* It looks silly, but this is correct. 1/183e-9 */
+#define SPI_0_TDT_FREQ  (4000000) /* 1/250e-9 */
+
 /** @} */
 
 
