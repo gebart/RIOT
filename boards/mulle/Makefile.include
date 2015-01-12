@@ -68,7 +68,7 @@ ifneq ($(PROGRAMMER_SERIAL),)
   ifeq ($(PORT),)
     # try to find tty name by serial number, only works on Linux currently.
     ifeq ($(OS),Linux)
-      PORT :=$(shell $(RIOTBOARD)/$(BOARD)/dist/find-tty.sh $(PROGRAMMER_SERIAL))
+      PORT :=$(shell $(RIOTBOARD)/dist/tools/ftdi/find-tty.sh $(PROGRAMMER_SERIAL))
     endif
   endif
 endif
