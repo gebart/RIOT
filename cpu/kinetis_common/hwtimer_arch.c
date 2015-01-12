@@ -30,8 +30,19 @@
 #define ENABLE_DEBUG (0)
 #include "debug.h"
 
-#define LPTIMER_IRQ_PRIO          1
 #define LPTMR_MAXTICKS            (0x0000FFFF)
+
+#ifndef LPTIMER_CNR_NEEDS_LATCHING
+#warning LPTIMER_CNR_NEEDS_LATCHING is not defined in cpu-conf.h!
+#endif
+
+#if LPTIMER_CNR_NEEDS_LATCHING
+/* Write some garbage to CNR to latch the current value */
+#define LPTIMER_LATCH_CNR() (*(&(LPTIMER_DEV->CNR)) = 0)
+#else
+/* The current CPU does not need latching of the CNR register */
+#define LPTIMER_LATCH_CNR() {}
+#endif
 
 typedef struct {
     uint32_t counter32b;
@@ -48,35 +59,34 @@ void (*timeout_handler)(int);
 
 inline static void hwtimer_start(void)
 {
-    LPTMR0->CSR |= LPTMR_CSR_TEN_MASK;
+    LPTIMER_DEV->CSR |= LPTMR_CSR_TEN_MASK;
 }
 
 inline static void hwtimer_stop(void)
 {
-    LPTMR0->CSR &= ~LPTMR_CSR_TEN_MASK;
+    LPTIMER_DEV->CSR &= ~LPTMR_CSR_TEN_MASK;
 }
 
 void hwtimer_arch_init(void (*handler)(int), uint32_t fcpu)
 {
     timeout_handler = handler;
-    LPTMR_Type *timer = LPTMR0;
 
-    /* unlock lptrm0 */
-    SIM->SCGC5 |= (SIM_SCGC5_LPTMR_MASK);
+    /* unlock LPTMR0 */
+    LPTIMER_CLKEN();
     /* set lptmr's IRQ priority */
-    NVIC_SetPriority(LPTimer_IRQn, LPTIMER_IRQ_PRIO);
+    NVIC_SetPriority(LPTIMER_IRQ_CHAN, LPTIMER_IRQ_PRIO);
     /* reset lptmr */
-    timer->CSR = 0;
+    LPTIMER_DEV->CSR = 0;
 
     switch (LPTIMER_CLKSRC) {
         case LPTIMER_CLKSRC_MCGIRCLK:
             /* Select MCGIRCLK as clock source */
-            timer->PSR = LPTMR_PSR_PRESCALE(LPTIMER_CLK_PRESCALE) | LPTMR_PSR_PCS(0);
+            LPTIMER_DEV->PSR = LPTMR_PSR_PRESCALE(LPTIMER_CLK_PRESCALE) | LPTMR_PSR_PCS(0);
             break;
 
         case LPTIMER_CLKSRC_OSCERCLK:
             /* Select OSCERCLK(4 MHz) as clock source */
-            timer->PSR = LPTMR_PSR_PRESCALE(LPTIMER_CLK_PRESCALE) | LPTMR_PSR_PCS(3);
+            LPTIMER_DEV->PSR = LPTMR_PSR_PRESCALE(LPTIMER_CLK_PRESCALE) | LPTMR_PSR_PCS(3);
             break;
 
         case LPTIMER_CLKSRC_ERCLK32K:
@@ -85,18 +95,18 @@ void hwtimer_arch_init(void (*handler)(int), uint32_t fcpu)
             SIM->SOPT1 &= ~(SIM_SOPT1_OSC32KSEL_MASK);
             SIM->SOPT1 |= SIM_SOPT1_OSC32KSEL(2);
             /* select ERCLK32K as clock source for lptmr0 */
-            timer->PSR = LPTMR_PSR_PBYP_MASK | LPTMR_PSR_PCS(2);
+            LPTIMER_DEV->PSR = LPTMR_PSR_PBYP_MASK | LPTMR_PSR_PCS(2);
             break;
 
         case LPTIMER_CLKSRC_LPO:
         default:
             /* select LPO as clock source (1 kHz)*/
-            timer->PSR = LPTMR_PSR_PBYP_MASK | LPTMR_PSR_PCS(1);
+            LPTIMER_DEV->PSR = LPTMR_PSR_PBYP_MASK | LPTMR_PSR_PCS(1);
     }
 
-    LPTMR0->CMR = (uint16_t)(LPTMR_MAXTICKS);
+    LPTIMER_DEV->CMR = (uint16_t)(LPTMR_MAXTICKS);
     /* enable lptrm interrupt */
-    timer->CSR = LPTMR_CSR_TIE_MASK;
+    LPTIMER_DEV->CSR = LPTMR_CSR_TIE_MASK;
 
     stimer.counter32b = 0;
     stimer.cmr32b = 0;
@@ -108,19 +118,19 @@ void hwtimer_arch_init(void (*handler)(int), uint32_t fcpu)
 
 void hwtimer_arch_enable_interrupt(void)
 {
-    NVIC_EnableIRQ(LPTimer_IRQn);
+    NVIC_EnableIRQ(LPTIMER_IRQ_CHAN);
 }
 
 void hwtimer_arch_disable_interrupt(void)
 {
-    NVIC_DisableIRQ(LPTimer_IRQn);
+    NVIC_DisableIRQ(LPTIMER_IRQ_CHAN);
 }
 
 void hwtimer_arch_set(unsigned long offset, short timer)
 {
     (void)timer;
-    LPTMR0->CNR = 42;
-    stimer.counter32b += (uint32_t)LPTMR0->CNR;
+    LPTIMER_LATCH_CNR();
+    stimer.counter32b += (uint32_t)LPTIMER_DEV->CNR;
     hwtimer_stop();
 
     stimer.cmr32b = stimer.counter32b + offset;
@@ -132,15 +142,15 @@ void hwtimer_arch_set(unsigned long offset, short timer)
 
     DEBUG("cntr: %lu, cmr: %lu, diff: %lu\n", stimer.counter32b, stimer.cmr32b, stimer.diff);
 
-    LPTMR0->CMR = (uint16_t)(stimer.diff);
+    LPTIMER_DEV->CMR = (uint16_t)(stimer.diff);
     hwtimer_start();
 }
 
 void hwtimer_arch_set_absolute(unsigned long value, short timer)
 {
     (void)timer;
-    LPTMR0->CNR = 42;
-    stimer.counter32b += (uint32_t)LPTMR0->CNR;
+    LPTIMER_LATCH_CNR();
+    stimer.counter32b += (uint32_t)LPTIMER_DEV->CNR;
     hwtimer_stop();
 
     stimer.cmr32b = value;
@@ -152,33 +162,33 @@ void hwtimer_arch_set_absolute(unsigned long value, short timer)
 
     DEBUG("cntr: %lu, cmr: %lu, diff: %lu\n", stimer.counter32b, stimer.cmr32b, stimer.diff);
 
-    LPTMR0->CMR = (uint16_t)(stimer.diff);
+    LPTIMER_DEV->CMR = (uint16_t)(stimer.diff);
     hwtimer_start();
 }
 
 void hwtimer_arch_unset(short timer)
 {
-    LPTMR0->CNR = 42;
-    stimer.counter32b += (uint32_t)LPTMR0->CNR;
+    LPTIMER_LATCH_CNR();
+    stimer.counter32b += (uint32_t)LPTIMER_DEV->CNR;
     hwtimer_stop();
     stimer.diff = 0;
     stimer.cmr32b = 0;
-    LPTMR0->CMR = (uint16_t)(LPTMR_MAXTICKS);
+    LPTIMER_DEV->CMR = (uint16_t)(LPTMR_MAXTICKS);
     hwtimer_start();
 
 }
 
 unsigned long hwtimer_arch_now(void)
 {
-    LPTMR0->CNR = 42;
-    return (unsigned int)(((uint32_t)LPTMR0->CNR + stimer.counter32b));
+    LPTIMER_LATCH_CNR();
+    return (unsigned int)(((uint32_t)LPTIMER_DEV->CNR + stimer.counter32b));
 }
 
 void isr_lptmr0(void)
 {
-    stimer.counter32b += (uint32_t)LPTMR0->CMR;
+    stimer.counter32b += (uint32_t)LPTIMER_DEV->CMR;
     /* clear compare flag (w1c bit) */
-    LPTMR0->CSR |= LPTMR_CSR_TCF_MASK;
+    LPTIMER_DEV->CSR |= LPTMR_CSR_TCF_MASK;
 
     if (stimer.diff) {
         if (stimer.cmr32b > stimer.counter32b) {
