@@ -130,13 +130,16 @@
  * @name Clock settings for the LPTMR0 timer
  * @{
  */
+#define LPTIMER_DEV                      (LPTMR0) /**< LPTIMER hardware module */
+#define LPTIMER_CLKEN()                  (BITBAND_REG(SIM->SCGC5, SIM_SCGC5_LPTIMER_SHIFT) = 1)    /**< Enable LPTMR0 clock gate */
+#define LPTIMER_CLKDIS()                 (BITBAND_REG(SIM->SCGC5, SIM_SCGC5_LPTIMER_SHIFT) = 0)    /**< Disable LPTMR0 clock gate */
 #define LPTIMER_CLKSRC_MCGIRCLK          0    /**< internal reference clock (4MHz) */
 #define LPTIMER_CLKSRC_LPO               1    /**< PMC 1kHz output */
 #define LPTIMER_CLKSRC_ERCLK32K          2    /**< RTC clock 32768Hz */
 #define LPTIMER_CLKSRC_OSCERCLK          3    /**< system oscillator output, clock from RF-Part */
 
 #ifndef LPTIMER_CLKSRC
-#define LPTIMER_CLKSRC                   LPTIMER_CLKSRC_LPO    /**< default clock source */
+#define LPTIMER_CLKSRC                   LPTIMER_CLKSRC_ERCLK32K    /**< default clock source */
 #endif
 
 #if (LPTIMER_CLKSRC == LPTIMER_CLKSRC_MCGIRCLK)
@@ -151,6 +154,30 @@
 #else
 #define LPTIMER_CLK_PRESCALE    0
 #define LPTIMER_SPEED           1000
+#endif
+
+/** IRQ priority for hwtimer interrupts */
+#define LPTIMER_IRQ_PRIO          1
+/** IRQ channel for hwtimer interrupts */
+#define LPTIMER_IRQ_CHAN          LPTMR0_IRQn
+
+/* Compatibility definitions */
+#define LPTMR0_IRQn LPTimer_IRQn
+#if K60_CPU_REV == 1
+/* Rev 2.x made the OSC32KSEL field into a bitfield (is a single bit in 1.x) */
+#define SIM_SOPT1_OSC32KSEL(a) (SIM_SOPT1_OSC32KSEL_MASK)
+
+/*
+ * The CNR register latching in LPTMR0 was added in silicon rev 2.x. With
+ * rev 1.x we do not need to do anything in order to read the current timer counter
+ * value
+ */
+#define LPTIMER_CNR_NEEDS_LATCHING 0
+
+#elif K60_CPU_REV == 2
+
+#define LPTIMER_CNR_NEEDS_LATCHING 1
+
 #endif
 /** @} */
 
