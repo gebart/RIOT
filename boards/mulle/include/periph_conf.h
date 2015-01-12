@@ -1,19 +1,20 @@
 /*
- * Copyright (C) 2014 Freie Universität Berlin
+ * Copyright (C) 2015 Eistec AB
  *
  * This file is subject to the terms and conditions of the GNU Lesser General
  * Public License v2.1. See the file LICENSE in the top level directory for more
  * details.
  */
 
+
 /**
- * @ingroup     board_stm32f4discovery
+ * @ingroup     board_mulle
  * @{
  *
  * @file
- * @name       Peripheral MCU configuration for the STM32F4discovery board
+ * @name        Peripheral MCU configuration for the Eistec Mulle
  *
- * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
+ * @author      Joakim Gebart <joakim.gebart@eistec.se>
  */
 
 #ifndef __PERIPH_CONF_H
@@ -187,7 +188,7 @@
 #define SPI_0_IRQ               SPI0_IRQn
 #define SPI_0_ISR               isr_spi0
 #define SPI_0_IRQ_PRIO          1
-#define SPI_0_FREQ              SystemSysClock
+#define SPI_0_FREQ              SystemBusClock
 /* SPI 0 pin configuration */
 #define SPI_0_SCK_PIN           1
 #define SPI_0_SCK_PORT          PORTD
