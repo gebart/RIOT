@@ -45,7 +45,6 @@ static spi_state_t spi_config[SPI_NUMOF];
 
 int spi_init_master(spi_t dev, spi_conf_t conf, spi_speed_t speed)
 {
-
     SPI_Type *spi_dev;
 
     switch (speed) {
@@ -80,12 +79,15 @@ int spi_init_master(spi_t dev, spi_conf_t conf, spi_speed_t speed)
             spi_dev = SPI_0_DEV;
             /* enable clocks */
             SPI_0_CLKEN();
-            SPI_0_PORT_CLKEN();
+            SPI_0_PCS0_PORT_CLKEN();
+            SPI_0_SCK_PORT_CLKEN();
+            SPI_0_SOUT_PORT_CLKEN();
+            SPI_0_SIN_PORT_CLKEN();
             /* Set PORT to AF mode */
-            SPI_0_PORT->PCR[SPI_0_PCS0_PIN] = PORT_PCR_MUX(SPI_0_PIN_AF);
-            SPI_0_PORT->PCR[SPI_0_SCK_PIN] = PORT_PCR_MUX(SPI_0_PIN_AF);
-            SPI_0_PORT->PCR[SPI_0_SOUT_PIN] = PORT_PCR_MUX(SPI_0_PIN_AF);
-            SPI_0_PORT->PCR[SPI_0_SIN_PIN] = PORT_PCR_MUX(SPI_0_PIN_AF);
+            SPI_0_PCS0_PORT->PCR[SPI_0_PCS0_PIN] = PORT_PCR_MUX(SPI_0_PCS0_AF);
+            SPI_0_SCK_PORT->PCR[SPI_0_SCK_PIN] = PORT_PCR_MUX(SPI_0_SCK_AF);
+            SPI_0_SOUT_PORT->PCR[SPI_0_SOUT_PIN] = PORT_PCR_MUX(SPI_0_SOUT_AF);
+            SPI_0_SIN_PORT->PCR[SPI_0_SIN_PIN] = PORT_PCR_MUX(SPI_0_SIN_AF);
             break;
 #endif /* SPI_0_EN */
 
@@ -104,7 +106,10 @@ int spi_init_master(spi_t dev, spi_conf_t conf, spi_speed_t speed)
 
     /* enable SPI */
     spi_dev->MCR = SPI_MCR_MSTR_MASK
-                   | SPI_MCR_PCSIS(1)
+                   | SPI_MCR_PCSIS((SPI_0_PCS0_ACTIVE_LOW << 0) |
+                                   (SPI_0_PCS1_ACTIVE_LOW << 1) |
+                                   (SPI_0_PCS2_ACTIVE_LOW << 2) |
+                                   (SPI_0_PCS3_ACTIVE_LOW << 3))
                    | SPI_MCR_DOZE_MASK
                    | SPI_MCR_CLR_TXF_MASK
                    | SPI_MCR_CLR_RXF_MASK;
@@ -125,12 +130,15 @@ int spi_init_slave(spi_t dev, spi_conf_t conf, char(*cb)(char data))
             spi_dev = SPI_0_DEV;
             /* enable clocks */
             SPI_0_CLKEN();
-            SPI_0_PORT_CLKEN();
+            SPI_0_PCS0_PORT_CLKEN();
+            SPI_0_SCK_PORT_CLKEN();
+            SPI_0_SOUT_PORT_CLKEN();
+            SPI_0_SIN_PORT_CLKEN();
             /* Set PORT to AF mode */
-            SPI_0_PORT->PCR[SPI_0_PCS0_PIN] = PORT_PCR_MUX(SPI_0_PIN_AF);
-            SPI_0_PORT->PCR[SPI_0_SCK_PIN] = PORT_PCR_MUX(SPI_0_PIN_AF);
-            SPI_0_PORT->PCR[SPI_0_SOUT_PIN] = PORT_PCR_MUX(SPI_0_PIN_AF);
-            SPI_0_PORT->PCR[SPI_0_SIN_PIN] = PORT_PCR_MUX(SPI_0_PIN_AF);
+            SPI_0_PCS0_PORT->PCR[SPI_0_PCS0_PIN] = PORT_PCR_MUX(SPI_0_PCS0_AF);
+            SPI_0_SCK_PORT->PCR[SPI_0_SCK_PIN] = PORT_PCR_MUX(SPI_0_SCK_AF);
+            SPI_0_SOUT_PORT->PCR[SPI_0_SOUT_PIN] = PORT_PCR_MUX(SPI_0_SOUT_AF);
+            SPI_0_SIN_PORT->PCR[SPI_0_SIN_PIN] = PORT_PCR_MUX(SPI_0_SIN_AF);
             break;
 #endif /* SPI_0_EN */
 
