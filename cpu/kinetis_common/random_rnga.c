@@ -28,6 +28,8 @@
 #include "periph_conf.h"
 
 #if RANDOM_NUMOF
+#ifdef KINETIS_RNGA
+
 
 typedef struct RNG_MemMap {
     uint32_t CR;
@@ -66,15 +68,15 @@ int random_read(char *buf, unsigned int num)
     int count = 0;
 
     /* self-seeding */
-    while (!(RNGA->SR & RNGA_SR_OREG_LVL_MASK));
+    while (!(KINETIS_RNGA->SR & RNG_SR_OREG_LVL_MASK));
 
-    RNGA->ER = RNGA->OR ^ (uint32_t)buf;
+    KINETIS_RNGA->ER = KINETIS_RNGA->OR ^ (uint32_t)buf;
 
     while (count < num) {
         /* wait for random data to be ready to read */
-        while (!(RNGA->SR & RNGA_SR_OREG_LVL_MASK));
+        while (!(KINETIS_RNGA->SR & RNG_SR_OREG_LVL_MASK));
 
-        tmp = RNGA->OR;
+        tmp = KINETIS_RNGA->OR;
 
         /* copy data into result vector */
         for (int i = 0; i < 4 && count < num; i++) {
@@ -89,12 +91,12 @@ int random_read(char *buf, unsigned int num)
 void random_poweron(void)
 {
     RANDOM_CLKEN();
-    RNGA->CR = RNGA_CR_INTM_MASK | RNGA_CR_HA_MASK | RNGA_CR_GO_MASK;
+    KINETIS_RNGA->CR = RNG_CR_INTM_MASK | RNG_CR_HA_MASK | RNG_CR_GO_MASK;
 }
 
 void random_poweroff(void)
 {
-    RNGA->CR = 0;
+    KINETIS_RNGA->CR = 0;
     RANDOM_CLKDIS();
 }
 
@@ -104,4 +106,5 @@ void isr_rng(void)
 }
 */
 
+#endif /* KINETIS_RNGA */
 #endif /* RANDOM_NUMOF */
