@@ -116,14 +116,86 @@ static int find_closest_baudrate_scalers(const uint32_t module_clock, const uint
   return 0;
 }
 
+/**
+ * @brief Helper function for finding optimal delay scalers.
+ *
+ * Find the prescaler and scaler settings that will yield a delay timing
+ * as close as possible (but not shorter than) the target delay, given the
+ * module runs at module_clock Hz.
+ *
+ * Hardware properties (delay configuration):
+ * Possible prescalers: 1, 3, 5, 7
+ * Possible scalers: 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65536
+ *
+ * delay = (1/f_BUS) x prescaler x scaler
+ *
+ * Because we want to do this using only integers, the target_freq parameter is
+ * the reciprocal of the delay time.
+ *
+ * @param module_clock Module clock frequency (e.g. F_BUS)
+ * @param target_freq Reciprocal (i.e. 1/t [Hz], frequency) of the desired delay time.
+ * @param closest_prescaler pointer where to write the optimal prescaler index.
+ * @param closest_scaler pointer where to write the optimal scaler index.
+ *
+ * @return 0 on success, <0 on error.
+ */
+static int find_closest_delay_scalers(const uint32_t module_clock, const uint32_t target_freq, uint8_t *closest_prescaler, uint8_t *closest_scaler) {
+  uint8_t i;
+  uint8_t k;
+  int freq;
+  int prescaler;
+  int scaler;
+  static const uint8_t num_scalers = 16;
+  static const uint8_t num_prescalers = 4;
+
+  int closest_frequency = -1;
+
+  /* Test all combinations until we arrive close to the target clock */
+  for (i = 0; i < num_prescalers; ++i)
+  {
+    for (k = 0; k < num_scalers; ++k)
+    {
+      prescaler = (i * 2) + 1;
+      scaler = (1 << (k + 1)); /* 2^(k+1) */
+      freq = module_clock / (prescaler * scaler);
+      if (freq <= target_freq)
+      {
+        /* Found closest lower frequency at this prescaler setting,
+         * compare to the best result */
+        if (closest_frequency < freq)
+        {
+          closest_frequency = freq;
+          *closest_scaler = k;
+          *closest_prescaler = i;
+        }
+        break;
+      }
+    }
+  }
+  if (closest_frequency < 0)
+  {
+    /* Error, no solution found, this line is never reachable with current
+     * hardware settings unless a _very_ low target clock is requested.
+     * (scaler_max * prescaler_max) = 458752 */
+    return -1;
+  }
+
+  return 0;
+}
 
 int spi_init_master(spi_t dev, spi_conf_t conf, spi_speed_t speed)
 {
     SPI_Type *spi_dev;
-    uint8_t br_prescaler = 0;
-    uint8_t br_scaler = 0;
+    uint8_t br_prescaler = 0xff;
+    uint8_t br_scaler = 0xff;
+    uint8_t prescaler_tmp = 0xff;
+    uint8_t scaler_tmp = 0xff;
+    uint32_t ctar = 0;
     uint32_t br_desired;
     uint32_t module_clock;
+    uint32_t tcsc_freq;
+    uint32_t tasc_freq;
+    uint32_t tdt_freq;
 
     switch (speed) {
         case SPI_SPEED_100KHZ:
@@ -156,6 +228,9 @@ int spi_init_master(spi_t dev, spi_conf_t conf, spi_speed_t speed)
         case SPI_0:
             spi_dev = SPI_0_DEV;
             module_clock = SPI_0_FREQ;
+            tcsc_freq = SPI_0_TCSC_FREQ;
+            tasc_freq = SPI_0_TASC_FREQ;
+            tdt_freq = SPI_0_TDT_FREQ;
             /* enable clocks */
             SPI_0_CLKEN();
             SPI_0_SCK_PORT_CLKEN();
@@ -171,21 +246,57 @@ int spi_init_master(spi_t dev, spi_conf_t conf, spi_speed_t speed)
         default:
             return -1;
     }
-    /* Find scaler and prescaler settings */
+    /* Find baud rate scaler and prescaler settings */
     if (find_closest_baudrate_scalers(module_clock, br_desired,
                                       &br_prescaler, &br_scaler) < 0) {
         /* Desired baud rate is too low to be reachable at current module clock frequency. */
         return -2;
     }
+    ctar |= SPI_CTAR_PBR(br_prescaler) | SPI_CTAR_BR(br_scaler);
+
+    /* Find the other delay divisors */
+    /* tCSC */
+    if (tcsc_freq == 0) {
+      /* Default to same as baud rate if set to zero. */
+      tcsc_freq = br_desired;
+    }
+    if (find_closest_delay_scalers(module_clock, tcsc_freq,
+          &prescaler_tmp, &scaler_tmp) < 0) {
+        /* failed to find a solution */
+        return -2;
+    }
+    ctar |= SPI_CTAR_PCSSCK(prescaler_tmp) | SPI_CTAR_CSSCK(scaler_tmp);
+
+    /* tASC */
+    if (tasc_freq == 0) {
+      /* Default to same as baud rate if set to zero. */
+      tasc_freq = br_desired;
+    }
+    if (find_closest_delay_scalers(module_clock, tasc_freq,
+          &prescaler_tmp, &scaler_tmp) < 0) {
+        /* failed to find a solution */
+        return -2;
+    }
+    ctar |= SPI_CTAR_PASC(prescaler_tmp) | SPI_CTAR_ASC(scaler_tmp);
+
+    /* tDT */
+    if (tdt_freq == 0) {
+      /* Default to same as baud rate if set to zero. */
+      tdt_freq = br_desired;
+    }
+    if (find_closest_delay_scalers(module_clock, tdt_freq,
+          &prescaler_tmp, &scaler_tmp) == 0) {
+        /* failed to find a solution */
+        return -2;
+    }
+    ctar |= SPI_CTAR_PDT(prescaler_tmp) | SPI_CTAR_DT(scaler_tmp);
 
     /* set speed for 8-bit access */
     spi_dev->CTAR[0] = SPI_CTAR_FMSZ(7)
-                       | SPI_CTAR_PBR(br_prescaler)
-                       | SPI_CTAR_BR(br_scaler);
+                       | ctar;
     /* set speed for 16-bit access */
     spi_dev->CTAR[1] = SPI_CTAR_FMSZ(15)
-                       | SPI_CTAR_PBR(br_prescaler)
-                       | SPI_CTAR_BR(br_scaler);
+                       | ctar;
 
     /* Set clock polarity and phase. */
     switch (conf) {
