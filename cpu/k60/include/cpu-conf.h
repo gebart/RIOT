@@ -162,8 +162,9 @@
 #define LPTIMER_IRQ_CHAN          LPTMR0_IRQn
 
 /* Compatibility definitions */
-#define LPTMR0_IRQn LPTimer_IRQn
 #if K60_CPU_REV == 1
+#define LPTMR0_IRQn LPTimer_IRQn
+
 /* Rev 2.x made the OSC32KSEL field into a bitfield (is a single bit in 1.x) */
 #define SIM_SOPT1_OSC32KSEL(a) (SIM_SOPT1_OSC32KSEL_MASK)
 
