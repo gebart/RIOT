@@ -18,8 +18,8 @@
  * @author      Joakim Gebart <joakim.gebart@eistec.se>
  */
 
-#ifndef __BOARD_H
-#define __BOARD_H
+#ifndef BOARD_H_
+#define BOARD_H_
 
 #include "cpu.h"
 #include "periph_conf.h"
@@ -96,5 +96,5 @@ void board_init(void);
 #define BOARD_RTC_LOAD_CAP_BITS (RTC_CR_SC8P_MASK | RTC_CR_SC4P_MASK)
 
 
-#endif /** __BOARD_H */
+#endif /* BOARD_H_ */
 /** @} */
