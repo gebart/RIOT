@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2014 Martine Lenders <mlenders@inf.fu-berlin.de>
+ * Copyright (C) 2015 Freie Universität Berlin
  *
  * This file is subject to the terms and conditions of the GNU Lesser
  * General Public License v2.1. See the file LICENSE in the top level
@@ -7,23 +8,23 @@
  */
 
 /**
- * @addtogroup  netdev
+ * @defgroup    net_netdev Network device driver interface
+ * @addtogroup  net
  * @{
  *
  * @file        netdev/base.h
- * @brief       Basic network device driver interface definitions.
+ * @brief       Network device driver interface definition.
  *
  * @author      Martine Lenders <mlenders@inf.fu-berlin.de>
+ * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
  */
 
-#ifndef __NETDEV_BASE_H_
-#define __NETDEV_BASE_H_
+#ifndef __NETDEV_H_
+#define __NETDEV_H_
 
 #include <errno.h>
 #include <stdint.h>
 #include <stdlib.h>
-
-#include "clist.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -349,60 +350,9 @@ struct netdev_t {
                                              communiticate with this device. */
 };
 
-/**
- * @brief   Helper function to calculate the total length of the headers in
- *          *hlist*.
- *
- * @param[in]   hlist   The header list.
- *
- * @return  Length in number of bytes of all headers in *hlist*.
- */
-size_t netdev_get_hlist_len(const netdev_hlist_t *hlist);
-
-/**
- * @brief Advance the header list
- *
- * @see clist_advance
- *
- * @param[in,out] list  The list to work upon.
- */
-static inline void netdev_hlist_advance(netdev_hlist_t **list)
-{
-    clist_advance((clist_node_t **)list);
-}
-
-/**
- * @brief Add *node* to list start of *list*
- *
- * @param[in,out] list  The list to add *node* to
- * @param[in] node      The node to add to the list
- */
-static inline void netdev_hlist_add(netdev_hlist_t **list,
-                                    netdev_hlist_t *node)
-{
-    clist_add((clist_node_t **)list, (clist_node_t *)node);
-    *list = node;
-}
-
-/**
- * @brief Removes *node* from list *list*
- *
- * @see clist_remove
- *
- * @param[in,out] list  The list to remove *node* from
- * @param[in] node      The node to remove from the list
- */
-static inline void netdev_hlist_remove(netdev_hlist_t **list,
-                                       netdev_hlist_t *node)
-{
-    clist_remove((clist_node_t **)list, (clist_node_t *)node);
-}
-
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* __NETDEV_BASE_H_ */
-/**
- * @}
- */
+#endif /* __NETDEV_H_ */
+/** @} */
