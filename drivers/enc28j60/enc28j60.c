@@ -137,14 +137,14 @@ void enc28j60_event(net_dev_t *dev, uint32_t event_type)
     }
 }
 
-net_dev_driver_t enc28j60 = {
-    enc28j60_init,
-    enc28j60_send_data,
-    enc28j60_add_rcv_cb,
-    enc28j60_rem_rcv_cb,
-    enc28j60_get_option,
-    enc28j60_set_option,
-    enc28j60_get_state,
-    enc28j60_set_state,
-    enc28j60_event
+const net_dev_driver_t enc28j60_driver = {
+    .init = enc28j60_init,
+    .send_data = enc28j60_send_data,
+    .add_receive_data_callback = enc28j60_add_rcv_cb,
+    .rem_receive_data_callback = enc28j60_rem_rcv_cb,
+    .get_option = enc28j60_get_option,
+    .set_option = enc28j60_set_option,
+    .get_state = enc28j60_get_state,
+    .set_state = enc28j60_set_state,
+    .event = enc28j60_event,
 };
