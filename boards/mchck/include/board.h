@@ -22,12 +22,19 @@
 #ifndef __BOARD_H
 #define __BOARD_H
 
+#include <periph/gpio.h>
+
 #include "cpu.h"
 #include "periph_conf.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/**
+ * @name LED GPIO pin
+ */
+#define LED_GPIO GPIO_26
 
 /**
  * Define the nominal CPU core clock in this board

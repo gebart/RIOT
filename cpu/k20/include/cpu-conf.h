@@ -25,24 +25,7 @@
 extern "C" {
 #endif
 
-
-/**
- * @brief Select the k20 CPU family header
- */
-#include "k20_family.h"
-
-#if CPU_FAMILY == MK20D5
-#include "cmsis/MK20D5.h"
-#elif CPU_FAMILY == MK20D7
-#include "cmsis/MK20D7.h"
-#elif CPU_FAMILY == MK20D10
-#include "cmsis/MK20D10.h"
-#elif CPU_FAMILY == MK20DZ10
-#include "cmsis/MK20Dz10.h"
-#elif CPU_FAMILY == MK20F12
-#include "cmsis/MK20F12.h"
-#endif
-
+#include "k20_periph.h"
 #include "periph_conf.h"
 
 /**
@@ -90,42 +73,6 @@ extern "C" {
 
 #endif
 
-/**
- * @name Clockgate functions
- * @{
- */
-static __INLINE void PORTA_CLKEN(void) {
-    SIM->SCGC5 |= SIM_SCGC5_PORTA_MASK;
-}
-static __INLINE void PORTB_CLKEN(void) {
-    SIM->SCGC5 |= SIM_SCGC5_PORTB_MASK;
-}
-static __INLINE void PORTC_CLKEN(void) {
-    SIM->SCGC5 |= SIM_SCGC5_PORTC_MASK;
-}
-static __INLINE void PORTD_CLKEN(void) {
-    SIM->SCGC5 |= SIM_SCGC5_PORTD_MASK;
-}
-static __INLINE void PORTE_CLKEN(void) {
-    SIM->SCGC5 |= SIM_SCGC5_PORTE_MASK;
-}
-
-static __INLINE void PORTA_CLKDIS(void) {
-    SIM->SCGC5 &= ~SIM_SCGC5_PORTA_MASK;
-}
-static __INLINE void PORTB_CLKDIS(void) {
-    SIM->SCGC5 &= ~SIM_SCGC5_PORTB_MASK;
-}
-static __INLINE void PORTC_CLKDIS(void) {
-    SIM->SCGC5 &= ~SIM_SCGC5_PORTC_MASK;
-}
-static __INLINE void PORTD_CLKDIS(void) {
-    SIM->SCGC5 &= ~SIM_SCGC5_PORTD_MASK;
-}
-static __INLINE void PORTE_CLKDIS(void) {
-    SIM->SCGC5 &= ~SIM_SCGC5_PORTE_MASK;
-}
-/** @} */
 
 /**
  * @defgroup k20_kernel_config Kernel configuration
@@ -239,24 +186,22 @@ static __INLINE void UART_0_CLKEN(void) {
     SIM->SCGC4 |= SIM_SCGC4_UART0_MASK;
 }
 
-/** We ifdef these things as there are different UART0 pins. If you define PORT you define everything */
-#ifndef UART_0_PORT
-
-#if defined(K20_UART0_OUTPUT_PTA_1_2)
+/** There are different UART0 pins. Define in Makefile if you want to override it */
+#if K20_UART0_PORT == K20_UART0_PORT_A
 #define UART_0_PORT PORTA
 #define UART_0_SCG5_PORT_MASK SIM_SCGC5_PORTA_MASK
 #define UART_0_TX_PIN 1
 #define UART_0_RX_PIN 2
 #define UART_0_AF 2
 
-#elif defined(K20_UART0_OUTPUT_PTB_16_17)
+#elif K20_UART0_PORT == K20_UART0_PORT_B
 #define UART_0_PORT PORTB
 #define UART_0_SCG5_PORT_MASK SIM_SCGC5_PORTB_MASK
 #define UART_0_TX_PIN 16
 #define UART_0_RX_PIN 17
 #define UART_0_AF 3
 
-#elif defined(K20_UART0_OUTPUT_PTD_6_7)
+#elif K20_UART0_PORT == K20_UART0_PORT_D
 #define UART_0_PORT PORTD
 #define UART_0_SCG5_PORT_MASK SIM_SCGC5_PORTD_MASK
 #define UART_0_TX_PIN 6
@@ -271,7 +216,6 @@ static __INLINE void UART_0_PORT_CLKEN(void) {
     SIM->SCGC5 |= UART_0_SCG5_PORT_MASK;
 }
 
-#endif // UART_0_PORT
 
 #define UART_1_DEV UART1
 #define UART_1_ISR isr_uart1_status

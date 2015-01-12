@@ -23,7 +23,7 @@
 #include <stdint.h>
 
 #include "board.h"
-#include "k20_gpio.h"
+#include "k20_periph.h"
 
 #include "cpu.h"
 

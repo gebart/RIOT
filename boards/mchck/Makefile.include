@@ -4,6 +4,18 @@ export CPU_MODEL = mk20dx32vlf5
 export CPU_BOOTLOADER_OFFSET = 0xc00
 export CLOCK_DESIRED_CORECLOCK = 50000000 # 50 Mhz
 
+# As the 'original' mchck firmware does this too we think it is not too
+# dangerous to use this option. At the very least people using this board have
+# already tested this multiple times and would have already ended up with a
+# damaged MCU if this were a problem.
+CFLAGS += -DK20_USE_UNSAFE_FLL_FACTOR_ON_INTERNAL_OSCILLATOR
+CFLAGS += -DK20_SUPPRESS_UNSAFE_FLL_FACTOR_WARNING
+CFLAGS += -DCLOCK_DESIRED_CORECLOCK=$(CLOCK_DESIRED_CORECLOCK)
+
+# UART count. This enables UART0, then UART1 respectively. UART2 is not routed on the board.
+UART_NUMOF ?= 2
+CFLAGS += -DUART_NUMOF=$(UART_NUMOF)
+
 #define the default port depending on the host OS
 OS := $(shell uname)
 ifeq ($(OS),Linux)
@@ -34,7 +46,7 @@ export DEBUGSERVER = st-util
 CPU_USAGE = -mcpu=cortex-m4
 FPU_USAGE = -msoft-float
 export CFLAGS += -ggdb -g3 -std=gnu99 -Os -Wall -Wstrict-prototypes $(CPU_USAGE) $(FPU_USAGE) -mlittle-endian -mthumb -mthumb-interwork -nostartfiles
-export CFLAGS += -ffunction-sections -fdata-sections -fno-builtin -DK20_UART0_OUTPUT_PTA_1_2
+export CFLAGS += -ffunction-sections -fdata-sections -fno-builtin
 export ASFLAGS += -ggdb -g3 $(CPU_USAGE) $(FPU_USAGE) -mlittle-endian
 export LINKFLAGS += -g3 -ggdb -std=gnu99 $(CPU_USAGE) $(FPU_USAGE) -mlittle-endian -static -lgcc -mthumb -mthumb-interwork -nostartfiles
 export LINKFLAGS += -T$(LINKERSCRIPT)

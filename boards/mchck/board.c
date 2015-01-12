@@ -21,9 +21,9 @@
 
 #include <stdlib.h>
 
-#include "board.h"
-#include <k20_gpio.h>
+#include <periph/gpio.h>
 #include <periph/uart.h>
+#include "board.h"
 
 static void leds_init(void);
 
@@ -50,5 +50,5 @@ void board_init(void)
  */
 static void leds_init(void)
 {
-    k20_gpio_enable_output(PTB, 16, true);
+    gpio_init_out(LED_GPIO, GPIO_NOPULL);
 }
