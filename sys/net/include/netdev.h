@@ -36,56 +36,6 @@ extern "C" {
 #define NETDEV_MSG_EVENT_TYPE   (0x0100)
 
 /**
- * @brief   Definition of device families.
- */
-typedef enum {
-    NETDEV_TYPE_UNKNOWN = 0,    /**< Type was not specified and may not
-                                     understand this API */
-    NETDEV_TYPE_BASE,           /**< Device understands this API */
-    NETDEV_TYPE_802154,         /**< Device understands this API and the API
-                                     defined in @ref netdev_802154 */
-} netdev_type_t;
-
-/**
- * @brief   Definition of protocol families to determine which frame types a
- *          device or protocol layer (see @ref netapi) can handle
- *
- * @note    XXX: The concrete definition of the values is necessary to work
- *          with super-flexible devices as e.g. @ref native_net. It was also
- *          decided not to use ethertype since protocols not supplied by it
- *          might be supported
- */
-typedef enum {
-    NETDEV_PROTO_UNKNOWN        = 0x0000,   /**< Type was not specified */
-
-    /**
-     * @brief   Radio frame protocol
-     *
-     * @details Sends frames as defined by radio_packet_t.
-     */
-    NETDEV_PROTO_RADIO          = 0x0001,
-
-    /**
-     * @brief   IEEE 802.15.4
-     *
-     * @details Sends frames as defined by ieee802154_frame_t
-     */
-    NETDEV_PROTO_802154         = 0x0002,
-    NETDEV_PROTO_6LOWPAN        = 0x0003,   /**< 6LoWPAN. */
-    NETDEV_PROTO_IPV6           = 0x0004,   /**< IPv6. */
-    NETDEV_PROTO_UDP            = 0x0005,   /**< UDP. */
-    NETDEV_PROTO_TCP            = 0x0006,   /**< TCP. */
-    NETDEV_PROTO_CCNL           = 0x0007,   /**< CCN lite. */
-
-    /**
-     * @brief   CC110x frame format protocol
-     *
-     * @detail  Sends frames as defined by cc110x_packet_t.
-     */
-    NETDEV_PROTO_CC110X         = 0x0008,
-} netdev_proto_t;
-
-/**
  * @brief   Definition of basic network device options.
  * @note    Feel free to expand if your device needs/supports more.
  */
@@ -135,15 +85,17 @@ typedef enum {
  * @note    Feel free to expand if your device needs/supports more
  */
 typedef enum {
-    NETDEV_STATE_POWER_OFF = 0,         /**< Device is powered off */
-    NETDEV_STATE_POWER_SLEEP,           /**< Device is sleeping */
-    NETDEV_STATE_POWER_IDLE,            /**< Device is idle */
-    NETDEV_STATE_RX_MODE,               /**< Device is in receive mode */
-    NETDEV_STATE_PROMISCUOUS_MODE,      /**< Device is in receive mode and
-                                             accepts all packets without regard
-                                             for their destination */
-    NETDEV_STATE_TX_BURST,              /**< Device is burst sending and
-                                             does not accept packets */
+    NETDEV_STATE_POWER_OFF = 0,     /**< Device is powered off */
+    NETDEV_STATE_POWER_SLEEP,       /**< Device is sleeping */
+    NETDEV_STATE_POWER_IDLE,        /**< Device is idle */
+    NETDEV_STATE_RX_MODE,           /**< Device is in receive mode */
+    NETDEV_STATE_PROMISCUOUS_MODE,  /**< Device is in receive mode and
+                                         accepts all packets without regard
+                                         for their destination */
+    NETDEV_STATE_TX,                /**< Device is transmitting all available
+                                         data in the TX buffer */
+    NETDEV_STATE_TX_BURST,          /**< Device is burst sending and
+                                         does not accept packets */
 } netdev_state_t;
 
 /**
@@ -333,22 +285,13 @@ typedef struct {
      *                          of the received message
      */
     void (*event)(netdev_t *dev, uint32_t event_type);
-} netdev_driver_t;
 
-/**
- * @brief   Definition of the network device type
- *
- * @note    Your driver may overload this with additional information (e.g.
- *          how the device is connected)
- */
-struct netdev_t {
-    netdev_type_t type;                 /**< The type of this device */
-    const netdev_driver_t *driver;      /**< The driver for this device */
-    void *more;                         /**< Pointer to device dependent
-                                             additional information. E.g. the
-                                             low-level device(s) to
-                                             communiticate with this device. */
-};
+    /**
+     * @brief   Pointer to device specific configuration data, e.g. peripherals
+     *          used, internal state, etc.
+     */
+    void *device;
+} netdev_t;
 
 #ifdef __cplusplus
 }
