@@ -7,18 +7,6 @@
  * details.
  */
 
-/**
- * @ingroup     cpu_kinetis_common
- * @{
- *
- * @file
- * @brief       Low-level SPI driver implementation
- *
- * @author      Peter Kietzmann <peter.kietzmann@haw-hamburg.de>
- * @author      Johann Fischer <j.fischer@phytec.de>
- *
- * @}
- */
 #include <stdio.h>
 
 #include "board.h"
@@ -31,6 +19,20 @@
 
 #define ENABLE_DEBUG (0)
 #include "debug.h"
+
+/**
+ * @ingroup     cpu_kinetis_common
+ * @{
+ *
+ * @file
+ * @brief       Low-level SPI driver implementation
+ *
+ * @author      Peter Kietzmann <peter.kietzmann@haw-hamburg.de>
+ * @author      Johann Fischer <j.fischer@phytec.de>
+ * @author      Joakim Gebart <joakim.gebart@eistec.se>
+ *
+ * @}
+ */
 
 /* guard this file in case no SPI device is defined */
 #if SPI_NUMOF
@@ -79,12 +81,10 @@ int spi_init_master(spi_t dev, spi_conf_t conf, spi_speed_t speed)
             spi_dev = SPI_0_DEV;
             /* enable clocks */
             SPI_0_CLKEN();
-            SPI_0_PCS0_PORT_CLKEN();
             SPI_0_SCK_PORT_CLKEN();
             SPI_0_SOUT_PORT_CLKEN();
             SPI_0_SIN_PORT_CLKEN();
             /* Set PORT to AF mode */
-            SPI_0_PCS0_PORT->PCR[SPI_0_PCS0_PIN] = PORT_PCR_MUX(SPI_0_PCS0_AF);
             SPI_0_SCK_PORT->PCR[SPI_0_SCK_PIN] = PORT_PCR_MUX(SPI_0_SCK_AF);
             SPI_0_SOUT_PORT->PCR[SPI_0_SOUT_PIN] = PORT_PCR_MUX(SPI_0_SOUT_AF);
             SPI_0_SIN_PORT->PCR[SPI_0_SIN_PIN] = PORT_PCR_MUX(SPI_0_SIN_AF);
@@ -132,10 +132,6 @@ int spi_init_master(spi_t dev, spi_conf_t conf, spi_speed_t speed)
 
     /* enable SPI */
     spi_dev->MCR = SPI_MCR_MSTR_MASK
-                   | SPI_MCR_PCSIS((SPI_0_PCS0_ACTIVE_LOW << 0) |
-                                   (SPI_0_PCS1_ACTIVE_LOW << 1) |
-                                   (SPI_0_PCS2_ACTIVE_LOW << 2) |
-                                   (SPI_0_PCS3_ACTIVE_LOW << 3))
                    | SPI_MCR_DOZE_MASK
                    | SPI_MCR_CLR_TXF_MASK
                    | SPI_MCR_CLR_RXF_MASK;
@@ -203,6 +199,7 @@ int spi_init_slave(spi_t dev, spi_conf_t conf, char(*cb)(char data))
 
     /* enable SPI */
     spi_dev->MCR = SPI_MCR_DOZE_MASK
+                   | SPI_MCR_PCSIS(SPI_0_PCS0_ACTIVE_LOW << 0)
                    | SPI_MCR_CLR_TXF_MASK
                    | SPI_MCR_CLR_RXF_MASK;
 
@@ -229,9 +226,9 @@ int spi_transfer_byte(spi_t dev, char out, char *in)
 
     while (!(spi_dev->SR & SPI_SR_TFFF_MASK));
 
+    /* The chip select lines are expected to be controlled via software in RIOT. */
     spi_dev->PUSHR = SPI_PUSHR_CTAS(0)
                      | SPI_PUSHR_EOQ_MASK
-                     | SPI_PUSHR_PCS(1)
                      | SPI_PUSHR_TXDATA(out);
 
     while (!(spi_dev->SR & SPI_SR_RXCTR_MASK));
@@ -275,7 +272,6 @@ int spi_transfer_bytes(spi_t dev, char *out, char *in, unsigned int length)
 
         spi_dev->PUSHR = SPI_PUSHR_CTAS(0)
                          | SPI_PUSHR_CONT_MASK
-                         | SPI_PUSHR_PCS(1)
                          | SPI_PUSHR_TXDATA(out[i]);
 
         while (!(spi_dev->SR & SPI_SR_RXCTR_MASK));
@@ -289,7 +285,6 @@ int spi_transfer_bytes(spi_t dev, char *out, char *in, unsigned int length)
 
     spi_dev->PUSHR = SPI_PUSHR_CTAS(0)
                      | SPI_PUSHR_EOQ_MASK
-                     | SPI_PUSHR_PCS(1)
                      | SPI_PUSHR_TXDATA(out[i]);
 
     while (!(spi_dev->SR & SPI_SR_RXCTR_MASK));
@@ -321,7 +316,6 @@ int spi_transfer_reg(spi_t dev, uint8_t reg, char out, char *in)
 
     spi_dev->PUSHR = SPI_PUSHR_CTAS(1)
                      | SPI_PUSHR_EOQ_MASK
-                     | SPI_PUSHR_PCS(1)
                      | SPI_PUSHR_TXDATA((uint16_t)(reg << 8) | (uint16_t)out);
 
     while (!(spi_dev->SR & SPI_SR_RXCTR_MASK));
@@ -364,7 +358,6 @@ int spi_transfer_regs(spi_t dev, uint8_t reg, char *out, char *in, unsigned int 
 
     spi_dev->PUSHR = SPI_PUSHR_CTAS(1)
                      | SPI_PUSHR_CONT_MASK
-                     | SPI_PUSHR_PCS(1)
                      | SPI_PUSHR_TXDATA((uint16_t)(reg << 8) | (uint16_t)out[0]);
 
     while (!(spi_dev->SR & SPI_SR_RXCTR_MASK));
@@ -379,7 +372,6 @@ int spi_transfer_regs(spi_t dev, uint8_t reg, char *out, char *in, unsigned int 
 
         spi_dev->PUSHR = SPI_PUSHR_CTAS(0)
                          | SPI_PUSHR_CONT_MASK
-                         | SPI_PUSHR_PCS(1)
                          | SPI_PUSHR_TXDATA(out[i]);
 
         while (!(spi_dev->SR & SPI_SR_RXCTR_MASK));
@@ -393,7 +385,6 @@ int spi_transfer_regs(spi_t dev, uint8_t reg, char *out, char *in, unsigned int 
 
     spi_dev->PUSHR = SPI_PUSHR_CTAS(0)
                      | SPI_PUSHR_EOQ_MASK
-                     | SPI_PUSHR_PCS(1)
                      | SPI_PUSHR_TXDATA(out[i]);
 
     while (!(spi_dev->SR & SPI_SR_RXCTR_MASK));
@@ -414,7 +405,6 @@ void spi_transmission_begin(spi_t dev, char reset_val)
         case SPI_0:
             SPI_0_DEV->PUSHR = SPI_PUSHR_CTAS(0)
                                | SPI_PUSHR_EOQ_MASK
-                               | SPI_PUSHR_PCS(0)
                                | SPI_PUSHR_TXDATA(reset_val);
             break;
 #endif
@@ -456,7 +446,6 @@ static inline void irq_handler_transfer(SPI_Type *spi, spi_t dev)
         data = spi_config[dev].cb(data);
         spi->PUSHR = SPI_PUSHR_CTAS(0)
                      | SPI_PUSHR_EOQ_MASK
-                     | SPI_PUSHR_PCS(0)
                      | SPI_PUSHR_TXDATA(data);
     }
 
