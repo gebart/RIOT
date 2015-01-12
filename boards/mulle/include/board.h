@@ -7,15 +7,15 @@
  */
 
 /**
- * @defgroup    board_stm32f4discovery STM32F4Discovery
+ * @defgroup    board_mulle Eistec Mulle
  * @ingroup     boards
- * @brief       Board specific files for the STM32F4Discovery board
+ * @brief       Board specific files for Eistec Mulle IoT boards
  * @{
  *
  * @file
- * @brief       Board specific definitions for the STM32F4Discovery evaluation board
+ * @brief       Board specific definitions for the Eistec Mulle IoT board
  *
- * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
+ * @author      Joakim Gebart <joakim.gebart@eistec.se>
  */
 
 #ifndef __BOARD_H
