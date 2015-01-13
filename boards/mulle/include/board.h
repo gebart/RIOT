@@ -85,7 +85,7 @@
 /** @} */
 
 #ifdef __cplusplus
- extern "C" {
+extern "C" {
 #endif
 
 /**
@@ -94,7 +94,7 @@
 void board_init(void);
 
 #ifdef __cplusplus
- }
+}
 #endif
 
 /**

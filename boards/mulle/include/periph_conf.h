@@ -231,7 +231,7 @@
  * @name I2C configuration
  * @{
  */
-#define I2C_NUMOF           (0U)                                                /* TODO !!!!!!! */
+#define I2C_NUMOF           (0U)                                                /* TODO !!!!!!!*/
 #define I2C_0_EN            0
 #define I2C_0_EN            0
 
