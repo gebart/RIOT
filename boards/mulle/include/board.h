@@ -119,11 +119,10 @@ void board_init(void);
  * @{
  */
 
-#define LIS3DH_INT1_GPIO   GPIO_12
-#define LIS3DH_INT2_GPIO   GPIO_13
-#define LIS3DH_SS_GPIO     GPIO_14
-#define LIS3DH_RST_GPIO    (-1)
-#define LIS3DH_SPI         SPI_0
+#define LIS3DH_INT1   GPIO_3
+#define LIS3DH_INT2   GPIO_4
+#define LIS3DH_CS     GPIO_15
+#define LIS3DH_SPI    SPI_0
 
 /** @} */
 
