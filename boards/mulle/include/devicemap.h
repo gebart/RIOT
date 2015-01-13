@@ -49,7 +49,7 @@
 #define NUM_IO_DEVICES 16 /* Arbitrarily chosen */
 
 #ifdef __cplusplus
- extern "C" {
+extern "C" {
 #endif
 
 /* This table maps the standard streams to device operations table entries. */
@@ -57,13 +57,13 @@ extern const devoptab_t *devoptab_list[MAX_OPEN_DEVICES];
 
 /* This table maps filenames to devices */
 typedef struct {
-  const char *name;
-  const devoptab_t *devoptab;
+    const char *name;
+    const devoptab_t *devoptab;
 } devoptab_name_t;
 
 typedef struct {
-  unsigned int len;
-  const devoptab_name_t* data;
+    unsigned int len;
+    const devoptab_name_t *data;
 } devoptab_name_list_t;
 
 extern const devoptab_name_list_t devoptab_name_list;
