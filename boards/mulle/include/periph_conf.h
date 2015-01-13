@@ -283,7 +283,7 @@
 #define GPIO_12_EN          1
 #define GPIO_13_EN          1
 #define GPIO_14_EN          1
-#define GPIO_15_EN          0
+#define GPIO_15_EN          1
 #define GPIO_IRQ_PRIO       1
 
 /* GPIO channel 0 config */
@@ -422,13 +422,13 @@
 #define GPIO_14_ISR         isr_portd_pin_detect
 
 /* GPIO channel 15 config */
-/* Not configured */
-#define GPIO_15_PORT        PORTB
-#define GPIO_15_DEV         PTB
-#define GPIO_15_PIN         1
-#define GPIO_15_CLKEN()     (SIM->SCGC5 |= SIM_SCGC5_PORTB_MASK)
-#define GPIO_15_IRQ         PORTB_IRQn
-#define GPIO_15_ISR         isr_portb_pin_detect
+/* LIS3DH CS */
+#define GPIO_15_PORT        PORTD
+#define GPIO_15_DEV         PTD
+#define GPIO_15_PIN         0
+#define GPIO_15_CLKEN()     (SIM->SCGC5 |= SIM_SCGC5_PORTD_MASK)
+#define GPIO_15_IRQ         PORTD_IRQn
+#define GPIO_15_ISR         isr_portd_pin_detect
 
 /** @} */
 
