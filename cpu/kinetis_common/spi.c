@@ -285,7 +285,7 @@ int spi_init_master(spi_t dev, spi_conf_t conf, spi_speed_t speed)
       tdt_freq = br_desired;
     }
     if (find_closest_delay_scalers(module_clock, tdt_freq,
-          &prescaler_tmp, &scaler_tmp) == 0) {
+          &prescaler_tmp, &scaler_tmp) < 0) {
         /* failed to find a solution */
         return -2;
     }
