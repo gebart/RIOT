@@ -18,23 +18,24 @@
  * @author          Joakim Gebart <joakim.gebart@eistec.se>
  */
 
-void * __stack_chk_guard = 0;
+void *__stack_chk_guard = 0;
 
-void __stack_chk_guard_setup(void) {
-  unsigned char *p;
-  p = (unsigned char *) &__stack_chk_guard;
+void __stack_chk_guard_setup(void)
+{
+    unsigned char *p;
+    p = (unsigned char *) &__stack_chk_guard;
 
-  p[0] = 0;
-  p[1] = 0;
-  p[2] = '\n';
-  p[3] = 255;	// XXX: Random this
+    p[0] = 0;
+    p[1] = 0;
+    p[2] = '\n';
+    p[3] = 255;	// XXX: Random this
 }
 
 /*
  * Arrange so that the __stack_chk_guard_setup function is called during
  * early init.
  */
-void __attribute__((section(".preinit_array"))) (*preinit__stack_chk_guard_setup[])(void) = {__stack_chk_guard_setup};
+void __attribute__((section(".preinit_array")))(*preinit__stack_chk_guard_setup[])(void) = {__stack_chk_guard_setup};
 
 /**
  * @brief Handler for stack smashing protection failure.
@@ -45,6 +46,7 @@ void __attribute__((section(".preinit_array"))) (*preinit__stack_chk_guard_setup
 void __attribute__((noreturn)) __stack_chk_fail(void)
 {
     DEBUGGER_BREAK(BREAK_MEMORY_CORRUPTION);
-    while(1);
+
+    while (1);
 }
 /** @} */

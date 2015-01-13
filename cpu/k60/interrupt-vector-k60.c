@@ -159,129 +159,128 @@ void isr_porte_pin_detect(void) UNHANDLED_ALIAS;
 /* void isr_reserved(void) UNHANDLED_ALIAS; */
 void isr_software(void) UNHANDLED_ALIAS;
 
-extern void* _estack[];
+extern void *_estack[];
 
 typedef void (*ISR_func)(void);
 
 /**
  * @brief Interrupt vector definition
  */
-const ISR_func isr_vector[111] ISR_VECTOR_SECTION =
-{
-  /* ARM Cortex defined interrupt vectors */
-  (ISR_func)_estack,
-  reset_handler,
-  isr_nmi,
-  isr_hard_fault,
-  isr_mem_manage,
-  isr_bus_fault,
-  isr_usage_fault,
-  isr_reserved,
-  isr_reserved,
-  isr_reserved,
-  isr_reserved,
-  isr_svc,
-  isr_debug_mon,
-  isr_reserved,
-  isr_pendsv,
-  isr_systick,
+const ISR_func isr_vector[111] ISR_VECTOR_SECTION = {
+    /* ARM Cortex defined interrupt vectors */
+    (ISR_func)_estack,
+    reset_handler,
+    isr_nmi,
+    isr_hard_fault,
+    isr_mem_manage,
+    isr_bus_fault,
+    isr_usage_fault,
+    isr_reserved,
+    isr_reserved,
+    isr_reserved,
+    isr_reserved,
+    isr_svc,
+    isr_debug_mon,
+    isr_reserved,
+    isr_pendsv,
+    isr_systick,
 
-  /* Device-specific (Freescale defined) interrupt vectors */
-  isr_dma0_complete,
-  isr_dma1_complete,
-  isr_dma2_complete,
-  isr_dma3_complete,
-  isr_dma4_complete,
-  isr_dma5_complete,
-  isr_dma6_complete,
-  isr_dma7_complete,
-  isr_dma8_complete,
-  isr_dma9_complete,
-  isr_dma10_complete,
-  isr_dma11_complete,
-  isr_dma12_complete,
-  isr_dma13_complete,
-  isr_dma14_complete,
-  isr_dma15_complete,
-  isr_dma_error,
-  isr_mcm,
-  isr_flash_command_complete,
-  isr_flash_read_collision,
-  isr_low_voltage,
-  isr_llwu,
-  isr_watchdog,
-  isr_random_number_generator,
-  isr_i2c0,
-  isr_i2c1,
-  isr_spi0,
-  isr_spi1,
-  isr_spi2,
-  isr_can0_ored_msg_buffer,
-  isr_can0_bus_off,
-  isr_can0_error,
-  isr_can0_tx_warn,
-  isr_can0_rx_warn,
-  isr_can0_wake_up,
-  isr_i2s0_tx,
-  isr_i2s0_rx,
-  isr_can1_ored_msg_buffer,
-  isr_can1_bus_off,
-  isr_can1_error,
-  isr_can1_tx_warn,
-  isr_can1_rx_warn,
-  isr_can1_wake_up,
-  isr_reserved,
-  isr_uart0_lon,
-  isr_uart0_status,
-  isr_uart0_error,
-  isr_uart1_status,
-  isr_uart1_error,
-  isr_uart2_status,
-  isr_uart2_error,
-  isr_uart3_status,
-  isr_uart3_error,
-  isr_uart4_status,
-  isr_uart4_error,
-  isr_reserved,
-  isr_reserved,
-  isr_adc0,
-  isr_adc1,
-  isr_cmp0,
-  isr_cmp1,
-  isr_cmp2,
-  isr_ftm0,
-  isr_ftm1,
-  isr_ftm2,
-  isr_cmt,
-  isr_rtc_alarm,
-  isr_rtc_seconds,
-  isr_pit0,
-  isr_pit1,
-  isr_pit2,
-  isr_pit3,
-  isr_pdb,
-  isr_usb_otg,
-  isr_usb_charger_detect,
-  isr_enet_1588_timer,
-  isr_enet_tx,
-  isr_enet_rx,
-  isr_enet_error_misc,
-  isr_reserved,
-  isr_sdhc,
-  isr_dac0,
-  isr_reserved,
-  isr_tsi,
-  isr_mcg,
-  isr_lptmr0,
-  isr_reserved,
-  isr_porta_pin_detect,
-  isr_portb_pin_detect,
-  isr_portc_pin_detect,
-  isr_portd_pin_detect,
-  isr_porte_pin_detect,
-  isr_reserved,
-  isr_reserved,
-  isr_software
+    /* Device-specific (Freescale defined) interrupt vectors */
+    isr_dma0_complete,
+    isr_dma1_complete,
+    isr_dma2_complete,
+    isr_dma3_complete,
+    isr_dma4_complete,
+    isr_dma5_complete,
+    isr_dma6_complete,
+    isr_dma7_complete,
+    isr_dma8_complete,
+    isr_dma9_complete,
+    isr_dma10_complete,
+    isr_dma11_complete,
+    isr_dma12_complete,
+    isr_dma13_complete,
+    isr_dma14_complete,
+    isr_dma15_complete,
+    isr_dma_error,
+    isr_mcm,
+    isr_flash_command_complete,
+    isr_flash_read_collision,
+    isr_low_voltage,
+    isr_llwu,
+    isr_watchdog,
+    isr_random_number_generator,
+    isr_i2c0,
+    isr_i2c1,
+    isr_spi0,
+    isr_spi1,
+    isr_spi2,
+    isr_can0_ored_msg_buffer,
+    isr_can0_bus_off,
+    isr_can0_error,
+    isr_can0_tx_warn,
+    isr_can0_rx_warn,
+    isr_can0_wake_up,
+    isr_i2s0_tx,
+    isr_i2s0_rx,
+    isr_can1_ored_msg_buffer,
+    isr_can1_bus_off,
+    isr_can1_error,
+    isr_can1_tx_warn,
+    isr_can1_rx_warn,
+    isr_can1_wake_up,
+    isr_reserved,
+    isr_uart0_lon,
+    isr_uart0_status,
+    isr_uart0_error,
+    isr_uart1_status,
+    isr_uart1_error,
+    isr_uart2_status,
+    isr_uart2_error,
+    isr_uart3_status,
+    isr_uart3_error,
+    isr_uart4_status,
+    isr_uart4_error,
+    isr_reserved,
+    isr_reserved,
+    isr_adc0,
+    isr_adc1,
+    isr_cmp0,
+    isr_cmp1,
+    isr_cmp2,
+    isr_ftm0,
+    isr_ftm1,
+    isr_ftm2,
+    isr_cmt,
+    isr_rtc_alarm,
+    isr_rtc_seconds,
+    isr_pit0,
+    isr_pit1,
+    isr_pit2,
+    isr_pit3,
+    isr_pdb,
+    isr_usb_otg,
+    isr_usb_charger_detect,
+    isr_enet_1588_timer,
+    isr_enet_tx,
+    isr_enet_rx,
+    isr_enet_error_misc,
+    isr_reserved,
+    isr_sdhc,
+    isr_dac0,
+    isr_reserved,
+    isr_tsi,
+    isr_mcg,
+    isr_lptmr0,
+    isr_reserved,
+    isr_porta_pin_detect,
+    isr_portb_pin_detect,
+    isr_portc_pin_detect,
+    isr_portd_pin_detect,
+    isr_porte_pin_detect,
+    isr_reserved,
+    isr_reserved,
+    isr_software
 };
 
 /**
@@ -290,7 +289,7 @@ const ISR_func isr_vector[111] ISR_VECTOR_SECTION =
 void
 dNMI_handler(void)
 {
-  while(1);
+    while (1);
 }
 
 /**
@@ -299,7 +298,7 @@ dNMI_handler(void)
 static void
 unhandled_interrupt(void)
 {
-  while(1);
+    while (1);
 }
 /**
  * Default handler of Hard Faults
@@ -310,15 +309,16 @@ unhandled_interrupt(void)
 static void
 dHardFault_handler(void)
 {
-  __asm volatile
-  (
-    "tst lr, #4\n"
-    "ite eq\n"
-    "mrseq r0, msp\n"
-    "mrsne r0, psp\n"
-    "b hard_fault_handler_c\n"
-  );
-  while(1);
+    __asm volatile
+    (
+        "tst lr, #4\n"
+        "ite eq\n"
+        "mrseq r0, msp\n"
+        "mrsne r0, psp\n"
+        "b hard_fault_handler_c\n"
+    );
+
+    while (1);
 }
 /**
  * Default handler of Usage Fault
@@ -326,7 +326,7 @@ dHardFault_handler(void)
 static void
 dUsageFault_handler(void)
 {
-  while(1);
+    while (1);
 }
 /**
  * Default handler of MemManage Fault
@@ -334,7 +334,7 @@ dUsageFault_handler(void)
 static void
 dMemManage_handler(void)
 {
-  while(1);
+    while (1);
 }
 /**
  * Default handler of Bus Fault
@@ -342,7 +342,7 @@ dMemManage_handler(void)
 static void
 dBusFault_handler(void)
 {
-  while(1);
+    while (1);
 }
 /** @} */
 

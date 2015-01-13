@@ -25,7 +25,7 @@ long uart1_write_r(struct _reent *r, int fd, const char *ptr, int len);
 long uart2_write_r(struct _reent *r, int fd, const char *ptr, int len);
 long uart3_write_r(struct _reent *r, int fd, const char *ptr, int len);
 long uart4_write_r(struct _reent *r, int fd, const char *ptr, int len);
-long uart0_read_r (struct _reent *r, int fd, char *ptr, int len);
+long uart0_read_r(struct _reent *r, int fd, char *ptr, int len);
 
 #endif /* !defined(DEVIO_UART_H_) */
 /** @} */
