@@ -95,6 +95,30 @@ void board_init(void);
 /* enable 12pF load capacitance, might need adjusting.. */
 #define BOARD_RTC_LOAD_CAP_BITS (RTC_CR_SC8P_MASK | RTC_CR_SC4P_MASK)
 
+/**
+ * @name Define the interface to the AT86RF231 radio
+ * @{
+ */
+#define AT86RF231_SPI       SPI_0
+#define AT86RF231_CS        GPIO_14
+#define AT86RF231_INT       GPIO_12
+//~ #define AT86RF231_RESET     GPIO_13
+#define AT86RF231_SLEEP     GPIO_13
+/** @} */
+
+/**
+ * @name LIS3DH configuration
+ * @{
+ */
+
+#define LIS3DH_INT1_GPIO   GPIO_12
+#define LIS3DH_INT2_GPIO   GPIO_13
+#define LIS3DH_SS_GPIO     GPIO_14
+#define LIS3DH_RST_GPIO    (-1)
+#define LIS3DH_SPI         SPI_0
+
+/** @} */
+
 
 #endif /* BOARD_H_ */
 /** @} */

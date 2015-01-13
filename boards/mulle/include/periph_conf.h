@@ -459,32 +459,5 @@
 
 /** @} */
 
-/**
- * @name AT86RF212 configuration
- * @{
- */
-
-#define AT86RF231_IRQ_GPIO    GPIO_12
-#define AT86RF231_SLP_TR_GPIO GPIO_13
-#define AT86RF231_SS_GPIO     GPIO_14
-#define AT86RF231_RST_GPIO    (-1)
-#define AT86RF231_SPI         SPI_0
-
-/** @} */
-
-
-/**
- * @name LIS3DH configuration
- * @{
- */
-
-#define LIS3DH_INT1_GPIO   GPIO_12
-#define LIS3DH_INT2_GPIO   GPIO_13
-#define LIS3DH_SS_GPIO     GPIO_14
-#define LIS3DH_RST_GPIO    (-1)
-#define LIS3DH_SPI         SPI_0
-
-/** @} */
-
 #endif /* __PERIPH_CONF_H */
 /** @} */
