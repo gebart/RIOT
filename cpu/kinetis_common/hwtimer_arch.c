@@ -33,15 +33,8 @@
 #define LPTMR_MAXTICKS            (0x0000FFFF)
 
 #ifndef LPTIMER_CNR_NEEDS_LATCHING
-#warning LPTIMER_CNR_NEEDS_LATCHING is not defined in cpu-conf.h!
-#endif
-
-#if LPTIMER_CNR_NEEDS_LATCHING
-/* Write some garbage to CNR to latch the current value */
-#define LPTIMER_LATCH_CNR() (*(&(LPTIMER_DEV->CNR)) = 0)
-#else
-/* The current CPU does not need latching of the CNR register */
-#define LPTIMER_LATCH_CNR() {}
+#warning LPTIMER_CNR_NEEDS_LATCHING is not defined in cpu-conf.h! Defaulting to 1
+#define LPTIMER_CNR_NEEDS_LATCHING 1
 #endif
 
 typedef struct {
@@ -56,6 +49,30 @@ static hwtimer_stimer32b_t stimer;
  * @brief Reference to the hwtimer callback
  */
 void (*timeout_handler)(int);
+
+inline static uint32_t lptmr_get_cnr(void)
+{
+    #if LPTIMER_CNR_NEEDS_LATCHING
+    /* Write some garbage to CNR to latch the current value */
+    LPTMR0->CNR = 42;
+    return (uint32_t)LPTMR0->CNR;
+    #else
+    /* The early revisions of the Kinetis CPUs do not need latching of the CNR
+     * register. However, this may lead to corrupt values, we read it twice to
+     * ensure that we got a valid value */
+    int i;
+    uint32_t tmp;
+    uint32_t cnr = LPTMR0->CNR;
+    /* you get three retries */
+    for (i = 0; i < 3; ++i) {
+        tmp = LPTMR0->CNR;
+        if (tmp == cnr) {
+            return cnr;
+        }
+        cnr = tmp;
+    }
+    #endif
+}
 
 inline static void hwtimer_start(void)
 {
@@ -129,8 +146,7 @@ void hwtimer_arch_disable_interrupt(void)
 void hwtimer_arch_set(unsigned long offset, short timer)
 {
     (void)timer;
-    LPTIMER_LATCH_CNR();
-    stimer.counter32b += (uint32_t)LPTIMER_DEV->CNR;
+    stimer.counter32b += lptmr_get_cnr();
     hwtimer_stop();
 
     stimer.cmr32b = stimer.counter32b + offset;
@@ -149,8 +165,7 @@ void hwtimer_arch_set(unsigned long offset, short timer)
 void hwtimer_arch_set_absolute(unsigned long value, short timer)
 {
     (void)timer;
-    LPTIMER_LATCH_CNR();
-    stimer.counter32b += (uint32_t)LPTIMER_DEV->CNR;
+    stimer.counter32b += lptmr_get_cnr();
     hwtimer_stop();
 
     stimer.cmr32b = value;
@@ -168,8 +183,7 @@ void hwtimer_arch_set_absolute(unsigned long value, short timer)
 
 void hwtimer_arch_unset(short timer)
 {
-    LPTIMER_LATCH_CNR();
-    stimer.counter32b += (uint32_t)LPTIMER_DEV->CNR;
+    stimer.counter32b += lptmr_get_cnr();
     hwtimer_stop();
     stimer.diff = 0;
     stimer.cmr32b = 0;
@@ -180,8 +194,7 @@ void hwtimer_arch_unset(short timer)
 
 unsigned long hwtimer_arch_now(void)
 {
-    LPTIMER_LATCH_CNR();
-    return (unsigned int)(((uint32_t)LPTIMER_DEV->CNR + stimer.counter32b));
+    return (unsigned int)((lptmr_get_cnr() + stimer.counter32b));
 }
 
 void isr_lptmr0(void)
