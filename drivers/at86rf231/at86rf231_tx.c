@@ -31,6 +31,8 @@
 static int16_t at86rf231_load(at86rf231_packet_t *packet);
 static void at86rf231_gen_pkt(uint8_t *buf, at86rf231_packet_t *packet);
 
+extern uint8_t at86rf231_options;
+
 static uint8_t sequence_nr;
 static uint8_t wait_for_ack;
 
@@ -45,7 +47,25 @@ int16_t at86rf231_send(at86rf231_packet_t *packet)
     return result;
 }
 
-netdev_802154_tx_status_t at86rf231_load_tx_buf(netdev_t *dev,
+int at86rf231_send_data(netdev_t *dev, void *dest, uint8_t dest_len,
+                        pkt_t *data)
+{
+    ieee802154_frame_t
+
+    if (dev == NULL) {
+        return -ENODEV;
+    }
+
+
+
+    _load();
+
+    if (!at86rf231_options & AT86RF231_OPT_PRELOADING) {
+        _send();
+    }
+}
+
+int at86rf231_load_tx_buf(netdev_t *dev,
         netdev_802154_pkt_kind_t kind,
         netdev_802154_node_addr_t *dest,
         int use_long_addr,

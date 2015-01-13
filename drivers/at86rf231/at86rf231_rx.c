@@ -34,9 +34,32 @@ uint8_t buffer[AT86RF231_RX_BUF_SIZE][AT86RF231_MAX_PKT_LENGTH];
 volatile uint8_t rx_buffer_next;
 extern netdev_802154_raw_packet_cb_t at86rf231_raw_packet_cb;
 
+void _rx(void *arg)
+{
+    at86rf231_t *dev = (at86rf231_t *)arg;
+    msg_t msg;
+
+    msg.type = NETDEV_MSG_EVENT_TYPE;
+    msg.content.value = AT86RF231_EVENT_RX;
+
+    msg_send(&msg, dev->pid);
+}
+
 void at86rf231_rx_handler(void)
 {
-    uint8_t lqi, fcs_rssi;
+    uint8_t lqi, fcs_rssi, length;
+
+
+    /* read length */
+    /* allocate memory in packet buffer:
+       - length - sizeof(154frame w/o payload) */
+    /* allocate memory for pkt_ptr */
+    /* read payload into pkt-buffer */
+
+
+
+
+
     /* read packet length */
     at86rf231_read_fifo(&at86rf231_rx_buffer[rx_buffer_next].length, 1);
 
@@ -108,5 +131,54 @@ void at86rf231_rx_handler(void)
     }
 
     /* Read IRQ to clear it */
-    at86rf231_reg_read(AT86RF231_REG__IRQ_STATUS);
+    at86rf231_reg_read(dev, AT86RF231_REG__IRQ_STATUS);
+
+
+
+
+
+
+    uint8_t length, tmp;
+    buffer[23];             /* store the ieee mac header here */
+    pkt_t pkt;
+    uint8_t *data;
+
+
+    /* read length of received data */
+    at86rf231_read_fifo(dev, &length, 1);
+
+    /* allocate memory for data and pkt pointer */
+    data = (uint8_t *)pktbuf_alloc((length - 1) + sizeof(pkt_t));
+    if (data == NULL) {
+        /* TODO: discard package: no memory */
+    }
+    pkt = (pkt_t *)(data + (length - 1));
+
+    /* initialize pkt */
+    pkt->payload_len = length - 1;
+    pkt->payload = data;
+    pkt->payload_proto = PKT_PROTO_UNKNOWN;
+    pkt->headers = NULL;
+
+    /* read actual payload into buffer */
+    at86rf231_read_fifo(dev, data, length - 1);
+
+    /* read LQI */
+    at86rf231_read_fifo(dev, &dev->lqi, 1);
+    /* read RSSI and CRC status */
+    tmp = at86rf231_reg_read(dev, AT86RF231_REG__PHY_RSSI);
+    dev->rssi = tmp & 0x0f;
+    dev->crc = tmp >> 7;
+
+    if (dev->crc == 0) {
+        DEBUG("at86rf231: Got packet with invalid crc.\n");
+        return;
+    }
+
+
+
+    /* call receive data callback */
+    dev->rcv_cb(src_addr, 8, pkt);
+    /* Read IRQ to clear it */
+    at86rf231_reg_read(dev, AT86RF231_REG__IRQ_STATUS);
 }

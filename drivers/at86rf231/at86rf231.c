@@ -45,6 +45,8 @@ static uint8_t  radio_channel;
 static uint16_t radio_address;
 static uint64_t radio_address_long;
 
+static uint8_t at86rf231_options;
+
 netdev_802154_raw_packet_cb_t at86rf231_raw_packet_cb;
 netdev_rcv_data_cb_t at86rf231_data_packet_cb;
 
@@ -735,7 +737,8 @@ void at86rf231_event(netdev_t *dev, uint32_t event_type)
 
 const netdev_802154_driver_t at86rf231_driver = {
     .init = at86rf231_initialize,
-    .send_data = netdev_802154_send_data,
+    .send_data = at86rf231_send_data,
+    // .send_data = netdev_802154_send_data,
     .add_receive_data_callback = at86rf231_add_data_recv_callback,
     .rem_receive_data_callback = at86rf231_rem_data_recv_callback,
     .get_option = at86rf231_get_option,
@@ -743,12 +746,12 @@ const netdev_802154_driver_t at86rf231_driver = {
     .get_state = at86rf231_get_state,
     .set_state = at86rf231_set_state,
     .event = at86rf231_event,
-    .load_tx = at86rf231_load_tx_buf,
-    .transmit = at86rf231_transmit_tx_buf,
-    .send = netdev_802154_send,
-    .add_receive_raw_callback = at86rf231_add_raw_recv_callback,
-    .rem_receive_raw_callback = at86rf231_rem_raw_recv_callback,
-    .channel_is_clear = at86rf231_channel_is_clear,
+    // .load_tx = at86rf231_load_tx_buf,
+    // .transmit = at86rf231_transmit_tx_buf,
+    // .send = netdev_802154_send,
+    // .add_receive_raw_callback = at86rf231_add_raw_recv_callback,
+    // .rem_receive_raw_callback = at86rf231_rem_raw_recv_callback,
+    // .channel_is_clear = at86rf231_channel_is_clear,
 };
 
-netdev_t at86rf231_netdev = { NETDEV_TYPE_802154, (netdev_driver_t *) &at86rf231_driver, NULL };
+netdev_t at86rf231_netdev = {NULL, (netdev_driver_t *) &at86rf231_driver};

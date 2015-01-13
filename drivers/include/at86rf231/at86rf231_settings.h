@@ -249,6 +249,10 @@ enum at86rf231_csma_seed_1 {
     AT86RF231_CSMA_SEED_1__AACK_I_AM_COORD = 0x08,
 };
 
+enum at86rf231_options {
+    AT86RF231_OPT_PRELOADING = 0x01,
+}
+
 #ifdef __cplusplus
 }
 #endif
