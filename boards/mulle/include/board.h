@@ -84,10 +84,18 @@
 #define LED_GREEN_TOGGLE    (BITBAND_REG(LED_GREEN_PORT->PTOR, LED_GREEN_PIN) = 1)
 /** @} */
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
 /**
  * @brief Initialize board specific hardware, including clock, LEDs and std-IO
  */
 void board_init(void);
+
+#ifdef __cplusplus
+ }
+#endif
 
 /**
  * RTC crystal load capacitance configuration bits.
@@ -118,7 +126,6 @@ void board_init(void);
 #define LIS3DH_SPI         SPI_0
 
 /** @} */
-
 
 #endif /* BOARD_H_ */
 /** @} */

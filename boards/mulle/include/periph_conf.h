@@ -29,7 +29,6 @@
 
 /** @} */
 
-
 /**
  * @name Timer configuration
  * @{
