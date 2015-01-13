@@ -40,19 +40,9 @@ extern "C" {
  * @note    Feel free to expand if your device needs/supports more.
  */
 typedef enum {
-    /**
-     * @brief   Communication type for the device as defined by @ref netdev_proto_t
-     *
-     * @details If a driver does not support the type (but the setting of the
-     *          option is supported) it @ref netdev_driver_t::set_option() shall result
-     *          with -EPROTONOSUPPORT.
-     *
-     *          *value_len* for @ref netdev_driver_t::get_option() must always be at
-     *          least `sizeof(netdev_proto_t)`.
-     */
-    NETDEV_OPT_PROTO = 0,
     NETDEV_OPT_CHANNEL,             /**< Channel for the device as unsigned value
                                          in host byte order */
+    NETDEV_OPT_IS_CHANNEL_CLR,      /**< Check if channel is clear */
     NETDEV_OPT_ADDRESS,             /**< Hardware address for the device as
                                          unsigned value in host byte order */
     NETDEV_OPT_NID,                 /**< Network ID (e.g. PAN ID in IEEE 802.15.4)
@@ -69,6 +59,12 @@ typedef enum {
                                          set to as value of `size_t`. (e.g.
                                          either PAN-centric 16-bit address or
                                          EUI-64 in IEEE 802.15.4) */
+    NETDEV_OPT_ENABLE_PRELOADING,   /**< Enable pre-loading of data, transfer
+                                         data to device using send_data(), send
+                                         by calling set_state(NETDEV_STATE_TX) */
+    NETDEV_OPT_ENABLE_AUTOACK,      /**< Automatically send link-layer ACKs */
+    NETDEV_OPT_RSSI,                /**< Read the RSSI value from the last transfer */
+    NETDEV_OPT_LQI,                 /**< Read the link quality indicator */
 
     /**
      * @brief   Last value for @ref netdev_opt_t defined here
@@ -98,27 +94,7 @@ typedef enum {
                                          does not accept packets */
 } netdev_state_t;
 
-/**
- * @brief   Circular list type to store a number of protocol headers of
- *          unspecified type to work with @ref clist.h.
- *
- * @extends clist_node_t
- */
-typedef struct __attribute__((packed)) netdev_hlist_t {
-    struct netdev_hlist_t *next;    /**< next element in list */
-    struct netdev_hlist_t *prev;    /**< previous element in list */
-    netdev_proto_t protocol;        /**< protocol of the header */
-    void *header;                   /**< the header stored in here */
-    size_t header_len;              /**< the length of the header in byte */
-} netdev_hlist_t;
 
-/**
- * @brief   Definition of the network device type
- *
- * @see struct netdev_t
- *
- * @note    Forward definition to use in @ref netdev_driver_t
- */
 typedef struct netdev_t netdev_t;
 
 /**
@@ -138,9 +114,7 @@ typedef struct netdev_t netdev_t;
  *          on success
  * @return  a fitting negative errno on failure
  */
-typedef int (*netdev_rcv_data_cb_t)(netdev_t *dev, void *src, size_t src_len,
-                                    void *dest, size_t dest_len, void *payload,
-                                    size_t payload_len);
+typedef int (*netdev_rcv_data_cb_t)(pkt_t *data);
 
 /**
  * @brief   Network device API definition.
@@ -166,12 +140,7 @@ typedef struct {
      * @param[in] dest              the (hardware) destination address for the data
      *                              in host byte order.
      * @param[in] dest_len          the length of *dest* in byte
-     * @param[in] upper_layer_hdrs  header data from higher network layers from
-     *                              highest to lowest layer. Must be prepended to
-     *                              the data stream by the network device. May be
-     *                              NULL if there are none.
-     * @param[in] data              the data to send
-     * @param[in] data_len          the length of *data* in byte
+     * @param[in] data              pointer to the data to sent
      *
      * @return  the number of byte actually send on success
      * @return  -EAFNOSUPPORT if address of length dest_len is not supported
@@ -181,9 +150,7 @@ typedef struct {
      *          of the device *dev*
      * @return  a fitting negative other errno on other failure
      */
-    int (*send_data)(netdev_t *dev, void *dest, size_t dest_len,
-                     netdev_hlist_t *upper_layer_hdrs, void *data,
-                     size_t data_len);
+    int (*send_data)(netdev_t *dev, void *dest, size_t dest_len, pkt_t *data);
 
     /**
      * @brief   Registers a receive data callback to a given network device.
@@ -285,13 +252,12 @@ typedef struct {
      *                          of the received message
      */
     void (*event)(netdev_t *dev, uint32_t event_type);
+} netdev_driver_t;
 
-    /**
-     * @brief   Pointer to device specific configuration data, e.g. peripherals
-     *          used, internal state, etc.
-     */
-    void *device;
-} netdev_t;
+struct netdev_t {
+    kernel_pid_t pid;           /**< the driver's thread's PID */
+    netdev_driver_t *driver;    /**< pointer to the devices interface */
+};
 
 #ifdef __cplusplus
 }
