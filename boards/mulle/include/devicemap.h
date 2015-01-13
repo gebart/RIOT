@@ -48,6 +48,10 @@
 /** Number of IO devices in this platform implementation */
 #define NUM_IO_DEVICES 16 /* Arbitrarily chosen */
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
 /* This table maps the standard streams to device operations table entries. */
 extern const devoptab_t *devoptab_list[MAX_OPEN_DEVICES];
 
@@ -65,5 +69,9 @@ typedef struct {
 extern const devoptab_name_list_t devoptab_name_list;
 
 void devicemap_init(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* !defined(DEVICEMAP_H_) */
