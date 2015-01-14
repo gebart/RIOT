@@ -31,7 +31,8 @@ for dev in /sys/bus/usb/devices/*; do
     fi
     # else: Match any of the given serials
     for s in "${@}"; do
-        if [ "${serial}" == "${s}" ]; then
+        echo "${serial}" | egrep -e "${s}" -q
+        if [ $? -eq 0 ]; then
             # return first tty
             echo "/dev/${ttys[0]}"
             exit 0
