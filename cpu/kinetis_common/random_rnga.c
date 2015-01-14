@@ -30,32 +30,6 @@
 #if RANDOM_NUMOF
 #ifdef KINETIS_RNGA
 
-
-typedef struct RNG_MemMap {
-    uint32_t CR;
-    uint32_t SR;
-    uint32_t ER;
-    uint32_t OR;
-} volatile RNGA_Type;
-
-#define RNGA_CR_SLP_MASK           0x10u
-#define RNGA_CR_CLRI_MASK          0x08u
-#define RNGA_CR_INTM_MASK          0x04u
-#define RNGA_CR_HA_MASK            0x02u
-#define RNGA_CR_GO_MASK            0x01u
-
-#define RNGA_SR_OREG_SIZE_MASK     0xFF0000u
-#define RNGA_SR_OREG_SIZE(x)       (((uint32_t)(((uint32_t)(x))<<16))&RNGA_SR_OREG_SIZE_MASK)
-#define RNGA_SR_OREG_LVL_MASK      0xFF00u
-#define RNGA_SR_OREG_LVL(x)        (((uint32_t)(((uint32_t)(x))<<8))&RNGA_SR_OREG_LVL_MASK)
-#define RNGA_SR_SLP_MASK           0x10u
-#define RNGA_SR_ERRI_MASK          0x08u
-#define RNGA_SR_ORU_MASK           0x04u
-#define RNGA_SR_LRS_MASK           0x02u
-#define RNGA_SR_SECV_MASK          0x01u
-
-#define RNGA                       ((RNGA_Type *)RANDOM_RNGA_BASE)
-
 void random_init(void)
 {
     random_poweron();
