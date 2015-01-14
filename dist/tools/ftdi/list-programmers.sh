@@ -21,10 +21,14 @@ for dev in /sys/bus/usb/devices/*; do
         # not a main device
         continue
     fi
-    manuf=$(cat "${dev}/manufacturer")
-    product=$(cat "${dev}/product")
-    serial=$(cat "${dev}/serial")
+    # Try to read the device info, discard any error messages (2>/dev/null)
+    serial=$(cat "${dev}/serial" 2>/dev/null)
+    manuf=$(cat "${dev}/manufacturer" 2>/dev/null)
+    product=$(cat "${dev}/product" 2>/dev/null)
     # Look if any subdevices have a tty directory, this means that it is assigned a port.
-    ttys=$(ls "${dev}:"*/tty* -d -1 | xargs -n 1 basename)
-    echo "${dev}: ${manuf} ${product} serial: '${serial}', tty(s): $(for t in ${ttys}; do echo -n "${t}, "; done)"
+    ttys=$( (ls "${dev}:"*/tty* -d -1 | xargs -n 1 basename ) 2>/dev/null)
+    # If at least one tty is assigned to the device we will write its info to stdout.
+    if [ ! -z "${ttys}" ]; then
+        echo "${dev}: ${manuf} ${product} serial: '${serial}', tty(s): $(for t in ${ttys}; do echo -n "${t}, "; done)"
+    fi
 done
