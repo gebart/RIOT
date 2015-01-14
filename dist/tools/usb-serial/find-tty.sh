@@ -9,7 +9,7 @@
 #
 
 # Find all USB to serial devices
-for dev in /sys/bus/usb/devices/*; do
+for dev in /sys/bus/usb/devices/[0-9]*; do
     if [ ! -f "${dev}/idVendor" ]; then
         # not a main device
         continue
@@ -18,7 +18,12 @@ for dev in /sys/bus/usb/devices/*; do
     serial=$(cat "${dev}/serial" 2>/dev/null)
     # Look if any subdevices have a tty directory, this means that it is assigned a port.
     unset ttys
-    ttys=$( (ls "${dev}:"*/tty* -d -1 2>/dev/null | xargs -n 1 basename) 2>/dev/null)
+    # Look if any subdevices have a tty directory, this means that it is
+    # assigned a port.
+    # Note: limit the depth to avoid duplicate tty devices below USB hubs.
+    # Each 'tty' directory contains a subdirectory named after the tty device
+    # e.g. /sys/bus/usb/devices/1-1/1-1:1.0/ttyUSB0/tty/ttyUSB0
+    ttys=$( (find "${dev}"/ -maxdepth 3 -type d -name 'tty' -exec ls -1 {} \; | grep tty ) 2>/dev/null )
     if [ -z "${ttys}" ]; then
         continue
     fi
