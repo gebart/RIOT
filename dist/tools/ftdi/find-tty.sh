@@ -11,23 +11,15 @@
 if [ $# -lt 1 ]; then
     cat <<EOF
 Usage: $(basename "${0}") [serial]
- The first tty device node assigned to the FTDI device with the given serial number is written to stdout.
+ The first tty device node assigned to the USB device with the given serial number is written to stdout.
 EOF
     exit 1
 fi
 
-# Find all FT2232H devices
+# Find all USB to serial devices
 for dev in /sys/bus/usb/devices/*; do
     if [ ! -f "${dev}/idVendor" ]; then
         # not a main device
-        continue
-    fi
-    # filter out any devices not identified as 0403:6010
-    if grep -v '0403' "${dev}/idVendor" -q; then
-        continue
-    fi
-    #
-    if grep -v '6010' "${dev}/idProduct" -q; then
         continue
     fi
     serial=$(cat "${dev}/serial")

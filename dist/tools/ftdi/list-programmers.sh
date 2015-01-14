@@ -13,19 +13,12 @@ if [ ! -d /sys/bus/usb/devices ]; then
     exit 1
 fi
 
-echo "These are the currently connected FTDI devices:"
+echo "These are the currently connected USB tty devices:"
 
-# Find all FT2232H devices
+# Find all USB to serial devices
 for dev in /sys/bus/usb/devices/*; do
     if [ ! -f "${dev}/idVendor" ]; then
         # not a main device
-        continue
-    fi
-    # filter out any devices not identified as 0403:6010
-    if grep -v '0403' "${dev}/idVendor" -q; then
-        continue
-    fi
-    if grep -v '6010' "${dev}/idProduct" -q; then
         continue
     fi
     manuf=$(cat "${dev}/manufacturer")
