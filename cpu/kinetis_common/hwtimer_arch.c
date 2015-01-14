@@ -15,7 +15,7 @@
  *              hwtimer uses Freescale Low Power Timer lptmr0.
  *              There are two clock sources supported and tested:
  *              LPO - 1kHz
- *              RTC - 32768kHz
+ *              RTC - 32768Hz
  *
  * @author      Johann Fischer <j.fischer@phytec.de>
  *
@@ -52,26 +52,30 @@ void (*timeout_handler)(int);
 
 inline static uint32_t lptmr_get_cnr(void)
 {
-    #if LPTIMER_CNR_NEEDS_LATCHING
+#if LPTIMER_CNR_NEEDS_LATCHING
     /* Write some garbage to CNR to latch the current value */
     LPTMR0->CNR = 42;
     return (uint32_t)LPTMR0->CNR;
-    #else
+#else
     /* The early revisions of the Kinetis CPUs do not need latching of the CNR
      * register. However, this may lead to corrupt values, we read it twice to
      * ensure that we got a valid value */
     int i;
     uint32_t tmp;
     uint32_t cnr = LPTMR0->CNR;
+
     /* you get three retries */
     for (i = 0; i < 3; ++i) {
         tmp = LPTMR0->CNR;
+
         if (tmp == cnr) {
             return cnr;
         }
+
         cnr = tmp;
     }
-    #endif
+
+#endif
 }
 
 inline static void hwtimer_start(void)
