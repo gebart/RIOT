@@ -44,6 +44,7 @@ int random_read(char *buf, unsigned int num)
 
     while (count < num) {
         uint32_t tmp;
+
         /* wait for random data to be ready to read */
         while (!(KINETIS_RNGB->SR & RNG_SR_FIFO_LVL_MASK));
 
@@ -62,8 +63,8 @@ int random_read(char *buf, unsigned int num)
 void random_poweron(void)
 {
     RANDOM_CLKEN();
-    if ((KINETIS_RNGB->VER & RNG_VER_TYPE_MASK) != 0b0001)
-    {
+
+    if ((KINETIS_RNGB->VER & RNG_VER_TYPE_MASK) != 0b0001) {
         /* Wrong type of RNG */
         /* TODO: Handle */
     }
