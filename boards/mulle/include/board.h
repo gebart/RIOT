@@ -93,6 +93,11 @@ extern "C" {
  */
 void board_init(void);
 
+/**
+ * Define the type for the radio packet length for the transceiver
+ */
+typedef uint8_t radio_packet_length_t;
+
 #ifdef __cplusplus
 }
 #endif
@@ -110,7 +115,8 @@ void board_init(void);
 #define AT86RF231_SPI       SPI_0
 #define AT86RF231_CS        GPIO_14
 #define AT86RF231_INT       GPIO_12
-//~ #define AT86RF231_RESET     GPIO_13
+/** @todo work around missing RESET pin on Mulle v0.6x */
+#define AT86RF231_RESET     GPIO_5
 #define AT86RF231_SLEEP     GPIO_13
 /** @} */
 
