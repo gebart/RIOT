@@ -282,5 +282,7 @@ typedef enum llwu_wakeup_edge {
 
 /** @} */
 
+#define TRANSCEIVER_BUFFER_SIZE (3)
+
 #endif /* __CPU_CONF_H */
 /** @} */
