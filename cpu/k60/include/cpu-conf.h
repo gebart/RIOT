@@ -182,6 +182,105 @@
 #endif
 /** @} */
 
+/**
+ * @name Power mode hardware details
+ */
+/** @{ */
+#if K60_CPU_REV == 1
+#define KINETIS_PMCTRL MC->PMCTRL
+#define KINETIS_PMCTRL_SET_MODE(x) (KINETIS_PMCTRL = MC_PMCTRL_LPLLSM(x) | MC_PMCTRL_LPWUI_MASK)
+/* Clear LLS protection, clear VLPS, VLPW, VLPR protection */
+/* Note: This register can only be written once after each reset, so we must
+ * enable all power modes that we wish to use. */
+#define KINETIS_UNLOCK_PMPROT() (MC->PMPROT |= MC_PMPROT_ALLS_MASK | MC_PMPROT_AVLP_MASK)
+#elif K60_CPU_REV == 2
+#define KINETIS_PMCTRL SMC->PMCTRL
+#define KINETIS_PMCTRL_SET_MODE(x) (KINETIS_PMCTRL = SMC_PMCTRL_STOPM(x) | SMC_PMCTRL_LPWUI_MASK)
+#define KINETIS_PMPROT_UNLOCK() (SMC->PMPROT |= SMC_PMPROT_ALLS_MASK | SMC_PMPROT_AVLP_MASK)
+#else
+#error Unknown K60 CPU revision!
+#endif
+
+#define KINETIS_POWER_MODE_NORMAL (0b000)
+#define KINETIS_POWER_MODE_VLPS   (0b010)
+#define KINETIS_POWER_MODE_LLS    (0b011)
+
+/**
+ * @brief Wake up source number for the LPTMR0
+ *
+ * In order to let the hwtimer wake the CPU from low power modes, we need to
+ * enable this wake up source.
+ */
+#define KINETIS_LLWU_WAKEUP_MODULE_LPTMR 0
+
+/**
+ * @brief IRQn name to enable LLWU IRQ in NVIC
+ */
+#define KINETIS_LLWU_IRQ LLW_IRQn
+
+/**
+ * @brief Enable clock gate on LLWU module.
+ */
+#define LLWU_UNLOCK() (BITBAND_REG(SIM->SCGC4, SIM_SCGC4_LLWU_SHIFT) = 1)
+
+/**
+ * Internal modules whose interrupts are mapped to LLWU wake up sources.
+ *
+ * Wake up source module number: Kinetis Module
+ * 0: LPTMR
+ * 1: CMP0
+ * 2: CMP1
+ * 3: CMP2
+ * 4: TSI
+ * 5: RTC Alarm
+ * 6: Reserved
+ * 7: RTC Seconds
+ *
+ * Other modules CAN NOT be used to wake the CPU from LLS or VLLSx power modes.
+ */
+typedef enum llwu_wakeup_module {
+    LLWU_WAKEUP_MODULE_LPTMR = 0,
+    LLWU_WAKEUP_MODULE_CMP0 = 1,
+    LLWU_WAKEUP_MODULE_CMP1 = 2,
+    LLWU_WAKEUP_MODULE_CMP2 = 3,
+    LLWU_WAKEUP_MODULE_TSI = 4,
+    LLWU_WAKEUP_MODULE_RTC_ALARM = 5,
+    LLWU_WAKEUP_MODULE_RESERVED = 6,
+    LLWU_WAKEUP_MODULE_RTC_SECONDS = 7,
+    LLWU_WAKEUP_MODULE_END,
+} llwu_wakeup_module_t;
+
+/** enum that maps physical pins to wakeup pin numbers in LLWU module
+ *
+ * Other modules CAN NOT be used to wake the CPU from LLS or VLLSx power modes. */
+typedef enum llwu_wakeup_pin {
+    LLWU_WAKEUP_PIN_PTE1 = 0,
+    LLWU_WAKEUP_PIN_PTE2 = 1,
+    LLWU_WAKEUP_PIN_PTE4 = 2,
+    LLWU_WAKEUP_PIN_PTA4 = 3,
+    LLWU_WAKEUP_PIN_PTA13 = 4,
+    LLWU_WAKEUP_PIN_PTB0 = 5,
+    LLWU_WAKEUP_PIN_PTC1 = 6,
+    LLWU_WAKEUP_PIN_PTC3 = 7,
+    LLWU_WAKEUP_PIN_PTC4 = 8,
+    LLWU_WAKEUP_PIN_PTC5 = 9,
+    LLWU_WAKEUP_PIN_PTC6 = 10,
+    LLWU_WAKEUP_PIN_PTC11 = 11,
+    LLWU_WAKEUP_PIN_PTD0 = 12,
+    LLWU_WAKEUP_PIN_PTD2 = 13,
+    LLWU_WAKEUP_PIN_PTD4 = 14,
+    LLWU_WAKEUP_PIN_PTD6 = 15,
+    LLWU_WAKEUP_PIN_END
+} llwu_wakeup_pin_t;
+
+typedef enum llwu_wakeup_edge {
+    LLWU_WAKEUP_EDGE_DISABLE = 0b00,
+    LLWU_WAKEUP_EDGE_RISING = 0b01,
+    LLWU_WAKEUP_EDGE_FALLING = 0b10,
+    LLWU_WAKEUP_EDGE_ANY = 0b11,
+} llwu_wakeup_edge_t;
+
+/** @} */
 
 #endif /* __CPU_CONF_H */
 /** @} */
