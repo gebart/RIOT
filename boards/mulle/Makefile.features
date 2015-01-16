@@ -1,4 +1,5 @@
 FEATURES_PROVIDED = \
+    transceiver \
     periph_gpio \
     periph_uart \
     periph_spi \
