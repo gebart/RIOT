@@ -27,6 +27,7 @@
 #include "devicemap.h"
 
 static void leds_init(void);
+static void power_pins_init(void);
 
 void board_init(void)
 {
@@ -47,6 +48,14 @@ void board_init(void)
     LED_YELLOW_ON;
 
     devicemap_init();
+
+    LED_RED_ON;
+
+    /* Initialize power control pins */
+    power_pins_init();
+
+    /* Turn on Vperiph for peripherals */
+    gpio_set(MULLE_POWER_VPERIPH);
 }
 
 /**
@@ -62,4 +71,14 @@ static void leds_init(void)
     gpio_init_out(LED_RED_GPIO, GPIO_NOPULL);
     gpio_init_out(LED_YELLOW_GPIO, GPIO_NOPULL);
     gpio_init_out(LED_GREEN_GPIO, GPIO_NOPULL);
+}
+
+static void power_pins_init(void)
+{
+    gpio_init_out(MULLE_POWER_AVDD, GPIO_NOPULL);
+    gpio_init_out(MULLE_POWER_VPERIPH, GPIO_NOPULL);
+    gpio_init_out(MULLE_POWER_VSEC, GPIO_NOPULL);
+    gpio_clear(MULLE_POWER_AVDD);
+    gpio_clear(MULLE_POWER_VPERIPH);
+    gpio_clear(MULLE_POWER_VSEC);
 }
