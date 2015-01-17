@@ -289,6 +289,7 @@
 /* GPIO channel 0 config */
 /* Red LED */
 #define GPIO_0_PORT         PORTC
+#define GPIO_0_PORT_BASE    PORTC_BASE
 #define GPIO_0_DEV          PTC
 #define GPIO_0_PIN          15
 #define GPIO_0_CLKEN()      (SIM->SCGC5 |= SIM_SCGC5_PORTC_MASK)
@@ -298,6 +299,7 @@
 /* GPIO channel 1 config */
 /* Yellow LED */
 #define GPIO_1_PORT         PORTC
+#define GPIO_1_PORT_BASE    PORTC_BASE
 #define GPIO_1_DEV          PTC
 #define GPIO_1_PIN          14
 #define GPIO_1_CLKEN()      (SIM->SCGC5 |= SIM_SCGC5_PORTC_MASK)
@@ -307,6 +309,7 @@
 /* GPIO channel 2 config */
 /* Green LED */
 #define GPIO_2_PORT         PORTC
+#define GPIO_2_PORT_BASE    PORTC_BASE
 #define GPIO_2_DEV          PTC
 #define GPIO_2_PIN          13
 #define GPIO_2_CLKEN()      (SIM->SCGC5 |= SIM_SCGC5_PORTC_MASK)
@@ -316,6 +319,7 @@
 /* GPIO channel 3 config */
 /* LIS3DH INT1 */
 #define GPIO_3_PORT         PORTC
+#define GPIO_3_PORT_BASE    PORTC_BASE
 #define GPIO_3_DEV          PTC
 #define GPIO_3_PIN          18
 #define GPIO_3_CLKEN()      (SIM->SCGC5 |= SIM_SCGC5_PORTC_MASK)
@@ -325,6 +329,7 @@
 /* GPIO channel 4 config */
 /* LIS3DH INT2 */
 #define GPIO_4_PORT         PORTC
+#define GPIO_4_PORT_BASE    PORTC_BASE
 #define GPIO_4_DEV          PTC
 #define GPIO_4_PIN          17
 #define GPIO_4_CLKEN()      (SIM->SCGC5 |= SIM_SCGC5_PORTC_MASK)
@@ -334,6 +339,7 @@
 /* GPIO channel 5 config */
 /* VSEC enable */
 #define GPIO_5_PORT         PORTB
+#define GPIO_5_PORT_BASE    PORTB_BASE
 #define GPIO_5_DEV          PTB
 #define GPIO_5_PIN          16
 #define GPIO_5_CLKEN()      (SIM->SCGC5 |= SIM_SCGC5_PORTB_MASK)
@@ -343,6 +349,7 @@
 /* GPIO channel 6 config */
 /* AVDD enable */
 #define GPIO_6_PORT         PORTB
+#define GPIO_6_PORT_BASE    PORTB_BASE
 #define GPIO_6_DEV          PTB
 #define GPIO_6_PIN          17
 #define GPIO_6_CLKEN()      (SIM->SCGC5 |= SIM_SCGC5_PORTB_MASK)
@@ -352,6 +359,7 @@
 /* GPIO channel 7 config */
 /* VPERIPH enable */
 #define GPIO_7_PORT         PORTD
+#define GPIO_7_PORT_BASE    PORTD_BASE
 #define GPIO_7_DEV          PTD
 #define GPIO_7_PIN          7
 #define GPIO_7_CLKEN()      (SIM->SCGC5 |= SIM_SCGC5_PORTD_MASK)
@@ -361,6 +369,7 @@
 /* GPIO channel 8 config */
 /* MC34673 enable */
 #define GPIO_8_PORT         PORTB
+#define GPIO_8_PORT_BASE    PORTB_BASE
 #define GPIO_8_DEV          PTB
 #define GPIO_8_PIN          23
 #define GPIO_8_CLKEN()      (SIM->SCGC5 |= SIM_SCGC5_PORTB_MASK)
@@ -370,6 +379,7 @@
 /* GPIO channel 9 config */
 /* MC34673 CHG */
 #define GPIO_9_PORT         PORTB
+#define GPIO_9_PORT_BASE    PORTB_BASE
 #define GPIO_9_DEV          PTB
 #define GPIO_9_PIN          22
 #define GPIO_9_CLKEN()      (SIM->SCGC5 |= SIM_SCGC5_PORTB_MASK)
@@ -379,6 +389,7 @@
 /* GPIO channel 10 config */
 /* MC34673 PPR */
 #define GPIO_10_PORT        PORTB
+#define GPIO_10_PORT_BASE   PORTB_BASE
 #define GPIO_10_DEV         PTB
 #define GPIO_10_PIN         9
 #define GPIO_10_CLKEN()     (SIM->SCGC5 |= SIM_SCGC5_PORTB_MASK)
@@ -388,6 +399,7 @@
 /* GPIO channel 11 config */
 /* MC34673 FAST */
 #define GPIO_11_PORT        PORTB
+#define GPIO_11_PORT_BASE   PORTB_BASE
 #define GPIO_11_DEV         PTB
 #define GPIO_11_PIN         10
 #define GPIO_11_CLKEN()     (SIM->SCGC5 |= SIM_SCGC5_PORTB_MASK)
@@ -397,6 +409,7 @@
 /* GPIO channel 12 config */
 /* AT86RF212 IRQ */
 #define GPIO_12_PORT        PORTB
+#define GPIO_12_PORT_BASE   PORTB_BASE
 #define GPIO_12_DEV         PTB
 #define GPIO_12_PIN         9
 #define GPIO_12_CLKEN()     (SIM->SCGC5 |= SIM_SCGC5_PORTB_MASK)
@@ -406,6 +419,7 @@
 /* GPIO channel 13 config */
 /* AT86RF212 SLP_TR */
 #define GPIO_13_PORT        PORTE
+#define GPIO_13_PORT_BASE   PORTE_BASE
 #define GPIO_13_DEV         PTE
 #define GPIO_13_PIN         6
 #define GPIO_13_CLKEN()     (SIM->SCGC5 |= SIM_SCGC5_PORTE_MASK)
@@ -415,6 +429,7 @@
 /* GPIO channel 14 config */
 /* AT86RF212 SS */
 #define GPIO_14_PORT        PORTD
+#define GPIO_14_PORT_BASE   PORTD_BASE
 #define GPIO_14_DEV         PTD
 #define GPIO_14_PIN         4
 #define GPIO_14_CLKEN()     (SIM->SCGC5 |= SIM_SCGC5_PORTD_MASK)
@@ -424,6 +439,7 @@
 /* GPIO channel 15 config */
 /* LIS3DH CS */
 #define GPIO_15_PORT        PORTD
+#define GPIO_15_PORT_BASE   PORTD_BASE
 #define GPIO_15_DEV         PTD
 #define GPIO_15_PIN         0
 #define GPIO_15_CLKEN()     (SIM->SCGC5 |= SIM_SCGC5_PORTD_MASK)
