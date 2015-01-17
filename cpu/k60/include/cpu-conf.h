@@ -85,12 +85,21 @@
 /* Do not use 0xAB, it is reserved for ARM semihosting environment. */
 #define BREAK_SEMIHOSTING 0xAB
 
+/**
+ * @name GPIO pin mux function numbers
+ */
+/** @{ */
 #define PIN_MUX_FUNCTION_ANALOG 0
 #define PIN_MUX_FUNCTION_GPIO 1
+/** @} */
+/**
+ * @name GPIO interrupt flank settings
+ */
+/** @{ */
 #define PIN_INTERRUPT_RISING 0b1001
 #define PIN_INTERRUPT_FALLING 0b1010
 #define PIN_INTERRUPT_EDGE 0b1011
-
+/** @} */
 /**
  * @name Kernel stack size configuration
  *
