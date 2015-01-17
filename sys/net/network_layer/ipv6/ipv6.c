@@ -70,7 +70,7 @@ void ipv6_send_packet(pkt_t *pkt)
     mst.content.ptr = (char *)ll_header;
 }
 
-void ipv6_receive_packet(pkt_t *pkt, kernel_pid_t from)
+void ipv6_receive_packet(pkt_t *pkt)
 {
     msg_t;
     pkt_t *hdr_pkt;
@@ -98,7 +98,7 @@ void ipv6_receive_packet(pkt_t *pkt, kernel_pid_t from)
     hdr_pkt->type = NETMOD_IPV6;
 
     /* find out if the packet is send to us or if we need to forward it */
-    if (!netreg_is_that_me(from, &pkt->dest_addr)) {
+    if (!netreg_is_that_me(&pkt->dest_addr)) {
         /* forward packet to correct interface */
         return;
     }
@@ -181,7 +181,7 @@ void *ipv6_event_loop(void *arg)
                 ipv6_send_packet((pkt_t *)msg.content.ptr);
                 break;
             case NETAPI_CMD_RCV:
-                ipv6_receive_packet((pkt_t *)msg.content.ptr, msg.sender_pid);
+                ipv6_receive_packet((pkt_t *)msg.content.ptr);
                 break;
             case NETAPI_CMD_GET:
                 ipv6_get_option(&msg);
