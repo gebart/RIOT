@@ -14,6 +14,7 @@
  * @brief       Atomic getter and setter functions
  *
  * @author      Kaspar Schleiser <kaspar@schleiser.de>
+ * @author      Joakim Gebart <joakim.gebart@eistec.se>
  */
 
 #ifndef _ATOMIC_H
@@ -34,6 +35,24 @@
  * @return The old value of *val*
  */
 unsigned int atomic_set_return(unsigned int *val, unsigned int set);
+
+/**
+ * @brief Increment a counter variable by one and return the old value.
+ *
+ * @param[in]  val   Pointer to a counter variable.
+ *
+ * @return The value of *val* before the increment.
+ */
+int atomic_inc(int *val);
+
+/**
+ * @brief Decrement a counter variable by one and return the old value.
+ *
+ * @param[in]  val   Pointer to a counter variable.
+ *
+ * @return The value of *val* before the decrement.
+ */
+int atomic_dec(int *val);
 
 #ifdef __cplusplus
 }
