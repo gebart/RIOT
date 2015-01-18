@@ -15,6 +15,7 @@
  *
  * @author      Stefan Pfeiffer <stefan.pfeiffer@fu-berlin.de>
  * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
+ * @author      Joakim Gebart <joakim.gebart@eistec.se>
  *
  * @}
  */
@@ -29,4 +30,36 @@ unsigned int atomic_arch_set_return(unsigned int *to_set, unsigned int value)
     *to_set = value;
     enableIRQ();
     return old;
+}
+
+int atomic_inc(int *val)
+{
+    int status;
+    int tmp;
+    do {
+        /* Load exclusive */
+        tmp = __LDREXW(val);
+
+        /* increment counter */
+        ++tmp;
+
+        /* Try to write the new value */
+        status = __STREXW(tmp, val);
+    } while (status != 0); /* retry until load-store cycle was exclusive. */
+}
+
+int atomic_dec(int *val)
+{
+    int status;
+    int tmp;
+    do {
+        /* Load exclusive */
+        tmp = __LDREXW(val);
+
+        /* decrement counter */
+        --tmp;
+
+        /* Try to write the new value */
+        status = __STREXW(tmp, val);
+    } while (status != 0); /* retry until load-store cycle was exclusive. */
 }
