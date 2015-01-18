@@ -15,6 +15,7 @@
  *
  * @author      Stefan Pfeiffer <stefan.pfeiffer@fu-berlin.de>
  * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
+ * @author      Joakim Gebart <joakim.gebart@eistec.se>
  *
  * @}
  */
@@ -30,4 +31,23 @@ unsigned int atomic_arch_set_return(unsigned int *to_set, unsigned int value)
     *to_set = value;
     enableIRQ();
     return old;
+}
+
+
+int atomic_inc(int *val)
+{
+    int old_val;
+    unsigned int irqmask = disableIRQ();
+    old_val = (*val)++;
+    restoreIRQ(irqmask);
+    return old_val;
+}
+
+int atomic_dec(int *val)
+{
+    int old_val;
+    unsigned int irqmask = disableIRQ();
+    old_val = (*val)--;
+    restoreIRQ(irqmask);
+    return old_val;
 }
