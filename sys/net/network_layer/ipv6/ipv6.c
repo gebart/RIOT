@@ -6,7 +6,7 @@ static char stack[KERNEL_CONF_STASKSIZE_DEFAULT];
 
 
 
-void ipv6_send_packet(pkt_t *pkt)
+void _send_packet(pkt_t *pkt)
 {
     ipv6_hdr_t *hdr;
     pkt_t *ll_header;
@@ -70,38 +70,8 @@ void ipv6_send_packet(pkt_t *pkt)
     mst.content.ptr = (char *)ll_header;
 }
 
-void ipv6_receive_packet(pkt_t *pkt)
+void _process(pkt_t *pkt)
 {
-    msg_t;
-    pkt_t *hdr_pkt;
-    ipv6_hdr_t *hdr;
-    int netmod;
-    kernel_pid_t receiver;
-    netreg_entry_t *netreg;
-
-    /* we only care about the IP header, so drop the previous one */
-    hdr_pkt = pkt->next;
-    pkt->next = NULL;
-    pktbuf_release(pkt);
-
-    /* check if we really have in IP header */
-    if (hdr_pkt == NULL) {
-        DEBUG("IPv6: receive_packet: got empty packet");
-        return;
-    }
-    hdr = (ipv6_hdr_t *)hdr_pkt->payload;
-    if (hdr_pkt->size < IPV6_HDR_LENGTH || hdr->version_trafficclass != IPV6_VER) {
-        pktbuf_release(hdr_pkt);
-        DEBUG("IPv6: receive_packet: received packet is not an IPv6 packet, dropping it");
-        return;
-    }
-    hdr_pkt->type = NETMOD_IPV6;
-
-    /* find out if the packet is send to us or if we need to forward it */
-    if (!netreg_is_that_me(&pkt->dest_addr)) {
-        /* forward packet to correct interface */
-        return;
-    }
 
     /* mark the packets payload */
     pkt = pktbuf_allocate(0, NETMOD_UNKNOWN);
@@ -142,49 +112,61 @@ void ipv6_receive_packet(pkt_t *pkt)
     }
 }
 
-
-pkt_t *ipv6_create_header(uint8_t *addr, uint8_t addr_len)
+void _receive(pkt_t *pkt)
 {
-    pkt_t *pkt;
+    msg_t;
+    pkt_t *hdr_pkt;
+    ipv6_hdr_t *hdr;
+    int netmod;
+    kernel_pid_t receiver;
+    netreg_entry_t *netreg;
 
-    /* check if given dst address is of correct length */
-    if (addr_len != IPV6_ADDR_LENGTH) {
-        return NULL;
+    /* we only care about the IP header, so drop the previous one */
+    hdr_pkt = pkt->next;
+    pkt->next = NULL;
+    pktbuf_release(pkt);
+
+    /* check if we really have in IP header */
+    if (hdr_pkt == NULL) {
+        DEBUG("IPv6: receive_packet: got empty packet");
+        return;
     }
-
-    /* allocate memory in the packet buffer to store the header data */
-    pkt = pktbuf_allocate(IPV6_HDR_LENGTH, NETMOD_IPV6);
-    if (pkt == NULL) {
-        return NULL;
+    hdr = (ipv6_hdr_t *)hdr_pkt->payload;
+    if (hdr_pkt->size < IPV6_HDR_LENGTH || hdr->version_trafficclass != IPV6_VER) {
+        pktbuf_release(hdr_pkt);
+        DEBUG("IPv6: receive_packet: received packet is not an IPv6 packet, dropping it");
+        return;
     }
+    hdr_pkt->type = NETMOD_IPV6;
 
-    /* write the address into the correct header field */
-    ipv6_hdr_init((ipv6_hdr_t *)pkt->payload, addr);
-
-    /* return the header entry with set destination address */
-    return pkt;
+    /* find out if the packet is send to us or if we need to forward it */
+    if (!netreg_is_that_me(&pkt->dest_addr)) {
+        _send_packet(hdr_pkt);
+        return;
+    }
+    else {
+        _process_packet(hdr_pkt);
+    }
 }
 
 
-void *ipv6_event_loop(void *arg)
+void *_event_loop(void *arg)
 {
     msg_t input;
 
-
     while (running) {
-
         /* listen for incoming NETAPI messages */
         msg_receive(&msg);
 
         switch (msg.type) {
             case NETAPI_CMD_SND:
-                ipv6_send_packet((pkt_t *)msg.content.ptr);
+                _send_packet((pkt_t *)msg.content.ptr);
                 break;
             case NETAPI_CMD_RCV:
-                ipv6_receive_packet((pkt_t *)msg.content.ptr);
+                _receive((pkt_t *)msg.content.ptr);
                 break;
             case NETAPI_CMD_GET:
-                ipv6_get_option(&msg);
+                _get_option(&msg);
             default:
                 /* no idea what to do, so do nothing */
                 break;
@@ -199,7 +181,7 @@ int ipv6_init(char thread_priority)
 
     /* start IP thread */
     pid = thread_create(stack, KERNEL_CONF_STASKSIZE_DEFAULT, thread_priority, NULL,
-                        ipv6_event_loop, NULL, "IPv6");
+                        _event_loop, NULL, "IPv6");
 
     /* register IP with netreg */
     netreg_register(NETMOD_IPV6, ipv6_create_header);
