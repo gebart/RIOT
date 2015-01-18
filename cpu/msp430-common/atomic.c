@@ -15,6 +15,7 @@
  *
  * @author      Kaspar Schleiser <kaspar@schleiser.de>
  * @author      Oliver Hahm <oliver.hahm@inria.fr>
+ * @author      Joakim Gebart <joakim.gebart@eistec.se>
  *
  * @}
  */
@@ -27,6 +28,24 @@ unsigned int atomic_set_return(unsigned int *val, unsigned int set)
     dINT();
     unsigned int old_val = *val;
     *val = set;
+    eINT();
+    return old_val;
+}
+
+int atomic_inc(int *val)
+{
+    int old_val;
+    dINT();
+    old_val = (*val)++;
+    eINT();
+    return old_val;
+}
+
+int atomic_dec(int *val)
+{
+    int old_val;
+    dINT();
+    old_val = (*val)--;
     eINT();
     return old_val;
 }
