@@ -33,4 +33,6 @@ void icmpv6_process(pkt_t *pkt)
             msg_send(&msg, receiver);
         }
     }
+
+    netapi_send(NETAPI_CMD_RCV);
 }
