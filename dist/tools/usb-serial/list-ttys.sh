@@ -13,24 +13,15 @@ if [ ! -d /sys/bus/usb/devices ]; then
     exit 1
 fi
 
-# Find all USB to serial devices
-for dev in /sys/bus/usb/devices/[0-9]*; do
-    if [ ! -f "${dev}/idVendor" ]; then
-        # not a main device
-        continue
-    fi
-    # Try to read the device info, discard any error messages (2>/dev/null)
-    serial=$(cat "${dev}/serial" 2>/dev/null)
-    manuf=$(cat "${dev}/manufacturer" 2>/dev/null)
-    product=$(cat "${dev}/product" 2>/dev/null)
-    # Look if any subdevices have a tty directory, this means that it is
-    # assigned a port.
-    # Note: limit the depth to avoid duplicate tty devices below USB hubs.
-    # Each 'tty' directory contains a subdirectory named after the tty device
-    # e.g. /sys/bus/usb/devices/1-1/1-1:1.0/ttyUSB0/tty/ttyUSB0
-    ttys=$( (find "${dev}"/ -maxdepth 3 -type d -name 'tty' -exec ls -1 {} \; | grep tty ) 2>/dev/null )
+# iterate over usb-tty devices:
+for dev in $(find /sys/bus/usb/devices/[0-9]*/[0-9]*/ -mindepth 1 -maxdepth 1 -name tty -follow -printf '%h\n'); do
+    parent=$(dirname ${dev})
+    serial=$(cat "${parent}/serial" 2>/dev/null)
+    manuf=$(cat "${parent}/manufacturer" 2>/dev/null)
+    product=$(cat "${parent}/product" 2>/dev/null)
+    ttys=$(ls ${dev}/tty 2>/dev/null)
     # If at least one tty is assigned to the device we will write its info to stdout.
     if [ ! -z "${ttys}" ]; then
-        echo "${dev}: ${manuf} ${product} serial: '${serial}', tty(s): $(for t in ${ttys}; do echo -n "${t}, "; done)"
+        echo "${parent}: ${manuf} ${product} serial: '${serial}', tty(s): $(for t in ${ttys}; do echo -n "${t}, "; done)"
     fi
 done
