@@ -13,8 +13,6 @@ if [ ! -d /sys/bus/usb/devices ]; then
     exit 1
 fi
 
-echo "These are the currently connected USB tty devices:"
-
 # Find all USB to serial devices
 for dev in /sys/bus/usb/devices/[0-9]*; do
     if [ ! -f "${dev}/idVendor" ]; then
