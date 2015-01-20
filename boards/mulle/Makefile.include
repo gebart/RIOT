@@ -170,7 +170,7 @@ NEWLIB_INCLUDES ?= \
 endif
 endif
 
-export CFLAGS += $(NEWLIB_INCLUDES)
+export INCLUDES += $(NEWLIB_INCLUDES)
 
 
 FFLAGS ?= $(OOCD_BOARD_FLAGS)
