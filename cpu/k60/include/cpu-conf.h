@@ -136,6 +136,14 @@
 /** @} */
 
 /**
+ * @name UART driver settings
+ */
+/** @{ */
+/** UART typedef from CPU header. */
+#define KINETIS_UART                    UART_Type
+/** @} */
+
+/**
  * @name Clock settings for the LPTMR0 timer
  * @{
  */
