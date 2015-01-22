@@ -124,7 +124,6 @@ export CFLAGS += -ggdb -g3 \
     $(FPU_USAGE) \
     -mlittle-endian \
     -mthumb \
-    -nostartfiles \
     -fno-common \
     -fshort-enums \
     -ffunction-sections -fdata-sections \
