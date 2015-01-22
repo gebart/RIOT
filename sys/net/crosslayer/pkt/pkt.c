@@ -14,53 +14,67 @@
 
 #include "pkt.h"
 
-pktsize_t pkt_hlist_len(pkt_hlist_t *list)
+int pktsnip_num(pktsnip_t *pkt)
 {
-    pktsize_t len = 0;
+    int c = 0;
 
-    while (list) {
-        len += list->header_len;
-        pkt_hlist_advance(&list);
+    while (pkt) {
+        c++;
+        pktsnip_advance(&pkt);
     }
 
-    return len;
+    return c;
 }
 
-pkt_hlist_t *pkt_hlist_remove_first(pkt_hlist_t **list)
+pktsize_t pkt_len(pktsnip_t *pkt)
 {
-    pkt_hlist_t *res;
+    pktsize_t c = 0;
 
-    if (list == NULL || *list == NULL) {
-        return NULL;
+    while (pkt) {
+        c += pkt->size;
+        pktsnip_advance(&pkt);
     }
 
-    res = *list;
-    *list = res->next;
-    res->next = NULL;
-
-    return res;
+    return c;
 }
 
-void pkt_hlist_remove(pkt_hlist_t **list, pkt_hlist_t *header)
+void pktsnip_add(pktsnip_t **pkt, pktsnip_t *snip)
 {
-    if (list == NULL || *list == NULL || header == NULL) {
+    if (pkt == NULL || snip == NULL) {
         return;
     }
 
-    if ((*list) == header) {
-        pkt_hlist_remove_first(list);
+    if (*pkt == NULL) {
+        *pkt = snip;
     }
     else {
-        pkt_hlist_t *ptr = (*list)->next, *prev = *list;
+        snip->next = (*pkt)->next;
+        (*pkt)->next = snip;
+    }
+}
+
+void pktsnip_remove(pktsnip_t **pkt, pktsnip_t *snip)
+{
+    if (pkt == NULL || *pkt == NULL || snip == NULL) {
+        return;
+    }
+
+    if ((*pkt) == snip) {
+        (*pkt) = (*pkt)->next;
+        snip->next = NULL;
+    }
+    else {
+        pktsnip_t *ptr = (*pkt)->next, *prev = *pkt;
 
         while (ptr != NULL) {
-            if (ptr == header) {
+            if (ptr == snip) {
                 prev->next = ptr->next;
                 ptr->next = NULL;
+                break;
             }
 
-            pkt_hlist_advance(&ptr);
-            pkt_hlist_advance(&prev);
+            pktsnip_advance(&ptr);
+            pktsnip_advance(&prev);
         }
     }
 
