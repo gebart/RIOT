@@ -20,6 +20,11 @@
 #ifndef __PERIPH_CONF_H
 #define __PERIPH_CONF_H
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 /**
  * @name Clock system configuration
  * @{
@@ -473,6 +478,10 @@
 #define RANDOM_RNGA_BASE        (RNG)
 
 /** @} */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __PERIPH_CONF_H */
 /** @} */
