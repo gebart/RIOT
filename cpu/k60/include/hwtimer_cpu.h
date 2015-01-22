@@ -21,6 +21,11 @@
 
 #include "cpu.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 /**
  * @name Hardware timer configuration
  * @{
@@ -29,6 +34,10 @@
 #define HWTIMER_SPEED       32768           /**< LPTMR is running at 32.768 kHz */
 #define HWTIMER_MAXTICKS (0xFFFFFFFF) /**< Virtually extended to 32 bits from 16 bits hardware counter. */
 /** @} */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* HWTIMER_CPU_H_ */
 /** @} */

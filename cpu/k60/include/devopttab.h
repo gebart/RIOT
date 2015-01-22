@@ -24,6 +24,11 @@
 #ifndef DEVOPTTAB_H_
 #define DEVOPTTAB_H_
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 /**
  * @brief Device operations table
  *
@@ -48,6 +53,10 @@ typedef struct {
     long(*fstat_r)(struct _reent *r, int fd, char *ptr,
                    int len);   /**< pointer to fstat() function for this device */
 } devoptab_t;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 /** @} */

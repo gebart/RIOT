@@ -21,6 +21,11 @@
 #ifndef __CPU_CONF_H
 #define __CPU_CONF_H
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #if defined(CPU_MODEL_K60DN512VLL10) || defined(CPU_MODEL_K60DN256VLL10)
 
 /* Rev. 2.x silicon */
@@ -300,6 +305,10 @@ typedef enum llwu_wakeup_edge {
 /** @} */
 
 #define TRANSCEIVER_BUFFER_SIZE (3)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CPU_CONF_H */
 /** @} */

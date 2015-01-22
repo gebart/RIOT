@@ -584,9 +584,9 @@ void *_sbrk_r(struct _reent *r, ptrdiff_t increment)
         increment += DYNAMIC_MEMORY_ALIGN - (increment % DYNAMIC_MEMORY_ALIGN);
     }
 
-    if ((current_break + increment) < ((void *)(&_heap_end))) {
+    if (((uint8_t *)current_break + increment) < ((uint8_t *)(&_heap_end))) {
         ret = current_break;
-        current_break += increment;
+        current_break = (void *)(((uint8_t *)current_break) + increment);
     }
     else {
         r->_errno = ENOMEM;
