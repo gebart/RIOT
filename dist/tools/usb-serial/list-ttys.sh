@@ -14,7 +14,7 @@ if [ ! -d /sys/bus/usb/devices ]; then
 fi
 
 # iterate over usb-tty devices:
-for dev in $(find /sys/bus/usb/devices/[0-9]*/[0-9]*/ -mindepth 1 -maxdepth 1 -name tty -follow -printf '%h\n'); do
+for dev in $(find /sys/bus/usb/devices/ -mindepth 3 -maxdepth 3 -name tty -follow -printf '%h\n' 2>/dev/null); do
     parent=$(dirname ${dev})
     serial=$(cat "${parent}/serial" 2>/dev/null)
     manuf=$(cat "${parent}/manufacturer" 2>/dev/null)
