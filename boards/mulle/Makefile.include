@@ -152,9 +152,6 @@ export OBJDUMP  = $(LLVMPREFIX)objdump
 # LLVM lacks a binutils strip tool as well...
 #export STRIP    = $(LLVMPREFIX)strip
 export SIZE     = $(LLVMPREFIX)size
-# llvm-ar does not support the f modifier (anymore, since r186078) set in the
-# default Contiki Makefile.include
-export AROPTS   = rcv
 
 # Since Clang is not installed as a separate instance for each crossdev target
 # we need to tell it where to look for platform specific includes (Newlib
