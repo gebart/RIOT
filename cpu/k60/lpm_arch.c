@@ -30,14 +30,15 @@ volatile int kinetis_lpm_inhibit_stop_sema = 0;
 volatile int kinetis_lpm_inhibit_vlps_sema = 0;
 volatile int kinetis_lpm_inhibit_lls_sema = 0;
 
-static inline void wait(void) {
-  /* Clear the SLEEPDEEP bit to make sure we go into WAIT (sleep) mode instead
-   * of deep sleep.
-   */
-  SCB->SCR &= ~SCB_SCR_SLEEPDEEP_Msk;
+static inline void wait(void)
+{
+    /* Clear the SLEEPDEEP bit to make sure we go into WAIT (sleep) mode instead
+     * of deep sleep.
+     */
+    SCB->SCR &= ~SCB_SCR_SLEEPDEEP_Msk;
 
-  /* WFI instruction will start entry into WAIT mode */
-  __WFI();
+    /* WFI instruction will start entry into WAIT mode */
+    __WFI();
 }
 
 /**
@@ -48,7 +49,8 @@ static inline void wait(void) {
  * @see Kinetis CPU reference manual, chapter System Mode Controller, Power Mode
  * Control register (SMC_PMCTRL), field STOPM
  */
-static inline void stop(uint8_t stopmode) {
+static inline void stop(uint8_t stopmode)
+{
     uint8_t dummy;
     /* Set the SLEEPDEEP bit to enable deep sleep modes (STOP) */
     SCB->SCR |= SCB_SCR_SLEEPDEEP_Msk;
@@ -70,6 +72,7 @@ static void kinetis_low_power_mode(void)
 {
     wait();
     return;
+
     /* Check if any UARTs are currently receiving data, if we go to STOP mode we
      * will lose the byte in progress. */
     /* It is necessary to check the SIM_SCGCx registers to avoid hardfaulting when
@@ -77,7 +80,7 @@ static void kinetis_low_power_mode(void)
     /* FIXME: It is possible that this could be implemented as a part of the
      * UART module interrupt by enabling the RXEDGIF IRQ and setting
      * inhibit_stop when RXEDGIF occurs. */
-    if(((SIM->SCGC4 & SIM_SCGC4_UART0_MASK) && (UART0->S2 & UART_S2_RAF_MASK)) ||
+    if (((SIM->SCGC4 & SIM_SCGC4_UART0_MASK) && (UART0->S2 & UART_S2_RAF_MASK)) ||
         ((SIM->SCGC4 & SIM_SCGC4_UART1_MASK) && (UART1->S2 & UART_S2_RAF_MASK)) ||
         ((SIM->SCGC4 & SIM_SCGC4_UART2_MASK) && (UART2->S2 & UART_S2_RAF_MASK)) ||
         ((SIM->SCGC4 & SIM_SCGC4_UART3_MASK) && (UART3->S2 & UART_S2_RAF_MASK)) ||
@@ -85,15 +88,15 @@ static void kinetis_low_power_mode(void)
         ((SIM->SCGC1 & SIM_SCGC1_UART5_MASK) && (UART5->S2 & UART_S2_RAF_MASK))) {
         wait();
     }
-    else if(kinetis_lpm_inhibit_stop_sema != 0) {
+    else if (kinetis_lpm_inhibit_stop_sema != 0) {
         /* STOP inhibited, go to WAIT mode */
         wait();
     }
-    else if(kinetis_lpm_inhibit_vlps_sema != 0) {
+    else if (kinetis_lpm_inhibit_vlps_sema != 0) {
         /* VLPS inhibited, go to normal STOP mode */
         stop(KINETIS_POWER_MODE_NORMAL);
     }
-    else if(kinetis_lpm_inhibit_lls_sema != 0) {
+    else if (kinetis_lpm_inhibit_lls_sema != 0) {
         /* LLS inhibited, go to VLPS mode */
         stop(KINETIS_POWER_MODE_VLPS);
     }
@@ -115,11 +118,11 @@ void lpm_arch_init(void)
 
 enum lpm_mode lpm_arch_set(enum lpm_mode target)
 {
-    switch (target)
-    {
+    switch (target) {
         case LPM_ON:
-            /* MCU is active, do not go to low power */
-            break;
+                /* MCU is active, do not go to low power */
+                break;
+
         case LPM_IDLE:
         case LPM_SLEEP:
         case LPM_POWERDOWN:
@@ -128,10 +131,12 @@ enum lpm_mode lpm_arch_set(enum lpm_mode target)
              * allow for. */
             kinetis_low_power_mode();
             break;
+
         case LPM_UNKNOWN:
         default:
-        break;
+            break;
     }
+
     return 0;
 }
 
