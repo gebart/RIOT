@@ -181,35 +181,46 @@ extern "C"
  * @name SPI configuration
  * @{
  */
-#define SPI_NUMOF           1
+#define SPI_NUMOF           6
 #define SPI_0_EN            1
 #define SPI_1_EN            0
+#define SPI_2_EN            0
+#define SPI_3_EN            0
+#define SPI_4_EN            0
+#define SPI_5_EN            0
+#define SPI_6_EN            0
+#define SPI_7_EN            0
+
+#define MULLE_PASTE_PARTS(left, index, right) MULLE_PASTE_PARTS2(left, index, right)
+#define MULLE_PASTE_PARTS2(left, index, right) left##index##right
 
 /* SPI 0 device config */
-#define SPI_0_DEV               SPI0
+/* SPI_0 (in RIOT) is mapped to SPI0, CTAS=0 in hardware */
+#define SPI_0_INDEX             0
 #define SPI_0_CTAS              0
-#define SPI_0_CLKEN()           (SIM->SCGC6 |= SIM_SCGC6_SPI0_MASK)
-#define SPI_0_CLKDIS()          (SIM->SCGC6 &= ~(SIM_SCGC6_SPI0_MASK))
-#define SPI_0_IRQ               SPI0_IRQn
-#define SPI_0_ISR               isr_spi0
+#define SPI_0_DEV               MULLE_PASTE_PARTS(SPI, SPI_0_INDEX, )
+#define SPI_0_CLKEN()           (BITBAND_REG(SIM->SCGC6, SIM_SCGC6_SPI0_SHIFT) = 1)
+#define SPI_0_CLKDIS()          (BITBAND_REG(SIM->SCGC6, SIM_SCGC6_SPI0_SHIFT) = 0)
+#define SPI_0_IRQ               MULLE_PASTE_PARTS(SPI, SPI_0_INDEX, _IRQn)
+#define SPI_0_ISR               MULLE_PASTE_PARTS(isr_spi, SPI_0_INDEX, )
 #define SPI_0_IRQ_PRIO          1
 #define SPI_0_FREQ              SystemBusClock
 /* SPI 0 pin configuration */
 #define SPI_0_SCK_PIN           1
 #define SPI_0_SCK_PORT          PORTD
-#define SPI_0_SCK_PORT_CLKEN()  (SIM->SCGC5 |= SIM_SCGC5_PORTD_MASK)
+#define SPI_0_SCK_PORT_CLKEN()  (BITBAND_REG(SIM->SCGC5, SIM_SCGC5_PORTD_SHIFT) = 1)
 #define SPI_0_SCK_AF            2
 #define SPI_0_SIN_PIN           3
 #define SPI_0_SIN_PORT          PORTD
-#define SPI_0_SIN_PORT_CLKEN()  (SIM->SCGC5 |= SIM_SCGC5_PORTD_MASK)
+#define SPI_0_SIN_PORT_CLKEN()  (BITBAND_REG(SIM->SCGC5, SIM_SCGC5_PORTD_SHIFT) = 1)
 #define SPI_0_SIN_AF            2
 #define SPI_0_SOUT_PIN          2
 #define SPI_0_SOUT_PORT         PORTD
-#define SPI_0_SOUT_PORT_CLKEN() (SIM->SCGC5 |= SIM_SCGC5_PORTD_MASK)
+#define SPI_0_SOUT_PORT_CLKEN() (BITBAND_REG(SIM->SCGC5, SIM_SCGC5_PORTD_SHIFT) = 1)
 #define SPI_0_SOUT_AF  2
 #define SPI_0_PCS0_PIN          0
 #define SPI_0_PCS0_PORT         PORTD
-#define SPI_0_PCS0_PORT_CLKEN() (SIM->SCGC5 |= SIM_SCGC5_PORTD_MASK)
+#define SPI_0_PCS0_PORT_CLKEN() (BITBAND_REG(SIM->SCGC5, SIM_SCGC5_PORTD_SHIFT) = 1)
 #define SPI_0_PCS0_AF           2
 /* SPI chip select polarity */
 #define SPI_0_PCS0_ACTIVE_LOW   1
