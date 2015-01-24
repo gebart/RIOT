@@ -187,6 +187,7 @@ extern "C"
 
 /* SPI 0 device config */
 #define SPI_0_DEV               SPI0
+#define SPI_0_CTAS              0
 #define SPI_0_CLKEN()           (SIM->SCGC6 |= SIM_SCGC6_SPI0_MASK)
 #define SPI_0_CLKDIS()          (SIM->SCGC6 &= ~(SIM_SCGC6_SPI0_MASK))
 #define SPI_0_IRQ               SPI0_IRQn
