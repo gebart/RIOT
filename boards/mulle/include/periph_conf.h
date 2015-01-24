@@ -270,7 +270,7 @@ extern "C"
 #define SPI_2_CLKEN()           (BITBAND_REG(SIM->SCGC6, SIM_SCGC6_SPI0_SHIFT) = 1)
 #define SPI_2_CLKDIS()          (BITBAND_REG(SIM->SCGC6, SIM_SCGC6_SPI0_SHIFT) = 0)
 #define SPI_2_IRQ               MULLE_PASTE_PARTS(SPI, SPI_2_INDEX, _IRQn)
-//~ #define SPI_2_IRQ_HANDLER       MULLE_PASTE_PARTS(isr_spi, SPI_2_INDEX, )
+/* #define SPI_2_IRQ_HANDLER       MULLE_PASTE_PARTS(isr_spi, SPI_2_INDEX, ) */
 #define SPI_2_IRQ_PRIO          1
 #define SPI_2_FREQ              SystemBusClock
 /* SPI 2 pin configuration, must be the same as the other RIOT device using this
