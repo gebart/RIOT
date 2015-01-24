@@ -128,7 +128,7 @@ typedef uint8_t radio_packet_length_t;
 #define LIS3DH_INT1   GPIO_3
 #define LIS3DH_INT2   GPIO_4
 #define LIS3DH_CS     GPIO_15
-#define LIS3DH_SPI    SPI_0
+#define LIS3DH_SPI    SPI_2
 
 /** @} */
 

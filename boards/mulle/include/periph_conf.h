@@ -181,10 +181,10 @@ extern "C"
  * @name SPI configuration
  * @{
  */
-#define SPI_NUMOF           6
+#define SPI_NUMOF           3
 #define SPI_0_EN            1
-#define SPI_1_EN            0
-#define SPI_2_EN            0
+#define SPI_1_EN            1
+#define SPI_2_EN            1
 #define SPI_3_EN            0
 #define SPI_4_EN            0
 #define SPI_5_EN            0
@@ -202,24 +202,24 @@ extern "C"
 #define SPI_0_CLKEN()           (BITBAND_REG(SIM->SCGC6, SIM_SCGC6_SPI0_SHIFT) = 1)
 #define SPI_0_CLKDIS()          (BITBAND_REG(SIM->SCGC6, SIM_SCGC6_SPI0_SHIFT) = 0)
 #define SPI_0_IRQ               MULLE_PASTE_PARTS(SPI, SPI_0_INDEX, _IRQn)
-#define SPI_0_ISR               MULLE_PASTE_PARTS(isr_spi, SPI_0_INDEX, )
+#define SPI_0_IRQ_HANDLER       MULLE_PASTE_PARTS(isr_spi, SPI_0_INDEX, )
 #define SPI_0_IRQ_PRIO          1
 #define SPI_0_FREQ              SystemBusClock
 /* SPI 0 pin configuration */
-#define SPI_0_SCK_PIN           1
 #define SPI_0_SCK_PORT          PORTD
+#define SPI_0_SCK_PIN           1
 #define SPI_0_SCK_PORT_CLKEN()  (BITBAND_REG(SIM->SCGC5, SIM_SCGC5_PORTD_SHIFT) = 1)
 #define SPI_0_SCK_AF            2
-#define SPI_0_SIN_PIN           3
 #define SPI_0_SIN_PORT          PORTD
+#define SPI_0_SIN_PIN           3
 #define SPI_0_SIN_PORT_CLKEN()  (BITBAND_REG(SIM->SCGC5, SIM_SCGC5_PORTD_SHIFT) = 1)
 #define SPI_0_SIN_AF            2
-#define SPI_0_SOUT_PIN          2
 #define SPI_0_SOUT_PORT         PORTD
+#define SPI_0_SOUT_PIN          2
 #define SPI_0_SOUT_PORT_CLKEN() (BITBAND_REG(SIM->SCGC5, SIM_SCGC5_PORTD_SHIFT) = 1)
 #define SPI_0_SOUT_AF  2
-#define SPI_0_PCS0_PIN          0
 #define SPI_0_PCS0_PORT         PORTD
+#define SPI_0_PCS0_PIN          0
 #define SPI_0_PCS0_PORT_CLKEN() (BITBAND_REG(SIM->SCGC5, SIM_SCGC5_PORTD_SHIFT) = 1)
 #define SPI_0_PCS0_AF           2
 /* SPI chip select polarity */
@@ -227,6 +227,75 @@ extern "C"
 #define SPI_0_PCS1_ACTIVE_LOW   1
 #define SPI_0_PCS2_ACTIVE_LOW   1
 #define SPI_0_PCS3_ACTIVE_LOW   1
+
+/* SPI 1 device config */
+/* SPI_1 (in RIOT) is mapped to SPI1, CTAS=0 in hardware */
+#define SPI_1_INDEX             1
+#define SPI_1_CTAS              0
+#define SPI_1_DEV               MULLE_PASTE_PARTS(SPI, SPI_1_INDEX, )
+#define SPI_1_CLKEN()           (BITBAND_REG(SIM->SCGC6, SIM_SCGC6_SPI1_SHIFT) = 1)
+#define SPI_1_CLKDIS()          (BITBAND_REG(SIM->SCGC6, SIM_SCGC6_SPI1_SHIFT) = 0)
+#define SPI_1_IRQ               MULLE_PASTE_PARTS(SPI, SPI_1_INDEX, _IRQn)
+#define SPI_1_IRQ_HANDLER       MULLE_PASTE_PARTS(isr_spi, SPI_1_INDEX, )
+#define SPI_1_IRQ_PRIO          1
+#define SPI_1_FREQ              SystemBusClock
+/* SPI 0 pin configuration */
+#define SPI_1_SCK_PORT          PORTE
+#define SPI_1_SCK_PIN           2
+#define SPI_1_SCK_PORT_CLKEN()  (BITBAND_REG(SIM->SCGC5, SIM_SCGC5_PORTE_SHIFT) = 1)
+#define SPI_1_SCK_AF            2
+#define SPI_1_SIN_PORT          PORTE
+#define SPI_1_SIN_PIN           3
+#define SPI_1_SIN_PORT_CLKEN()  (BITBAND_REG(SIM->SCGC5, SIM_SCGC5_PORTE_SHIFT) = 1)
+#define SPI_1_SIN_AF            2
+#define SPI_1_SOUT_PORT         PORTE
+#define SPI_1_SOUT_PIN          1
+#define SPI_1_SOUT_PORT_CLKEN() (BITBAND_REG(SIM->SCGC5, SIM_SCGC5_PORTE_SHIFT) = 1)
+#define SPI_1_SOUT_AF  2
+#define SPI_1_PCS0_PORT         PORTE
+#define SPI_1_PCS0_PIN          4
+#define SPI_1_PCS0_PORT_CLKEN() (BITBAND_REG(SIM->SCGC5, SIM_SCGC5_PORTE_SHIFT) = 1)
+#define SPI_1_PCS0_AF           2
+/* SPI chip select polarity */
+#define SPI_1_PCS0_ACTIVE_LOW   1
+#define SPI_1_PCS1_ACTIVE_LOW   1
+#define SPI_1_PCS2_ACTIVE_LOW   1
+#define SPI_1_PCS3_ACTIVE_LOW   1
+
+/* SPI 2 device config */
+/* SPI_2 (in RIOT) is mapped to SPI0, CTAS=1 in hardware */
+#define SPI_2_INDEX             0
+#define SPI_2_CTAS              1
+#define SPI_2_DEV               MULLE_PASTE_PARTS(SPI, SPI_2_INDEX, )
+#define SPI_2_CLKEN()           (BITBAND_REG(SIM->SCGC6, SIM_SCGC6_SPI0_SHIFT) = 1)
+#define SPI_2_CLKDIS()          (BITBAND_REG(SIM->SCGC6, SIM_SCGC6_SPI0_SHIFT) = 0)
+#define SPI_2_IRQ               MULLE_PASTE_PARTS(SPI, SPI_2_INDEX, _IRQn)
+//~ #define SPI_2_IRQ_HANDLER       MULLE_PASTE_PARTS(isr_spi, SPI_2_INDEX, )
+#define SPI_2_IRQ_PRIO          1
+#define SPI_2_FREQ              SystemBusClock
+/* SPI 2 pin configuration, must be the same as the other RIOT device using this
+ * hardware module */
+#define SPI_2_SCK_PORT          PORTD
+#define SPI_2_SCK_PIN           1
+#define SPI_2_SCK_PORT_CLKEN()  (BITBAND_REG(SIM->SCGC5, SIM_SCGC5_PORTD_SHIFT) = 1)
+#define SPI_2_SCK_AF            2
+#define SPI_2_SIN_PORT          PORTD
+#define SPI_2_SIN_PIN           3
+#define SPI_2_SIN_PORT_CLKEN()  (BITBAND_REG(SIM->SCGC5, SIM_SCGC5_PORTD_SHIFT) = 1)
+#define SPI_2_SIN_AF            2
+#define SPI_2_SOUT_PORT         PORTD
+#define SPI_2_SOUT_PIN          2
+#define SPI_2_SOUT_PORT_CLKEN() (BITBAND_REG(SIM->SCGC5, SIM_SCGC5_PORTD_SHIFT) = 1)
+#define SPI_2_SOUT_AF  2
+#define SPI_2_PCS0_PORT         PORTD
+#define SPI_2_PCS0_PIN          0
+#define SPI_2_PCS0_PORT_CLKEN() (BITBAND_REG(SIM->SCGC5, SIM_SCGC5_PORTD_SHIFT) = 1)
+#define SPI_2_PCS0_AF           2
+/* SPI chip select polarity */
+#define SPI_2_PCS0_ACTIVE_LOW   1
+#define SPI_2_PCS1_ACTIVE_LOW   1
+#define SPI_2_PCS2_ACTIVE_LOW   1
+#define SPI_2_PCS3_ACTIVE_LOW   1
 
 /**
  * @name SPI delay timing configuration
@@ -238,6 +307,16 @@ extern "C"
 #define SPI_0_TCSC_FREQ (5555555) /* It looks silly, but this is correct. 1/180e-9 */
 #define SPI_0_TASC_FREQ (5454545) /* It looks silly, but this is correct. 1/183e-9 */
 #define SPI_0_TDT_FREQ  (4000000) /* 1/250e-9 */
+
+/* SPI_1 timings */
+#define SPI_1_TCSC_FREQ (0)
+#define SPI_1_TASC_FREQ (0)
+#define SPI_1_TDT_FREQ  (0)
+
+/* SPI_2 timings */
+#define SPI_2_TCSC_FREQ (0)
+#define SPI_2_TASC_FREQ (0)
+#define SPI_2_TDT_FREQ  (0)
 
 /** @} */
 
