@@ -20,8 +20,10 @@
  * @}
  */
 
+#include <stdint.h>
 #include "arch/atomic_arch.h"
 #include "irq.h"
+#include "cpu.h"
 
 unsigned int atomic_arch_set_return(unsigned int *to_set, unsigned int value)
 {
@@ -36,30 +38,34 @@ int atomic_arch_inc(int *val)
 {
     int status;
     int tmp;
+    int old;
     do {
         /* Load exclusive */
-        tmp = __LDREXW(val);
+        tmp = __LDREXW((volatile uint32_t *)val);
 
         /* increment counter */
-        ++tmp;
+        old = tmp++;
 
         /* Try to write the new value */
-        status = __STREXW(tmp, val);
+        status = __STREXW(tmp, (volatile uint32_t *)val);
     } while (status != 0); /* retry until load-store cycle was exclusive. */
+    return old;
 }
 
 int atomic_arch_dec(int *val)
 {
     int status;
     int tmp;
+    int old;
     do {
         /* Load exclusive */
-        tmp = __LDREXW(val);
+        tmp = __LDREXW((volatile uint32_t *)val);
 
         /* decrement counter */
-        --tmp;
+        old = tmp--;
 
         /* Try to write the new value */
-        status = __STREXW(tmp, val);
+        status = __STREXW(tmp, (volatile uint32_t *)val);
     } while (status != 0); /* retry until load-store cycle was exclusive. */
+    return old;
 }
