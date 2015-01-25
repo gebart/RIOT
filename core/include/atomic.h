@@ -37,7 +37,7 @@
 unsigned int atomic_set_return(unsigned int *val, unsigned int set);
 
 /**
- * @brief Increment a counter variable by one and return the old value.
+ * @brief Increment a counter variable by one atomically and return the old value.
  *
  * @param[in]  val   Pointer to a counter variable.
  *
@@ -46,7 +46,7 @@ unsigned int atomic_set_return(unsigned int *val, unsigned int set);
 int atomic_inc(int *val);
 
 /**
- * @brief Decrement a counter variable by one and return the old value.
+ * @brief Decrement a counter variable by one atomically and return the old value.
  *
  * @param[in]  val   Pointer to a counter variable.
  *

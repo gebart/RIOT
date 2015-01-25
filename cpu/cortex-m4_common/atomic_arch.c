@@ -32,7 +32,7 @@ unsigned int atomic_arch_set_return(unsigned int *to_set, unsigned int value)
     return old;
 }
 
-int atomic_inc(int *val)
+int atomic_arch_inc(int *val)
 {
     int status;
     int tmp;
@@ -48,7 +48,7 @@ int atomic_inc(int *val)
     } while (status != 0); /* retry until load-store cycle was exclusive. */
 }
 
-int atomic_dec(int *val)
+int atomic_arch_dec(int *val)
 {
     int status;
     int tmp;

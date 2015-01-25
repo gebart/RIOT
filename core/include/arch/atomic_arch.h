@@ -32,6 +32,8 @@
  */
 #ifdef COREIF_NG
 #define atomic_set_return       atomic_arch_set_return
+#define atomic_inc              atomic_arch_inc
+#define atomic_dec              atomic_arch_dec
 #endif
 /** @} */
 
@@ -44,6 +46,25 @@
  * @return                  the value that was set
  */
 unsigned int atomic_arch_set_return(unsigned int *to_set, unsigned int value);
+
+/**
+ * @brief Increment a counter variable by one atomically and return the old value.
+ *
+ * @param[in]  val   Pointer to a counter variable.
+ *
+ * @return The value of *val* before the increment.
+ */
+int atomic_arch_inc(int *val);
+
+/**
+ * @brief Decrement a counter variable by one atomically and return the old value.
+ *
+ * @param[in]  val   Pointer to a counter variable.
+ *
+ * @return The value of *val* before the decrement.
+ */
+int atomic_arch_dec(int *val);
+
 
 #ifdef __cplusplus
 }
