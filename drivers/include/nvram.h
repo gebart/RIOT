@@ -36,16 +36,16 @@ extern "C" {
 
 /* Forward declaration in order to declare function pointers which take this
  * type as a parameter within the struct. */
-typedef struct nvram nvram_t;
+struct nvram;
 
 /**
  * @brief Device descriptor for generic NVRAM devices.
  */
 typedef struct nvram {
     /** @brief Pointer to device-specific read function */
-    int (*read)(nvram_t *dev, uint8_t *dst, uint32_t src, size_t size);
+    int (*read)(struct nvram *dev, uint8_t *dst, uint32_t src, size_t size);
     /** @brief Pointer to device-specific write function */
-    int (*write)(nvram_t *dev, uint32_t dst, uint8_t *src, size_t size);
+    int (*write)(struct nvram *dev, uint32_t dst, uint8_t *src, size_t size);
     /** @brief Device memory size */
     size_t size;
     /** @brief Device-specific parameters, if any. */
