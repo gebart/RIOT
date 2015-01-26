@@ -363,7 +363,7 @@ extern "C"
  * @name GPIO configuration
  * @{
  */
-#define GPIO_NUMOF          15
+#define GPIO_NUMOF          17
 #define GPIO_0_EN           1
 #define GPIO_1_EN           1
 #define GPIO_2_EN           1
@@ -380,6 +380,8 @@ extern "C"
 #define GPIO_13_EN          1
 #define GPIO_14_EN          1
 #define GPIO_15_EN          1
+#define GPIO_16_EN          1
+#define GPIO_17_EN          1
 #define GPIO_IRQ_PRIO       1
 
 /* GPIO channel 0 config */
@@ -541,6 +543,26 @@ extern "C"
 #define GPIO_15_CLKEN()     (SIM->SCGC5 |= SIM_SCGC5_PORTD_MASK)
 #define GPIO_15_IRQ         PORTD_IRQn
 #define GPIO_15_ISR         isr_portd_pin_detect
+
+/* GPIO channel 16 config */
+/* FM25L04B CS */
+#define GPIO_16_PORT        PORTD
+#define GPIO_16_PORT_BASE   PORTD_BASE
+#define GPIO_16_DEV         PTD
+#define GPIO_16_PIN         6
+#define GPIO_16_CLKEN()     (SIM->SCGC5 |= SIM_SCGC5_PORTD_MASK)
+#define GPIO_16_IRQ         PORTD_IRQn
+#define GPIO_16_ISR         isr_portd_pin_detect
+
+/* GPIO channel 17 config */
+/* M25P16 CS */
+#define GPIO_17_PORT        PORTD
+#define GPIO_17_PORT_BASE   PORTD_BASE
+#define GPIO_17_DEV         PTD
+#define GPIO_17_PIN         5
+#define GPIO_17_CLKEN()     (SIM->SCGC5 |= SIM_SCGC5_PORTD_MASK)
+#define GPIO_17_IRQ         PORTD_IRQn
+#define GPIO_17_ISR         isr_portd_pin_detect
 
 /** @} */
 
