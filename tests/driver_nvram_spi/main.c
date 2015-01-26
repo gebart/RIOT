@@ -68,28 +68,30 @@ static void print_buffer(const uint8_t * buf, size_t length) {
         unsigned int col;
         for (col = 0; col < bytes_per_line; ++col) {
             /* Print hex data */
-            if ((col % bytes_per_line) == 0) {
+            if (col == 0) {
                 printf("\n%08lx: ", i);
             }
             else if ((col % bytes_per_group) == 0) {
-                printf(" ");
+                putchar(' ');
             }
             if ((i + col) < length) {
                 printf("%02hhx", buf[i + col]);
             } else {
-                printf("  ");
+                putchar(' ');
+                putchar(' ');
             }
         }
+        putchar(' ');
         for (col = 0; col < bytes_per_line; ++col) {
-            /* Print ascii data */
             if ((i + col) < length) {
-                if (isprint(buf[i])) {
-                    printf("%c", buf[i + col]);
+                /* Echo only printable chars */
+                if (isprint(buf[i + col])) {
+                    putchar(buf[i + col]);
                 } else {
-                    printf(".");
+                    putchar('.');
                 }
             } else {
-                printf(" ");
+                putchar(' ');
             }
         }
         i += bytes_per_line;
