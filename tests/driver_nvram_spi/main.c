@@ -68,13 +68,13 @@ static void print_buffer(const uint8_t * buf, size_t length) {
         unsigned int col;
         for (col = 0; col < bytes_per_line; ++col) {
             /* Print hex data */
-            if ((i % bytes_per_line) == 0) {
+            if ((col % bytes_per_line) == 0) {
                 printf("\n%08lx: ", i);
             }
-            else if ((i % bytes_per_group) == 0) {
+            else if ((col % bytes_per_group) == 0) {
                 printf(" ");
             }
-            if (i < length) {
+            if ((i + col) < length) {
                 printf("%02hhx", buf[i + col]);
             } else {
                 printf("  ");
@@ -82,7 +82,7 @@ static void print_buffer(const uint8_t * buf, size_t length) {
         }
         for (col = 0; col < bytes_per_line; ++col) {
             /* Print ascii data */
-            if (i < length) {
+            if ((i + col) < length) {
                 if (isprint(buf[i])) {
                     printf("%c", buf[i + col]);
                 } else {
@@ -94,6 +94,8 @@ static void print_buffer(const uint8_t * buf, size_t length) {
         }
         i += bytes_per_line;
     }
+    /* end with a newline */
+    puts("");
 }
 
 /* weak PRNG for generating "random" test data */
