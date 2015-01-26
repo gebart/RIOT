@@ -49,12 +49,12 @@ static void _switch_to_rx(void);
 /**
  * @brief Transmission buffer
  */
-static uint8_t tx_buf[NRF51_CONF_MAX_PAYLOAD_LENGTH + 1];
+static nrf51prop_packet_t tx_buf;
 
 /**
  * @brief Receiving buffers
  */
-nrf51_packet_t nrf51_rx_buf[NRF51_RX_BUFSIZE];
+nrf51prop_packet_t nrf51prop_rx_buf[NRF51_RX_BUFSIZE];
 
 /**
  * @brief Pointer to the currently used receive buffer
@@ -64,7 +64,7 @@ static volatile uint8_t rx_buf_next = 0;
 /**
  * @brief The current state of the radio
  */
-static volatile nrf51_state_t state = NRF51_STATE_OFF;
+static volatile nrf51prop_state_t state = NRF51_STATE_OFF;
 
 /**
  * @brief The currently configured radio address
@@ -74,7 +74,7 @@ static volatile uint16_t own_addr = NRF51_CONF_ADDR_OWN;
 /**
  * @brief Pointer to a registered receive callback
  */
-static nrf51_receive_cb_t recv_cb = NULL;
+static netdev_event_cb_t event_cb = NULL;
 
 /**
  * @brief Save the transceivers PID in case the radio is used with the transceiver
@@ -85,16 +85,16 @@ volatile kernel_pid_t transceiver_pid;
 
 
 #ifdef MODULE_TRANSCEIVER
-void nrf51_init_transceiver(kernel_pid_t trans_pid)
+void nrf51prop_init_transceiver(kernel_pid_t trans_pid)
 {
     DEBUG("nrf51: init_transceiver()\n");
     transceiver_pid = trans_pid;
-    nrf51_init();
+    nrf51prop_init();
     _switch_to_rx();
 }
 #endif
 
-int nrf51_init(void)
+int nrf51prop_init(void)
 {
     DEBUG("nrf51: init()\n");
 
@@ -138,27 +138,9 @@ int nrf51_init(void)
     return 0;
 }
 
-int nrf51_register_receive_cb(nrf51_receive_cb_t cb)
+int nrf51prop_set_state(nrf51prop_state_t new_state)
 {
-    /* test if no other callback is already registered */
-    if (recv_cb) {
-        return -1;
-    }
-    recv_cb = cb;
-    return 0;
-}
-
-int nrf51_unregister_receive_cb(nrf51_receive_cb_t cb)
-{
-    (void)cb;
-
-    recv_cb = 0;
-    return 0;
-}
-
-int nrf51_set_state(nrf51_state_t new_state)
-{
-    nrf51_state_t old_state = state;
+    nrf51prop_state_t old_state = state;
 
     switch (new_state) {
         case NRF51_STATE_OFF:
@@ -173,14 +155,14 @@ int nrf51_set_state(nrf51_state_t new_state)
     return old_state;
 }
 
-nrf51_state_t nrf51_get_state(void)
+nrf51prop_state_t nrf51prop_get_state(void)
 {
     return state;
 }
 
-int nrf51_send(uint16_t addr, uint8_t *data, uint8_t length)
+int nrf51prop_send(uint16_t addr, uint8_t *data, uint8_t length)
 {
-    nrf51_state_t old_state = state;
+    nrf51prop_state_t old_state = state;
 
     if (length > NRF51_CONF_MAX_PAYLOAD_LENGTH) {
         DEBUG("nrf51 TX: payload too large, dropping package\n");
@@ -219,7 +201,7 @@ int nrf51_send(uint16_t addr, uint8_t *data, uint8_t length)
     return (int)length;
 }
 
-int nrf51_set_address(uint16_t address)
+int nrf51prop_set_address(uint16_t address)
 {
     NRF_RADIO->BASE0 &= ~(0xffff);
     NRF_RADIO->BASE0 |= address;
@@ -227,24 +209,24 @@ int nrf51_set_address(uint16_t address)
     return 0;
 }
 
-uint16_t nrf51_get_address(void)
+uint16_t nrf51prop_get_address(void)
 {
     return own_addr;
 }
 
-int nrf51_set_broadcast_address(uint16_t address)
+int nrf51prop_set_broadcast_address(uint16_t address)
 {
     NRF_RADIO->BASE1 &= ~(0xffff);
     NRF_RADIO->BASE1 |= address;
     return 0;
 }
 
-uint16_t nrf51_get_broadcast_address(void)
+uint16_t nrf51prop_get_broadcast_address(void)
 {
     return (uint16_t)(NRF_RADIO->BASE1 & 0xffff);
 }
 
-int nrf51_set_channel(uint8_t channel)
+int nrf51prop_set_channel(uint8_t channel)
 {
     uint8_t chan = channel & 0x3f;
     if (chan == channel) {
@@ -260,33 +242,38 @@ int nrf51_set_channel(uint8_t channel)
     return -1;
 }
 
-int nrf51_get_channel(void)
+int nrf51prop_get_channel(void)
 {
     return (uint8_t)(0x3f & NRF_RADIO->FREQUENCY);
 }
 
-int nrf51_set_txpower(nrf51_txpower_t power)
+int nrf51prop_set_txpower(nrf51prop_txpower_t power)
 {
     NRF_RADIO->TXPOWER = (power & 0xff);
     return 0;
 }
 
-nrf51_txpower_t nrf51_get_txpower(void)
+nrf51prop_txpower_t nrf51prop_get_txpower(void)
 {
     return (NRF_RADIO->TXPOWER & 0xff);
 }
 
-void nrf51_poweron(void)
+void nrf51prop_poweron(void)
 {
     NRF_RADIO->POWER = 1;
 }
 
-void nrf51_poweroff(void)
+void nrf51prop_poweroff(void)
 {
     if (state == NRF51_STATE_RX) {
         _switch_to_disabled();
     }
     NRF_RADIO->POWER = 0;
+}
+
+static void _receive_data(void)
+{
+
 }
 
 static void _switch_to_disabled(void)
@@ -304,7 +291,7 @@ static void _switch_to_disabled(void)
 static void _switch_to_rx(void)
 {
     /* set pointer to receive buffer */
-    NRF_RADIO->PACKETPTR = (uint32_t)&nrf51_rx_buf[rx_buf_next];
+    NRF_RADIO->PACKETPTR = (uint32_t)&nrf51prop_rx_buf[rx_buf_next];
     /* set address */
     NRF_RADIO->BASE0 &= ~(0xffff);
     NRF_RADIO->BASE0 |= own_addr;
@@ -329,7 +316,7 @@ void isr_radio(void)
             DEBUG("nrf51 RX: CRC failed - dropping package\n");
         }
         else {
-            DEBUG("nrf51 RX: CRC ok, got %i byte\n", nrf51_rx_buf[rx_buf_next].length);
+            DEBUG("nrf51 RX: CRC ok, got %i byte\n", nrf51prop_rx_buf[rx_buf_next].length);
 #ifdef MODULE_TRANSCEIVER
             /* notify transceiver thread if any */
             if (transceiver_pid != KERNEL_PID_UNDEF) {
@@ -341,14 +328,14 @@ void isr_radio(void)
             }
 #else
             if (recv_cb) {
-                recv_cb((uint8_t *)&nrf51_rx_buf[rx_buf_next].payload,
-                        nrf51_rx_buf[rx_buf_next].length);
+                recv_cb((uint8_t *)&nrf51prop_rx_buf[rx_buf_next].payload,
+                        nrf51prop_rx_buf[rx_buf_next].length);
             }
 #endif
             if (++rx_buf_next == NRF51_RX_BUFSIZE) {
                 rx_buf_next = 0;
             }
-            NRF_RADIO->PACKETPTR = (uint32_t)&nrf51_rx_buf[rx_buf_next];
+            NRF_RADIO->PACKETPTR = (uint32_t)&nrf51prop_rx_buf[rx_buf_next];
         }
         /* and here we go again */
         NRF_RADIO->TASKS_START = 1;
@@ -357,3 +344,66 @@ void isr_radio(void)
         thread_yield();
     }
 }
+
+/*
+ * Define the netdev interface
+ */
+
+int nrf51prop_send(netdev_t *dev, pktsnip_t *snip)
+{
+    nrf51prop_send(snip);
+}
+
+int nrf51prop_add_event_cb(netdev_t *dev, netdev_event_cb_t cb)
+{
+    void (dev);
+
+    /* test if no other callback is already registered */
+    if (event_cb) {
+        return -1;
+    }
+    event_cb = cb;
+    return 0;
+}
+
+int nrf51prop_rem_event_cb(netdev_t *dev, netdev_event_cb_t cb)
+{
+    (void)dev;
+    (void)cb;
+
+    event_cb = 0;
+    return 0;
+}
+
+int nrf51prop_get_option(netdev_t *dev, netdev_opt_t opt, void *value,
+                         size_t *value_len)
+{
+    return -1;
+}
+
+int nrf51prop_set_option,
+int nrf51prop_get_state,
+int nrf51prop_trigger,
+
+int nrf51prop_isr_event(netdev_t *dev, uint16_t event_type)
+{
+    switch (type) {
+        case ISR_EVENT_RX_DONE:
+            _receive_data();
+            break;
+        case ISR_EVENT_RX_START:
+
+            break;
+    }
+}
+
+const netdev_driver_t nrf51prop_driver = {
+    .send_data = nrf51prop_send,
+    .add_event_callback = nrf51prop_add_event_cb,
+    .rem_event_callback = nrf51prop_rem_event_cb,
+    .get_option = nrf51prop_get_option,
+    .set_option = nrf51prop_set_option,
+    .get_state = nrf51prop_get_state,
+    .trigger = nrf51prop_trigger,
+    .isr_event = nrf51prop_isr_event,
+};

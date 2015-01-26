@@ -70,14 +70,13 @@
 #define NRF51_CONF_ADDR_OWN             (23U)
 /** @} */
 
-
 /**
  * @brief States the device can be put into
  */
 typedef enum {
     NRF51_STATE_OFF = 0,            /**< turn the radio off */
     NRF51_STATE_RX =  1,            /**< listen for incoming packets */
-} nrf51_state_t;
+} nrf51prop_state_t;
 
 /**
  * @brief Possible transmit power values, ranging from +4dBm to -30dBm
@@ -91,48 +90,27 @@ typedef enum {
     NRF51_TXPWR_M16DBM    = 0xf0,   /**< transmit with -16dBm */
     NRF51_TXPWR_M20DBM    = 0xec,   /**< transmit with -20dBm */
     NRF51_TXPWR_M30DBM    = 0xd8    /**< transmit with -30dBm */
-} nrf51_txpower_t;
+} nrf51prop_txpower_t;
 
 /**
  * @brief The in-memory structure of an NRF51 radio packet
  */
-typedef struct {
-#if NRF51_CONF_S0
-    uint8_t s0;                     /**< optional S0 field */
-#endif
-#if NRF51_CONF_LEN
+typedef struct __attribute__((packed)) {
     uint8_t length;                 /**< length field (can be optional as well) */
-#endif
-#if NRF51_CONF_S1
-    uint8_t s1;                     /**< optional S1 field */
-#endif
     uint8_t payload[NRF51_CONF_MAX_PAYLOAD_LENGTH];     /**< actual payload of the packet */
-} nrf51_packet_t;
+} nrf51prop_packet_t;
 
 /**
- * @brief Make the receive buffer available to the transceiver (if available)
+ * @brief Device descriptor for the NRF51 proprietary radio implementation
  */
-#ifdef MODULE_TRANSCEIVER
-extern nrf51_packet_t nrf51_rx_buf[NRF51_RX_BUFSIZE];
-#endif
-
-/**
- * @brief Callback on receiving of data
- *
- * @param[in] data          pointer to the received data
- * @param[in] length        number of bytes that were received
- */
-typedef void(*nrf51_receive_cb_t)(uint8_t *data, int length);
-
-
-/**
- * @brief Initialize the radio to be used with the transceiver module
- *
- * @param[in] trans_pid     the transceiver thread's PID
- */
-#ifdef MODULE_TRANSCEIVER
-void nrf51_init_transceiver(kernel_pid_t trans_pid);
-#endif
+typedef struct __attribute__ ((packed)) {
+    uint8_t rx_buf_next;                /**< pointer to free rx buffer */
+    uint8_t state;                      /**< the current state of the device */
+    uint16_t own_addr;                  /**< configured 16-bit RX address */
+    netdev_event_cb_t event_cb;         /**< netdev event callback */
+    nrf51prop_packet_t tx_buf;          /**< transmission buffer */
+    nrf51prop_packet_t rx_buf[2];       /**< double buffered RX buffer */
+} nrf51prop_t;
 
 /**
  * @brief Initialize the NRF51 radio
@@ -142,7 +120,7 @@ void nrf51_init_transceiver(kernel_pid_t trans_pid);
  * @return                  0 on success
  * @return                  -1 on error
  */
-int nrf51_init(void);
+int nrf51prop_init(void);
 
 /**
  * @brief Send data using the radio
@@ -153,29 +131,7 @@ int nrf51_init(void);
  *
  * @return                  number of bytes transferred
  */
-int nrf51_send(uint16_t addr, uint8_t *data, uint8_t length);
-
-/**
- * @brief Register a callback for receiving data
- *
- * @note The driver supports only one callback
- *
- * @param[in] cb            function to call when a packet was received
- *
- * @return                  0 on success
- * @return                  -1 on error
- */
-int nrf51_register_receive_cb(nrf51_receive_cb_t cb);
-
-/**
- * @brief Unregister the given callback
- *
- * @param[in] cb            callback function to unregister
- *
- * @return                  0 on success
- * @return                  -1 on error
- */
-int nrf51_unregister_receive_cb(nrf51_receive_cb_t cb);
+int nrf51prop_send(pktsnip_t *snip);
 
 /**
  * @brief Set the state of the radio
@@ -189,14 +145,14 @@ int nrf51_unregister_receive_cb(nrf51_receive_cb_t cb);
  * @return                  the previous state
  * @return                  -1 on error
  */
-int nrf51_set_state(nrf51_state_t new_state);
+int nrf51prop_set_state(nrf51prop_state_t new_state);
 
 /**
  * @brief Get the current state of the radio
  *
  * @return                  current state of the radio
  */
-nrf51_state_t nrf51_get_state(void);
+nrf51prop_state_t nrf51prop_get_state(void);
 
 /**
  * @brief Set the radio's address
@@ -206,14 +162,14 @@ nrf51_state_t nrf51_get_state(void);
  * @return                  address that was set
  * @return                  -1 on error
  */
-int nrf51_set_address(uint16_t address);
+int nrf51prop_set_address(uint16_t address);
 
 /**
  * @brief Get the current address
  *
  * @return                  current address
  */
-uint16_t nrf51_get_address(void);
+uint16_t nrf51prop_get_address(void);
 
 /**
  * @brief Set the address on which the radio listens for broadcast messages
@@ -223,14 +179,14 @@ uint16_t nrf51_get_address(void);
  * @return                  0 on success
  * @return                  -1 on error
  */
-int nrf51_set_broadcast_address(uint16_t address);
+int nrf51prop_set_broadcast_address(uint16_t address);
 
 /**
  * @brief Get the radio's broadcast address
  *
  * @return                  broadcast address
  */
-uint16_t nrf51_get_broadcast_address(void);
+uint16_t nrf51prop_get_broadcast_address(void);
 
 /**
  * @brief Set the radio channel to use
@@ -242,14 +198,14 @@ uint16_t nrf51_get_broadcast_address(void);
  * @return                  new channel
  * @return                  -1 on error
  */
-int nrf51_set_channel(uint8_t channel);
+int nrf51prop_set_channel(uint8_t channel);
 
 /**
  * @brief Get the currently configured channel
  *
  * @return                  the current channel
  */
-int nrf51_get_channel(void);
+int nrf51prop_get_channel(void);
 
 /**
  * @brief Set transmit power
@@ -259,24 +215,19 @@ int nrf51_get_channel(void);
  * @return                  0 on success
  * @return                  -1 on error
  */
-int nrf51_set_txpower(nrf51_txpower_t power);
+int nrf51prop_set_txpower(nrf51prop_txpower_t power);
 
 /**
  * @brief Get the currently set transmit power
  *
  * @return                  configured transmit power
  */
-nrf51_txpower_t nrf51_get_txpower(void);
+nrf51prop_txpower_t nrf51prop_get_txpower(void);
 
 /**
  * @brief Power on the radio
  */
-void nrf51_poweron(void);
-
-/**
- * @brief Power off the radio
- */
-void nrf51_poweroff(void);
+void nrf51prop_poweron(void);
 
 #endif /* __NRF_RADIO_H */
 /** @} */
