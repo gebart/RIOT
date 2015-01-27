@@ -42,41 +42,39 @@ struct nvram;
  * @brief Device descriptor for generic NVRAM devices.
  */
 typedef struct nvram {
-    /** @brief Pointer to device-specific read function */
+    /**
+     * @brief Pointer to device-specific read function
+     *
+     * Copy data from system memory to NVRAM.
+     *
+     * @param[in]  dev   Pointer to NVRAM device descriptor
+     * @param[out] dst   Pointer to the first byte in the system memory address space
+     * @param[in]  src  Starting address in the NVRAM device address space
+     * @param[in]  len   Number of bytes to copy
+     *
+     * @return          Number of bytes written on success
+     * @return          <0 on errors
+     */
     int (*read)(struct nvram *dev, uint8_t *dst, uint32_t src, size_t size);
-    /** @brief Pointer to device-specific write function */
-    int (*write)(struct nvram *dev, uint32_t dst, uint8_t *src, size_t size);
-    /** @brief Device memory size */
+    /**
+     * @brief Pointer to device-specific write function
+     *
+     * Copy data from NVRAM to system memory.
+     *
+     * @param[in]  dev   Pointer to NVRAM device descriptor
+     * @param[in]  src   Pointer to the first byte in the system memory address space
+     * @param[in]  dst  Starting address in the NVRAM device address space
+     * @param[in]  len   Number of bytes to copy
+     *
+     * @return          Number of bytes written on success
+     * @return          <0 on errors
+     */
+    int (*write)(struct nvram *dev, uint8_t *src, uint32_t dst, size_t size);
+    /** @brief Device capacity */
     size_t size;
     /** @brief Device-specific parameters, if any. */
     void *extra;
 } nvram_t;
-
-/**
- * @brief Copy data from system memory to NVRAM.
- *
- * @param[in]  dev   Pointer to NVRAM device descriptor
- * @param[in]  dst   Starting address in the NVRAM device address space
- * @param[in]  src   Pointer to the first byte in the system memory address space
- * @param[in]  len   Number of bytes to copy
- *
- * @return          Number of bytes written on success
- * @return          <0 on errors
- */
-int nvram_write(nvram_t *dev, uint32_t dst, uint8_t *src, size_t len);
-
-/**
- * @brief Copy data from NVRAM to system memory.
- *
- * @param[in]  dev   Pointer to NVRAM device descriptor
- * @param[in]  dst   Pointer to the first byte in the system memory address space
- * @param[in]  src   Starting address in the NVRAM device address space
- * @param[in]  len   Number of bytes to copy
- *
- * @return          Number of bytes written on success
- * @return          <0 on errors
- */
-int nvram_read(nvram_t *dev, uint8_t *dst, uint32_t src, size_t len);
 
 #ifdef __cplusplus
 }
