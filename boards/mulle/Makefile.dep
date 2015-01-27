@@ -4,3 +4,5 @@ ifneq (,$(filter defaulttransceiver,$(USEMODULE)))
         USEMODULE += transceiver
     endif
 endif
+# The Mulle uses NVRAM to store persistent variables, such as boot count.
+USEMODULE += nvram_spi
