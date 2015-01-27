@@ -164,7 +164,7 @@ int main(void)
 
     memset(buf_out, 0xff, sizeof(buf_out));
     for (i = 0; i < TEST_NVRAM_SPI_SIZE; ++i) {
-        if (dev.write(&dev, i, &buf_out[i], 1) != 1) {
+        if (dev.write(&dev, &buf_out[i], i, 1) != 1) {
             puts("[Failed]\n");
             return 1;
         }
@@ -194,7 +194,7 @@ int main(void)
     for (i = 0; i < TEST_NVRAM_SPI_SIZE; ++i) {
         buf_out[i] = (~(i)) & 0xff;
     }
-    if (dev.write(&dev, 0, buf_out, TEST_NVRAM_SPI_SIZE) != TEST_NVRAM_SPI_SIZE) {
+    if (dev.write(&dev, buf_out, 0, TEST_NVRAM_SPI_SIZE) != TEST_NVRAM_SPI_SIZE) {
         puts("[Failed]\n");
         return 1;
     }
@@ -227,7 +227,7 @@ int main(void)
     print_buffer(buf_out, sizeof(buf_out));
 
     puts("Writing blockwise data to device");
-    if (dev.write(&dev, 0, buf_out, TEST_NVRAM_SPI_SIZE) != TEST_NVRAM_SPI_SIZE) {
+    if (dev.write(&dev, buf_out, 0, TEST_NVRAM_SPI_SIZE) != TEST_NVRAM_SPI_SIZE) {
         puts("[Failed]\n");
         return 1;
     }
