@@ -33,6 +33,7 @@
 #include <stdint.h>
 
 #include "kernel_types.h"
+#include "netdev.h"
 
 /**
  * @brief Define the size of the receive buffer used in the driver (number of packets)
@@ -97,6 +98,7 @@ typedef enum {
  */
 typedef struct __attribute__((packed)) {
     uint8_t length;                 /**< length field (can be optional as well) */
+    uint16_t src_addr;              /**< source address of the packet */
     uint8_t payload[NRF51_CONF_MAX_PAYLOAD_LENGTH];     /**< actual payload of the packet */
 } nrf51prop_packet_t;
 
@@ -120,7 +122,7 @@ typedef struct __attribute__ ((packed)) {
  * @return                  0 on success
  * @return                  -1 on error
  */
-int nrf51prop_init(void);
+int nrf51prop_init(nrf51prop_t *dev);
 
 /**
  * @brief Send data using the radio
@@ -131,7 +133,7 @@ int nrf51prop_init(void);
  *
  * @return                  number of bytes transferred
  */
-int nrf51prop_send(pktsnip_t *snip);
+int nrf51prop_send(netdev_t *dev, pkt_t *snip);
 
 /**
  * @brief Set the state of the radio

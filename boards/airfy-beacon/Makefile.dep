@@ -1,6 +1,3 @@
-ifneq (,$(filter defaulttransceiver,$(USEMODULE)))
-    USEMODULE += nrf51
-    ifeq (,$(filter netdev_base,$(USEMODULE)))
-        USEMODULE += transceiver
-    endif
+ifneq (,$(filter net,$(USEMODULE)))
+    USEMODULE += nrf51prop
 endif

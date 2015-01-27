@@ -58,24 +58,16 @@ int netapi_send_command(kernel_pid_t pid, netapi_cmd_t *cmd)
     return ack_result;
 }
 
-int netapi_send_packet(kernel_pid_t pid, netdev_hlist_t *upper_layer_hdrs,
-                       void *addr, size_t addr_len, void *data, size_t data_len)
+int netapi_send_packet(kernel_pid_t pid, pkt_t *pkt)
 {
-    netapi_snd_pkt_t pkt;
-
-    pkt.type = NETAPI_CMD_SND;
-
-    pkt.ulh = upper_layer_hdrs;
-    pkt.dest = addr;
-    pkt.dest_len = addr_len;
-    pkt.data = data;
-    pkt.data_len = data_len;
-
-    return netapi_send_command(pid, (netapi_cmd_t *)(&pkt));
+    msg_t msg;
+    msg.type = NETAPI_MSG_TYPE_SND;
+    msg.content.ptr = (void *)pkt;
+    return msg_send(&msg, pid);
 }
 
 static unsigned int _get_set_option(kernel_pid_t pid, netapi_cmd_type_t type,
-                                    netapi_conf_type_t param, void *data,
+                                    netconf_opt_t param, void *data,
                                     size_t data_len)
 {
     netapi_conf_t conf;
@@ -88,13 +80,13 @@ static unsigned int _get_set_option(kernel_pid_t pid, netapi_cmd_type_t type,
     return netapi_send_command(pid, (netapi_cmd_t *)(&conf));
 }
 
-int netapi_get_option(kernel_pid_t pid, netapi_conf_type_t param,
+int netapi_get_option(kernel_pid_t pid, netconf_opt_t param,
                       void *data, size_t data_len)
 {
     return _get_set_option(pid, NETAPI_CMD_GET, param, data, data_len);
 }
 
-int netapi_set_option(kernel_pid_t pid, netapi_conf_type_t param,
+int netapi_set_option(kernel_pid_t pid, netconf_opt_t param,
                       void *data, size_t data_len)
 {
     return _get_set_option(pid, NETAPI_CMD_SET, param, data, data_len);

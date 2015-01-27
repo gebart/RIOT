@@ -5,8 +5,8 @@ MODULE = cpu
 DIRS = periph $(CORTEX_COMMON)
 
 # also build the radio driver when enabled
-ifneq (,$(filter nrf51,$(USEMODULE)))
-    DIRS += nrf51
+ifneq (,$(filter nrf51prop,$(USEMODULE)))
+    DIRS += nrf51prop
 endif
 
 include $(RIOTBASE)/Makefile.base

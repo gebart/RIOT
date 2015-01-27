@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Freie Universität Berlin
+ * Copyright (C) 2014-2015 Freie Universität Berlin
  *
  * This file is subject to the terms and conditions of the GNU Lesser
  * General Public License v2.1. See the file LICENSE in the top level
@@ -18,6 +18,7 @@
  *              directly without any medium access.
  *
  * @author      Martine Lenders <mlenders@inf.fu-berlin.de>
+ * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
  */
 
 #ifndef __NOMAC_H_
@@ -25,7 +26,7 @@
 
 #include <stdlib.h>
 
-#include "netdev/base.h"
+#include "netdev.h"
 #include "netapi.h"
 
 #ifdef __cplusplus
@@ -43,31 +44,7 @@ extern "C" {
  * @brief   Recommended stack size for a NOMAC thread
  * TODO: determine real minimal size based on thread_print_all() output
  */
-#define NOMAC_CONTROL_STACKSIZE    (KERNEL_CONF_STACKSIZE_DEFAULT)
-
-/**
- * @brief   Basic configuration types
- *
- * @extends netapi_conf_type_t
- */
-typedef enum {
-    NOMAC_PROTO = NETAPI_CONF_PROTO,            /**< Set or get protocol */
-    NOMAC_CHANNEL = NETAPI_CONF_CARRIER,        /**< Set or get channel */
-    NOMAC_ADDRESS = NETAPI_CONF_ADDRESS,        /**< Set or get address */
-    NOMAC_NID = NETAPI_CONF_SUBNETS,            /**< Set or get network id
-                                                 *   (e.g. PAN ID in 802.15.4)*/
-    NOMAC_MAX_PACKET_SIZE = NETAPI_CONF_MAX_PACKET_SIZE,    /**< Set or get maximum
-                                                             *   packet size */
-    NOMAC_SRC_LEN = NETAPI_CONF_SRC_LEN,        /**< Set or get default source length */
-    NOMAC_REGISTRY = NETAPI_CONF_REGISTRY,      /**< get registered threads */
-    NOMAC_ADDRESS2 = NETDEV_OPT_ADDRESS_LONG,   /**< Set or get alternative address
-                                                 *   format (e.g EUI-64 in 802.15.4) */
-} nomac_conf_type_t;
-
-/**
- * @brief   Initializes the module
- */
-void nomac_init_module(void);
+#define NOMAC_DEFAULT_STACKSIZE     (KERNEL_CONF_STACKSIZE_DEFAULT)
 
 /**
  * @brief   Initialize new NOMAC layer.
@@ -88,20 +65,9 @@ void nomac_init_module(void);
 kernel_pid_t nomac_init(char *stack, int stacksize, char priority,
                         const char *name, netdev_t *dev);
 
-#ifdef MODULE_NETDEV_DUMMY
-/**
- * @brief   Re-updates the receive callback of a network device for testing
- *          purposes
- *
- * @param[in] dev   A network device
- */
-void nomac_update_callback(netdev_t *dev);
-#endif
-
 #ifdef __cplusplus
 }
 #endif
 
 #endif /* __NOMAC_H_ */
-
 /** @} */

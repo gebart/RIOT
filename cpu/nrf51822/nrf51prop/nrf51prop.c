@@ -26,8 +26,10 @@
 #include "thread.h"
 #include "sched.h"
 #include "kernel_types.h"
-#include "nrf51.h"
+#include "nrf51prop.h"
 #include "periph_conf.h"
+#include "pktbuf.h"
+#include "ll_gen_frame.h"
 
 #ifdef MODULE_TRANSCEIVER
 #include "transceiver.h"
@@ -44,57 +46,10 @@ static void _switch_to_disabled(void);
 /**
  * @brief Put the radio into receiving state
  */
-static void _switch_to_rx(void);
-
-/**
- * @brief Transmission buffer
- */
-static nrf51prop_packet_t tx_buf;
-
-/**
- * @brief Receiving buffers
- */
-nrf51prop_packet_t nrf51prop_rx_buf[NRF51_RX_BUFSIZE];
-
-/**
- * @brief Pointer to the currently used receive buffer
- */
-static volatile uint8_t rx_buf_next = 0;
-
-/**
- * @brief The current state of the radio
- */
-static volatile nrf51prop_state_t state = NRF51_STATE_OFF;
-
-/**
- * @brief The currently configured radio address
- */
-static volatile uint16_t own_addr = NRF51_CONF_ADDR_OWN;
-
-/**
- * @brief Pointer to a registered receive callback
- */
-static netdev_event_cb_t event_cb = NULL;
-
-/**
- * @brief Save the transceivers PID in case the radio is used with the transceiver
- */
-#ifdef MODULE_TRANSCEIVER
-volatile kernel_pid_t transceiver_pid;
-#endif
+static void _switch_to_rx(nrf51prop_t *radio);
 
 
-#ifdef MODULE_TRANSCEIVER
-void nrf51prop_init_transceiver(kernel_pid_t trans_pid)
-{
-    DEBUG("nrf51: init_transceiver()\n");
-    transceiver_pid = trans_pid;
-    nrf51prop_init();
-    _switch_to_rx();
-}
-#endif
-
-int nrf51prop_init(void)
+int nrf51prop_init(nrf51prop_t *dev)
 {
     DEBUG("nrf51: init()\n");
 
@@ -160,32 +115,54 @@ nrf51prop_state_t nrf51prop_get_state(void)
     return state;
 }
 
-int nrf51prop_send(uint16_t addr, uint8_t *data, uint8_t length)
+int nrf51prop_send(netdev_t *dev, pkt_t *pkt)
 {
+    nrf51prop_t *radio = (nrf51prop_t *)dev;
     nrf51prop_state_t old_state = state;
+    int count = 0;
+    pkt_t *current = pkt->next;
+    uint16_t dst_addr;
 
-    if (length > NRF51_CONF_MAX_PAYLOAD_LENGTH) {
+#if DEVELHELP
+    if (pkt->payload_proto != PKT_PROTO_LL_GEN) {
+        DEBUG("nrf51prop_send: given header is not of type LL_GEN\n");
+        return 0;
+    }
+#endif
+
+    /* prepare TX buffer */
+    ll_gen_frame_t *llheader = (ll_gen_frame_t *)pkt->data;
+    ll_gen_get_dst_addr(llheader, (uint8_t *)&dst_addr, 2);
+#if DEVELHELP
+
+#endif
+
+    radio->tx_buf.length = pktbuf_sizeof(pkt->next) + 2; /* 2 byte src address */
+    radio->tx_buf.src_addr = radio->own_addr;
+    while (current != NULL) {
+        memcpy((&radio->tx_buf.payload + count), current->data, current->size);
+        count += current->size;
+        current = current->next;
+    }
+
+    if (count > NRF51_CONF_MAX_PAYLOAD_LENGTH) {
         DEBUG("nrf51 TX: payload too large, dropping package\n");
         return 0;
     }
 
-    /* prepare TX buffer */
-    tx_buf[0] = length;
-    memcpy(&tx_buf[1], data, length);
+    DEBUG("nrf51 TX: sending %i byte to addr %i\n", tx_buf.length, dst_addr);
 
-    DEBUG("nrf51 TX: sending %i byte to addr %i\n", tx_buf[0], addr);
-
-    /* point radio to the packet that it has to send */
-    NRF_RADIO->PACKETPTR = (uint32_t)tx_buf;
     /* switch back to disabled in case we are in RX state */
     if (state == NRF51_STATE_RX) {
         _switch_to_disabled();
     }
+    /* point radio to the packet that it has to send */
+    NRF_RADIO->PACKETPTR = (uint32_t)(&radio->tx_buf);
     /* configure shorts */
     NRF_RADIO->SHORTS |= (1 << RADIO_SHORTS_END_DISABLE_Pos);
     /* set destination address */
     NRF_RADIO->BASE0 &= ~(0xffff);
-    NRF_RADIO->BASE0 |= addr;
+    NRF_RADIO->BASE0 |= dst_addr;
     /* send out packet */
     DEBUG("nrf51 STATE: TX\n");
     NRF_RADIO->EVENTS_DISABLED = 0;
@@ -198,7 +175,7 @@ int nrf51prop_send(uint16_t addr, uint8_t *data, uint8_t length)
         _switch_to_rx();
     }
 
-    return (int)length;
+    return (int)count;
 }
 
 int nrf51prop_set_address(uint16_t address)
@@ -288,10 +265,10 @@ static void _switch_to_disabled(void)
     DEBUG("nrf51 STATE: OFF\n");
 }
 
-static void _switch_to_rx(void)
+static void _switch_to_rx(nrf51prop_t *radio)
 {
     /* set pointer to receive buffer */
-    NRF_RADIO->PACKETPTR = (uint32_t)&nrf51prop_rx_buf[rx_buf_next];
+    NRF_RADIO->PACKETPTR = (uint32_t)&radio->tx_buf[radio->rx_buf_next];
     /* set address */
     NRF_RADIO->BASE0 &= ~(0xffff);
     NRF_RADIO->BASE0 |= own_addr;

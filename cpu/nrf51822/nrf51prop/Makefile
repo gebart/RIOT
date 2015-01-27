@@ -1,3 +1,3 @@
-MODULE = nrf51
+MODULE = nrf51prop
 
 include $(RIOTBASE)/Makefile.base

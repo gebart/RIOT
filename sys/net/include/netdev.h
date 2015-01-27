@@ -26,6 +26,9 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#include "pkt.h"
+#include "netconf.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -34,48 +37,6 @@ extern "C" {
  * @brief Type for @ref msg_t if device fired an event.
  */
 #define NETDEV_MSG_EVENT_TYPE   (0x0100)
-
-/**
- * @brief   Definition of basic network device options.
- * @note    Feel free to expand if your device needs/supports more.
- */
-typedef enum {
-    NETDEV_OPT_CHANNEL,             /**< Channel for the device as unsigned value
-                                         in host byte order */
-    NETDEV_OPT_IS_CHANNEL_CLR,      /**< Check if channel is clear */
-    NETDEV_OPT_ADDRESS,             /**< Hardware address for the device as
-                                         unsigned value in host byte order */
-    NETDEV_OPT_NID,                 /**< Network ID (e.g. PAN ID in IEEE 802.15.4)
-                                         for the device as unsigned value in
-                                         host byte order */
-    NETDEV_OPT_ADDRESS_LONG,        /**< Longer hardware address for the device
-                                         (e.g. EUI-64) for the device as
-                                         unsigned value in host byte order */
-    NETDEV_OPT_TX_POWER,            /**< The output of the device in dB as
-                                         signed value in host byte order */
-    NETDEV_OPT_MAX_PACKET_SIZE,     /**< Maximum packet size the device supports
-                                         unsigned value in host byte order */
-    NETDEV_OPT_SRC_LEN,             /**< Default mode the source address is
-                                         set to as value of `size_t`. (e.g.
-                                         either PAN-centric 16-bit address or
-                                         EUI-64 in IEEE 802.15.4) */
-    NETDEV_OPT_EN_PRELOADING,       /**< Enable pre-loading of data, transfer
-                                         data to device using send_data(), send
-                                         by calling trigger(NETDEV_ACTION_TX) */
-    NETDEV_OPT_EN_PROMISCUOUSMODE   /**< Enable promiscuous mode */
-    NETDEV_OPT_EN_AUTOACK,          /**< Automatically send link-layer ACKs */
-    NETDEV_OPT_RSSI,                /**< Read the RSSI value from the last transfer */
-    NETDEV_OPT_LQI,                 /**< Read the link quality indicator */
-
-    /**
-     * @brief   Last value for @ref netdev_opt_t defined here
-     *
-     * @details Specific devices or modules like @ref netapi that utilize these
-     *          values to may define higher values, but they must be greater
-     *          or equal to @ref NETDEV_OPT_LAST.
-     */
-    NETDEV_OPT_LAST,
-} netdev_opt_t;
 
 /**
  * @brief   Definition of basic network device.
@@ -196,7 +157,7 @@ typedef struct {
      * @return  any other fitting negative errno if the ones stated above
      *          are not sufficient
      */
-    int (*get_option)(netdev_t *dev, netdev_opt_t opt, void *value,
+    int (*get_option)(netdev_t *dev, netconf_opt_t opt, void *value,
                       size_t *value_len);
 
     /**
@@ -218,7 +179,7 @@ typedef struct {
      * @return  any other fitting negative errno if the ones stated above
      *          are not sufficient
      */
-    int (*set_option)(netdev_t *dev, netdev_opt_t opt, void *value,
+    int (*set_option)(netdev_t *dev, netconf_opt_t opt, void *value,
                       size_t value_len);
 
     /**
