@@ -44,6 +44,7 @@ extern "C" {
  */
 typedef enum {
     NETDEV_ACTION_POWEROFF = 0,
+    NETDEV_ACTION_POWERON,
     NETDEV_ACTION_SLEEP,
     NETDEV_ACTION_IDLE,
     NETDEV_ACTION_RX,
@@ -54,10 +55,10 @@ typedef enum {
  * TODO: document...
  */
 typedef enum {
-    NETDEV_EVENT_RX_STARTED = 0,
-    NETDEV_EVENT_RX_COMPLETE,
-    NETDEV_EVENT_TX_STARTED,
-    NETDEV_EVENT_TX_COMPLETE
+    NETDEV_EVENT_RX_STARTED     = 0x0001,
+    NETDEV_EVENT_RX_COMPLETE    = 0x0002,
+    NETDEV_EVENT_TX_STARTED     = 0x0004,
+    NETDEV_EVENT_TX_COMPLETE    = 0x0008
     /* probably more? */
 } netdev_event_t;
 
@@ -146,8 +147,8 @@ typedef struct {
      * @param[in] dev           the network device
      * @param[in] opt           the option type
      * @param[out] value        pointer to store the gotten value in
-     * @param[in,out] value_len the length of *value*. Must be initialized to the
-     *                          available space in *value* on call.
+     * @param[in,out] value_len the length of *value*. Must be initialized to
+     *                          the available space in *value* on call.
      * @return  0, on success
      * @return  -ENODEV, if *dev* is not recognized
      * @return  -ENOTSUP, if *opt* is not supported for the device with this
@@ -220,8 +221,9 @@ typedef struct {
 } netdev_driver_t;
 
 struct netdev_t {
-    kernel_pid_t pid;           /**< the driver's thread's PID */
     netdev_driver_t *driver;    /**< pointer to the devices interface */
+    netdev_event_cb_t event_cb; /**< netdev event callback */
+    kernel_pid_t mac_pid;       /**< the driver's thread's PID */
 };
 
 #ifdef __cplusplus

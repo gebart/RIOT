@@ -41,7 +41,7 @@
 #include "nomac.h"
 
 nrf51prop_t radio;
-char nomac_stack[NOMAC_DEFAULT_STACKSIZE];
+static char nomac_stack[NOMAC_DEFAULT_STACKSIZE];
 
 
 static int shell_readc(void)

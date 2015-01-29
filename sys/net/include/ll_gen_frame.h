@@ -36,8 +36,15 @@ typedef struct {
     uint8_t* addresses;
 } ll_gen_frame_t;
 
+inline void ll_gen_get_src_addr(ll_gen_frame_t *frame, uint8_t *addr, int addr_len)
+{
+    memcpy(addr, frame->addresses, addr_len);
+}
 
-int ll_gen_get_dst_addr(ll_gen_frame_t *frame, uint8_t *addr, int add_len);
+inline void ll_gen_get_dst_addr(ll_gen_frame_t *frame, uint8_t *addr, int addr_len)
+{
+    memcpy(addr, (frame->addresses + addr_len), addr_len);
+}
 
 #ifdef __cplusplus
 }

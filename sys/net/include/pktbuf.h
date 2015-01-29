@@ -163,7 +163,7 @@ static inline pktsnip_t *pktbuf_insert(const void *data, pktsize_t size)
 pktsnip_t *pktbuf_add_header(pktsnip_t *pkt, void *data, pktsize_t size,
                              pkt_proto_t type);
 
-size_t pktbuf_sizeof(const void *pkt);
+size_t pktbuf_sizeof(const pkt_t *pkt);
 
 /**
  * @brief   Increases pktsnip_t::users of @pkt atomically.
