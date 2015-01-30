@@ -64,8 +64,6 @@
 #define NRF51_CONF_PREFIX1              (0xC5C6C7C8UL)
 #define NRF51_CONF_BASE0                (0xE7E70000UL)
 #define NRF51_CONF_BASE1                (0xC2C20000UL)
-#define NRF51_CONF_ADDR_BROADCAST       (0U)
-#define NRF51_CONF_ADDR_OWN             (23U)
 /** @} */
 
 /**
@@ -219,8 +217,8 @@ int nrf51prop_init(nrf51prop_t *dev)
     /* pre-configure radio addresses */
     NRF_RADIO->PREFIX0 = NRF51_CONF_PREFIX0;
     NRF_RADIO->PREFIX1 = NRF51_CONF_PREFIX1;
-    NRF_RADIO->BASE0   = NRF51_CONF_BASE0 | NRF51_CONF_ADDR_OWN;
-    NRF_RADIO->BASE1   = NRF51_CONF_BASE1 | NRF51_CONF_ADDR_BROADCAST;
+    NRF_RADIO->BASE0   = NRF51_CONF_BASE0 | NRF51ROP_DEFAULT_ADDR;
+    NRF_RADIO->BASE1   = NRF51_CONF_BASE1 | NRF51ROP_BROADCASTCAST_ADDR;
     NRF_RADIO->TXADDRESS = 0x00UL;      /* always send from address 0 */
     NRF_RADIO->RXADDRESSES = 0x03UL;    /* listen to logical addresses 0 (own) and 1 (broadcast) */
 
@@ -232,7 +230,7 @@ int nrf51prop_init(nrf51prop_t *dev)
                        (NRF51_CONF_ENDIAN << RADIO_PCNF1_ENDIAN_Pos) |
                        (NRF51_CONF_BASE_ADDR_LEN << RADIO_PCNF1_BALEN_Pos) |
                        (NRF51_CONF_STATLEN << RADIO_PCNF1_STATLEN_Pos) |
-                       (NRF51_CONF_MAX_PAYLOAD_LENGTH << RADIO_PCNF1_MAXLEN_Pos);
+                       (NRF51PROP_MAX_PAYLOAD_LENGTH << RADIO_PCNF1_MAXLEN_Pos);
 
     /* set shortcuts for more efficient transfer */
     NRF_RADIO->SHORTS = (1 << RADIO_SHORTS_READY_START_Pos);
@@ -277,18 +275,6 @@ uint16_t _get_address(nrf51prop_t *dev)
     return dev->own_addr;
 }
 
-// int nrf51prop_set_broadcast_address(uint16_t address)
-// {
-//     NRF_RADIO->BASE1 &= ~(0xffff);
-//     NRF_RADIO->BASE1 |= address;
-//     return 0;
-// }
-
-// uint16_t _get_broadcast_address(void)
-// {
-//     return (uint16_t)(NRF_RADIO->BASE1 & 0xffff);
-// }
-
 int nrf51prop_set_channel(nrf51prop_t *dev, uint8_t channel)
 {
     uint8_t chan = channel & 0x3f;
@@ -326,7 +312,45 @@ nrf51prop_txpower_t _get_txpower(void)
 
 static void _receive_data(nrf51prop_t *dev)
 {
+    if (dev->event_cb) {
+        nrf51prop_packet_t *data = &(dev->rx_buf[(dev->rx_buf_next +1) & 0x01]);
+        pkt_t *llhead, *payload;
+        ll_gen_frame_t *frame;
 
+        /* allocate memory */
+        llhead = pktbuf_allocate(sizeof(ll_gen_frame_t) + 4);
+        if (llhead == NULL) {
+            DEBUG("Unable to allocate memory for the incoming link layer header\n");
+            return;
+        }
+        payload = pktbuf_allocate(data->length - 2);
+        if (payload == NULL) {
+            pktbuf_release(llhead);
+            DEBUG("Unable to allocate memory for the incoming payload\n");
+            return;
+        }
+
+        /* fill generic link layer header */
+        frame = (ll_gen_frame_t *)llhead->data;
+        memset(frame, 0, sizeof(ll_gen_frame_t));
+        frame->addr_len = 2;
+        if (NRF_RADIO->RXMATCH == 0) {
+            /* packet was send unicast */
+            ll_gen_set_dst_addr(frame, (uint8_t *)&(dev->own_addr), 2);
+        }
+        else {
+            /* packet was send broadcast */
+            uint16_t bcast_addr = NRF51ROP_BROADCASTCAST_ADDR;
+            ll_gen_set_dst_addr(frame, (uint8_t *)&(bcast_addr), 2);
+        }
+        ll_gen_set_src_addr(frame, (uint8_t *)&(data->src_addr), 2);
+
+        /* copy and linke payload */
+        memcpy(payload->data, data->payload, data->length - 2);
+        llhead->next = payload;
+        /* hand data over to MAC layer */
+        dev->event_cb(NETDEV_EVENT_RX_COMPLETE, llhead);
+    }
 }
 
 static void _switch_to_idle(nrf51prop_t *dev)
@@ -444,7 +468,7 @@ int _send(netdev_t *dev, pkt_t *pkt)
     }
     pktbuf_release(pkt);
 
-    if (count > NRF51_CONF_MAX_PAYLOAD_LENGTH) {
+    if (count > NRF51PROP_MAX_PAYLOAD_LENGTH) {
         DEBUG("nrf51 TX: payload too large, dropping package\n");
         return 0;
     }

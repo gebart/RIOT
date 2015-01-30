@@ -40,8 +40,9 @@
 #include "nrf51prop.h"
 #include "nomac.h"
 
-nrf51prop_t radio;
+static nrf51prop_t radio;
 static char nomac_stack[NOMAC_DEFAULT_STACKSIZE];
+static kernel_pit_t radio_pid;
 
 
 static int shell_readc(void)
@@ -49,6 +50,43 @@ static int shell_readc(void)
     char c = 0;
     (void) posix_read(uart0_handler_pid, &c, 1);
     return c;
+}
+
+static void *receive_something(void *arg)
+{
+
+}
+
+
+static void txtsnd(int argc, char **argv)
+{
+    uint16_t addr;
+    pkt_t *llhead, *payload;
+    ll_gen_frame_t *frame;
+    msg_t msg;
+
+    if (argc < 3) {
+        printf("usage: %s ADRESS DATA\n", argv[0]);
+    }
+
+    /* parse address */
+    addr = (uint16_t)atoi(argv[1]);
+
+    /* allocate packet */
+    llhead = pktbuf_allocate(sizeof(ll_gen_frame_t) + 4);
+    payload = pktbuf_allocate(strlen(argv[2]));
+    /* set dst address */
+    frame = (ll_gen_frame_t *)llhead->data;
+    memset(frame, 0, sizeof(ll_gen_frame_t));
+    ll_gen_set_dst_addr(frame, (uint8_t *)&addr, 2);
+    /* set and link payload */
+    memcpy(payload->data, argv[2], payload->size);
+    llhead->next = payload;
+
+    /* send out data via netapi */
+    msg.type = NETAPI_MSG_TYPE_SND;
+    msg.content.ptr = (void *)llhead;
+    msg_send(&msg, radio_pid);
 }
 
 static void shell_putchar(int c)
@@ -63,7 +101,7 @@ int main(void)
 
     /* TODO */
     nrf51prop_init(&radio);
-    nomac_init(nomac_stack, sizeof(nomac_stack), PRIORITY_MAIN - 4, "nomac", (netdev_t *)&radio);
+    radio_pid = nomac_init(nomac_stack, sizeof(nomac_stack), PRIORITY_MAIN - 4, "nomac", (netdev_t *)&radio);
 
     (void) puts("Welcome to RIOT!");
 

@@ -36,7 +36,11 @@
 #include "netdev.h"
 
 
-#define NRF51_CONF_MAX_PAYLOAD_LENGTH   (256U)
+#define NRF51PROP_MAX_PAYLOAD_LENGTH    (256U)
+
+#define NRF51ROP_BROADCASTCAST_ADDR     (0xffff)
+
+#define NRF51ROP_DEFAULT_ADDR           (0x0018)
 
 
 /**
@@ -45,7 +49,7 @@
 typedef struct __attribute__((packed)) {
     uint8_t length;                 /**< length field (can be optional as well) */
     uint16_t src_addr;              /**< source address of the packet */
-    uint8_t payload[NRF51_CONF_MAX_PAYLOAD_LENGTH];     /**< actual payload of the packet */
+    uint8_t payload[NRF51PROP_MAX_PAYLOAD_LENGTH];     /**< actual payload of the packet */
 } nrf51prop_packet_t;
 
 /**
