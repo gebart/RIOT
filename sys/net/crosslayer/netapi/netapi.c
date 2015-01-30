@@ -58,7 +58,7 @@ int netapi_send_command(kernel_pid_t pid, netapi_cmd_t *cmd)
     return ack_result;
 }
 
-int netapi_send_packet(kernel_pid_t pid, pkt_t *pkt)
+int netapi_send_packet(kernel_pid_t pid, pktsnip_t *pkt)
 {
     msg_t msg;
     msg.type = NETAPI_MSG_TYPE_SND;
@@ -120,7 +120,7 @@ int netapi_fire_receive_event(kernel_pid_t pid, void *src, size_t src_len,
                               void *dest, size_t dest_len, void *data,
                               size_t data_len)
 {
-    netapi_rcv_pkt_t pkt;
+    netapi_rcv_pktsnip_t pkt;
 
     pkt.type = NETAPI_CMD_FIRE_RCV;
 

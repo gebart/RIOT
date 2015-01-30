@@ -67,6 +67,7 @@ typedef enum __attribute__((packed)) {
     PKT_PROTO_UDP           = 0x000c,   /**< UDP. */
     PKT_PROTO_TCP           = 0x000d,   /**< TCP. */
     PKT_PROTO_CCNL          = 0x000e,   /**< CCN lite. */
+    PKT_PROTO_LL_GEN        = 0x000f,   /**< generic link layer format */
 } pkt_proto_t;
 
 /**

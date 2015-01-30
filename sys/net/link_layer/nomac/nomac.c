@@ -116,7 +116,7 @@ static void *_nomac_runner(void *args)
             dev->driver->isr_event(dev, msg_cmd.content.value);
         }
         else if (msg_cmd.type == NETAPI_MSG_TYPE_SND) {
-            dev->driver->send_data(dev, (pkt_t *)msg_cmd.content.ptr);
+            dev->driver->send_data(dev, (pktsnip_t *)msg_cmd.content.ptr);
         }
 
         // else if (msg_cmd.type == NETAPI_MSG_TYPE) {

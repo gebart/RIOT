@@ -31,6 +31,7 @@
 #include "shell.h"
 #include "shell_commands.h"
 #include "board_uart0.h"
+#include "kernel_types.h"
 
 #define SND_BUFFER_SIZE     (100)
 #define RCV_BUFFER_SIZE     (64)
@@ -39,10 +40,12 @@
 /* TODO */
 #include "nrf51prop.h"
 #include "nomac.h"
+#include "ll_gen_frame.h"
+#include "pktbuf.h"
 
 static nrf51prop_t radio;
 static char nomac_stack[NOMAC_DEFAULT_STACKSIZE];
-static kernel_pit_t radio_pid;
+static kernel_pid_t radio_pid;
 
 
 static int shell_readc(void)
@@ -55,13 +58,16 @@ static int shell_readc(void)
 static void *receive_something(void *arg)
 {
 
+
+    /* never reached */
+    return NULL;
 }
 
 
 static void txtsnd(int argc, char **argv)
 {
     uint16_t addr;
-    pkt_t *llhead, *payload;
+    pktsnip_t *llhead, *payload;
     ll_gen_frame_t *frame;
     msg_t msg;
 
@@ -73,8 +79,8 @@ static void txtsnd(int argc, char **argv)
     addr = (uint16_t)atoi(argv[1]);
 
     /* allocate packet */
-    llhead = pktbuf_allocate(sizeof(ll_gen_frame_t) + 4);
-    payload = pktbuf_allocate(strlen(argv[2]));
+    llhead = pktbuf_alloc(sizeof(ll_gen_frame_t) + 4);
+    payload = pktbuf_alloc(strlen(argv[2]));
     /* set dst address */
     frame = (ll_gen_frame_t *)llhead->data;
     memset(frame, 0, sizeof(ll_gen_frame_t));

@@ -314,16 +314,16 @@ static void _receive_data(nrf51prop_t *dev)
 {
     if (dev->event_cb) {
         nrf51prop_packet_t *data = &(dev->rx_buf[(dev->rx_buf_next +1) & 0x01]);
-        pkt_t *llhead, *payload;
+        pktsnip_t *llhead, *payload;
         ll_gen_frame_t *frame;
 
         /* allocate memory */
-        llhead = pktbuf_allocate(sizeof(ll_gen_frame_t) + 4);
+        llhead = pktbuf_alloc(sizeof(ll_gen_frame_t) + 4);
         if (llhead == NULL) {
             DEBUG("Unable to allocate memory for the incoming link layer header\n");
             return;
         }
-        payload = pktbuf_allocate(data->length - 2);
+        payload = pktbuf_alloc(data->length - 2);
         if (payload == NULL) {
             pktbuf_release(llhead);
             DEBUG("Unable to allocate memory for the incoming payload\n");
@@ -438,15 +438,15 @@ void isr_radio(void)
  * Define the netdev interface
  */
 
-int _send(netdev_t *dev, pkt_t *pkt)
+int _send(netdev_t *dev, pktsnip_t *pkt)
 {
     nrf51prop_t *radio = (nrf51prop_t *)dev;
     int count = 0;
-    pkt_t *current = pkt->next;
+    pktsnip_t *current = pkt->next;
     uint16_t dst_addr;
 
 #if DEVELHELP
-    if (pkt->payload_proto != PKT_PROTO_LL_GEN) {
+    if (pkt->type != PKT_PROTO_LL_GEN) {
         DEBUG("nrf51prop_send: given header is not of type LL_GEN\n");
         return 0;
     }
@@ -459,7 +459,7 @@ int _send(netdev_t *dev, pkt_t *pkt)
     /* make sure there is no transfer in progress, otherwise wait for it to finish */
     while (radio->state == STATE_TX);
 
-    radio->tx_buf.length = pktbuf_sizeof(pkt->next) + 2; /* 2 byte src address */
+    radio->tx_buf.length = pkt_len(pkt->next) + 2; /* 2 byte src address */
     radio->tx_buf.src_addr = radio->own_addr;
     while (current != NULL) {
         memcpy((&radio->tx_buf.payload + count), current->data, current->size);

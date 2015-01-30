@@ -91,7 +91,7 @@ typedef struct netdev_t netdev_t;
  * @brief   Event callback for signaling event to a MAC layer.
  *
  * @param[in] type          type of the event
- * @param[in] arg           event argument, can e.g. contain a pkt_t pointer
+ * @param[in] arg           event argument, can e.g. contain a pktsnip_t pointer
  */
 typedef void (*netdev_event_cb_t)(netdev_event_t type, void *arg);
 
@@ -116,7 +116,7 @@ typedef struct {
      *          of the device *dev*
      * @return  a fitting negative other errno on other failure
      */
-    int (*send_data)(netdev_t *dev, pkt_t *pkt);
+    int (*send_data)(netdev_t *dev, pktsnip_t *pkt);
 
     /**
      * @brief   Registers an event callback to a given network device.

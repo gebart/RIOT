@@ -231,7 +231,6 @@ pktsnip_t *pktbuf_start_write(pktsnip_t *pkt)
     return pkt;
 }
 
-<<<<<<< HEAD
 bool pktbuf_contains(const void *ptr)
 {
 #if PKTBUF_SIZE > 0
@@ -239,10 +238,6 @@ bool pktbuf_contains(const void *ptr)
 #else
     return (_find_chunk(ptr, NULL, NULL) != NULL);
 #endif
-=======
-    //return _pkt_data(packet);
-    return NULL;
->>>>>>> more more more
 }
 
 /***********************************

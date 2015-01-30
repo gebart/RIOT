@@ -275,7 +275,7 @@ int netapi_send_command(kernel_pid_t pid, netapi_cmd_t *cmd);
  * @return  -ENOMSG if wrong acknowledgement was received or was no
  *          acknowledgement at all.
  */
-int netapi_send_packet(kernel_pid_t pid, pkt_t *pkt);
+int netapi_send_packet(kernel_pid_t pid, pktsnip_t *pkt);
 
 /**
  * @brief Get an option of a protocol layer identified by *pid*.
