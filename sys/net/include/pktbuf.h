@@ -189,6 +189,8 @@ void pktbuf_release(pktsnip_t *pkt);
  * @details This function duplicates a packet in the packet buffer if
  *          pktsnip_t::users of @p pkt > 1.
  *
+ * @note    Do *not* call this function in a thread twice on the same packet.
+ *
  * @param[in] pkt   The packet you want to write into.
  *
  * @return  The (new) pointer to the pkt.
@@ -201,6 +203,9 @@ pktsnip_t *pktbuf_start_write(pktsnip_t *pkt);
  * @brief   Checks if a given data pointer is stored in the packet buffer.
  *
  * @param[in] ptr   Pointer to be checked
+ *
+ * @note    This will not work for pktsnip_t types, when they are dynamically
+ *          allocated, but for there pktsnip_t::data field it will.
  *
  * @return  true, if @p ptr is in packet buffer
  * @return  false, otherwise

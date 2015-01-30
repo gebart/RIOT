@@ -347,6 +347,25 @@ static void test_pktbuf_insert__success(void)
     TEST_ASSERT(!pktbuf_is_empty());
 }
 
+static void test_pktbuf_insert__packed_struct(void)
+{
+    test_pktbuf_struct_t data = { 0x4d, 0xef43, 0xacdef574, 0x43644305695afde5,
+                                  34, -4469, 149699748, -46590430597
+                                };
+    test_pktbuf_struct_t *data_cpy;
+    pktsnip_t *pkt = pktbuf_insert(&data, sizeof(test_pktbuf_struct_t));
+    data_cpy = (test_pktbuf_struct_t *)pkt->data;
+
+    TEST_ASSERT_EQUAL_INT(data.u8, data_cpy->u8);
+    TEST_ASSERT_EQUAL_INT(data.u16, data_cpy->u16);
+    TEST_ASSERT_EQUAL_INT(data.u32, data_cpy->u32);
+    TEST_ASSERT_EQUAL_INT(data.u64, data_cpy->u64);
+    TEST_ASSERT_EQUAL_INT(data.s8, data_cpy->s8);
+    TEST_ASSERT_EQUAL_INT(data.s16, data_cpy->s16);
+    TEST_ASSERT_EQUAL_INT(data.s32, data_cpy->s32);
+    TEST_ASSERT_EQUAL_INT(data.s64, data_cpy->s64);
+}
+
 static void test_pktbuf_add_header__pkt_NULL__data_NULL__size_0(void)
 {
     TEST_ASSERT_NULL(pktbuf_add_header(NULL, NULL, 0, PKT_PROTO_UNKNOWN));
@@ -468,170 +487,92 @@ static void test_pktbuf_hold__success(void)
     }
 }
 
-/*
-static void test_pktbuf_release_ptr_null(void)
+static void test_pktbuf_release__pkt_null(void)
 {
-    pkt_t *pkt;
-
-    TEST_ASSERT_NOT_NULL(pktbuf_alloc(25));
-    pkt = pktbuf_insert("abcd", 5);
-    TEST_ASSERT_NOT_NULL(pkt);
-    TEST_ASSERT_NOT_NULL(pktbuf_alloc(16));
-
     pktbuf_release(NULL);
-
-    TEST_ASSERT_EQUAL_INT(3, pktbuf_copy(pkt->payload_data, "ef", 3));
-    TEST_ASSERT_EQUAL_STRING("ef", pkt->payload_data);
+    TEST_ASSERT(pktbuf_is_empty());
 }
 
-static void test_pktbuf_release_wrong_ptr(void)
+static void test_pktbuf_release__pkt_external(void)
 {
-    pkt_t *pkt, wrong;
+    pktsnip_t pkt = { NULL, TEST_STRING8, sizeof(TEST_STRING8), PKT_PROTO_UNKNOWN, 1 };
 
-    TEST_ASSERT_NOT_NULL(pktbuf_alloc(25));
-    pkt = pktbuf_insert("abcd", 5);
-    TEST_ASSERT_NOT_NULL(pkt);
-    TEST_ASSERT_NOT_NULL(pktbuf_alloc(16));
-
-    pktbuf_release(&wrong);
-
-    TEST_ASSERT_EQUAL_INT(3, pktbuf_copy(pkt->payload_data, "ef", 3));
-    TEST_ASSERT_EQUAL_STRING("ef", pkt->payload_data);
+    pktbuf_release(&pkt);
+    TEST_ASSERT(pktbuf_is_empty());
 }
 
-static void test_pktbuf_release_success(void)
+static void test_pktbuf_release__success(void)
 {
-    pkt_t *pkt;
+    pktsnip_t *pkt = pktbuf_insert(TEST_STRING16, sizeof(TEST_STRING16));
 
-    TEST_ASSERT_NOT_NULL(pktbuf_alloc(25));
-    pkt = pktbuf_insert("abcd", 5);
-    TEST_ASSERT_NOT_NULL(pkt);
-    TEST_ASSERT_NOT_NULL(pktbuf_alloc(16));
+    for (uint8_t i = 0; i < TEST_UINT8; i++) {
+        uint8_t prev_users = pkt->users;
+        pktbuf_hold(pkt);
+        TEST_ASSERT_EQUAL_INT(prev_users + 1, pkt->users);
+    }
 
-    TEST_ASSERT_EQUAL_INT(3, pktbuf_packets_allocated());
+    TEST_ASSERT(!pktbuf_is_empty());
 
+    for (uint8_t i = 0; i < TEST_UINT8; i++) {
+        uint8_t prev_users = pkt->users;
+        pktbuf_release(pkt);
+        TEST_ASSERT_EQUAL_INT(prev_users - 1, pkt->users);
+    }
+
+    TEST_ASSERT(!pktbuf_is_empty());
+    pktbuf_release(pkt);
+    TEST_ASSERT(pktbuf_is_empty());
+}
+
+static void test_pktbuf_start_write__NULL(void)
+{
+    pktbuf_start_write(NULL);
+    TEST_ASSERT(pktbuf_is_empty());
+}
+
+static void test_pktbuf_start_write__pkt_users_1(void)
+{
+    pktsnip_t *pkt = pktbuf_insert(TEST_STRING16, sizeof(TEST_STRING16)), *pkt_copy;
+    TEST_ASSERT_NOT_NULL((pkt_copy = pktbuf_start_write(pkt)));
+    TEST_ASSERT(pkt == pkt_copy);
+    pktbuf_release(pkt);
+    TEST_ASSERT(pktbuf_is_empty());
+}
+
+static void test_pktbuf_start_write__pkt_users_2(void)
+{
+    pktsnip_t *pkt = pktbuf_insert(TEST_STRING16, sizeof(TEST_STRING16)), *pkt_copy;
     pktbuf_hold(pkt);
-    pktbuf_hold(pkt);
+    TEST_ASSERT_NOT_NULL((pkt_copy = pktbuf_start_write(pkt)));
+    TEST_ASSERT(pkt != pkt_copy);
+    TEST_ASSERT(pkt->next == pkt_copy->next);
+    TEST_ASSERT_EQUAL_STRING(pkt->data, pkt_copy->data);
+    TEST_ASSERT_EQUAL_INT(pkt->size, pkt_copy->size);
+    TEST_ASSERT_EQUAL_INT(pkt->type, pkt_copy->type);
+    TEST_ASSERT_EQUAL_INT(pkt->users, pkt_copy->users);
+    TEST_ASSERT_EQUAL_INT(1, pkt->users);
+
+    pktbuf_release(pkt_copy);
     pktbuf_release(pkt);
-    pktbuf_release(pkt);
-    pktbuf_release(pkt);
-
-    TEST_ASSERT_EQUAL_INT(2, pktbuf_packets_allocated());
+    TEST_ASSERT(pktbuf_is_empty());
 }
 
-static void test_pktbuf_release_success2(void)
+static void test_pktbuf_contains__NULL(void)
 {
-    pkt_t *pkt1, *pkt2, *pkt3;
-
-    pkt1 = pktbuf_insert("abcd", 5);
-    TEST_ASSERT_NOT_NULL(pkt1);
-    pkt2 = pktbuf_insert("ef", 3);
-    TEST_ASSERT_NOT_NULL(pkt2);
-    pkt3 = pktbuf_insert("ghijkl", 7);
-    TEST_ASSERT_NOT_NULL(pkt3);
-
-    TEST_ASSERT_EQUAL_INT(3, pktbuf_packets_allocated());
-
-    pktbuf_release(pkt2);
-
-    TEST_ASSERT_EQUAL_INT(2, pktbuf_packets_allocated());
-    TEST_ASSERT_EQUAL_INT(2, pktbuf_copy(pkt1->payload_data, "m", 2));
-    TEST_ASSERT_EQUAL_STRING("m", pkt1->payload_data);
-    TEST_ASSERT_EQUAL_INT(4, pktbuf_copy(pkt3->payload_data, "nop", 4));
-    TEST_ASSERT_EQUAL_STRING("nop", pkt3->payload_data);
+    TEST_ASSERT(!pktbuf_contains(NULL));
 }
 
-static void test_pktbuf_release_success3(void)
+static void test_pktbuf_contains__external(void)
 {
-    pkt_t *pkt1, *pkt2, *pkt3;
-
-    pkt1 = pktbuf_insert("abcd", 5);
-    TEST_ASSERT_NOT_NULL(pkt1);
-    pkt2 = pktbuf_insert("ef", 3);
-    TEST_ASSERT_NOT_NULL(pkt2);
-    pkt3 = pktbuf_insert("ghijkl", 7);
-    TEST_ASSERT_NOT_NULL(pkt3);
-
-    TEST_ASSERT_EQUAL_INT(3, pktbuf_packets_allocated());
-
-    pktbuf_release(pkt1);
-
-    TEST_ASSERT_EQUAL_INT(2, pktbuf_packets_allocated());
-    TEST_ASSERT_EQUAL_INT(2, pktbuf_copy(pkt2->payload_data, "m", 2));
-    TEST_ASSERT_EQUAL_STRING("m", pkt2->payload_data);
-    TEST_ASSERT_EQUAL_INT(4, pktbuf_copy(pkt3->payload_data, "nop", 4));
-    TEST_ASSERT_EQUAL_STRING("nop", pkt3->payload_data);
+    TEST_ASSERT(!pktbuf_contains(TEST_STRING8));
 }
 
-static void test_pktbuf_release_success4(void)
+static void test_pktbuf_contains__success(void)
 {
-    pkt_t *pkt1, *pkt2, *pkt3;
+    pktsnip_t *pkt = pktbuf_insert(TEST_STRING8, sizeof(TEST_STRING8));
 
-    pkt1 = pktbuf_insert("abcd", 5);
-    TEST_ASSERT_NOT_NULL(pkt1);
-    pkt2 = pktbuf_insert("ef", 3);
-    TEST_ASSERT_NOT_NULL(pkt2);
-    pkt3 = pktbuf_insert("ghijkl", 7);
-    TEST_ASSERT_NOT_NULL(pkt3);
-
-    TEST_ASSERT_EQUAL_INT(3, pktbuf_packets_allocated());
-
-    pktbuf_release(pkt3);
-
-    TEST_ASSERT_EQUAL_INT(2, pktbuf_packets_allocated());
-    TEST_ASSERT_EQUAL_INT(2, pktbuf_copy(pkt1->payload_data, "m", 2));
-    TEST_ASSERT_EQUAL_STRING("m", pkt1->payload_data);
-    TEST_ASSERT_EQUAL_INT(1, pktbuf_copy(pkt2->payload_data, "", 1));
-    TEST_ASSERT_EQUAL_STRING("", pkt2->payload_data);
+    TEST_ASSERT(pktbuf_contains(pkt->data));
 }
-
-static void test_pktbuf_insert_packed_struct(void)
-{
-    test_pktbuf_struct_t data = { 0x4d, 0xef43, 0xacdef574, 0x43644305695afde5,
-                                  34, -4469, 149699748, -46590430597
-                                };
-    test_pktbuf_struct_t *data_cpy;
-    pkt_t *pkt;
-
-    pkt = pktbuf_insert(&data, sizeof(test_pktbuf_struct_t));
-    data_cpy = (test_pktbuf_struct_t *)pkt->payload_data;
-
-    TEST_ASSERT_EQUAL_INT(data.u8, data_cpy->u8);
-    TEST_ASSERT_EQUAL_INT(data.u16, data_cpy->u16);
-    TEST_ASSERT_EQUAL_INT(data.u32, data_cpy->u32);
-    TEST_ASSERT_EQUAL_INT(data.u64, data_cpy->u64);
-    TEST_ASSERT_EQUAL_INT(data.s8, data_cpy->s8);
-    TEST_ASSERT_EQUAL_INT(data.s16, data_cpy->s16);
-    TEST_ASSERT_EQUAL_INT(data.s32, data_cpy->s32);
-    TEST_ASSERT_EQUAL_INT(data.s64, data_cpy->s64);
-}
-
-static void test_pktbuf_alloc_off_by_one1(void)
-{
-    pkt_t *pkt1, *pkt2, *pkt3, *pkt4;
-
-    pkt1 = pktbuf_insert("1234567890a", 12);
-    TEST_ASSERT_NOT_NULL(pkt1);
-    pkt2 = pktbuf_alloc(44);
-    TEST_ASSERT_NOT_NULL(pkt2);
-    pkt4 = pktbuf_alloc(4);
-    TEST_ASSERT_NOT_NULL(pkt4);
-    TEST_ASSERT_EQUAL_INT(3, pktbuf_packets_allocated());
-    TEST_ASSERT_EQUAL_INT(12 + 44 + 4, pktbuf_bytes_allocated());
-
-    pktbuf_release(pkt1);
-
-    TEST_ASSERT_EQUAL_INT(2, pktbuf_packets_allocated());
-    TEST_ASSERT_EQUAL_INT(44 + 4, pktbuf_bytes_allocated());
-
-    pkt3 = pktbuf_insert("bcdefghijklm", 13);
-    TEST_ASSERT_NOT_NULL(pkt3);
-    TEST_ASSERT(pkt1 != pkt3);
-
-    TEST_ASSERT_EQUAL_INT(3, pktbuf_packets_allocated());
-    TEST_ASSERT_EQUAL_INT(44 + 4 + 13, pktbuf_bytes_allocated());
-}
-*/
 
 Test *tests_pktbuf_tests(void)
 {
@@ -664,6 +605,7 @@ Test *tests_pktbuf_tests(void)
         new_TestFixture(test_pktbuf_insert__size_0),
         new_TestFixture(test_pktbuf_insert__data_NULL),
         new_TestFixture(test_pktbuf_insert__success),
+        new_TestFixture(test_pktbuf_insert__packed_struct),
         new_TestFixture(test_pktbuf_add_header__pkt_NULL__data_NULL__size_0),
         new_TestFixture(test_pktbuf_add_header__pkt_NOT_NULL__data_NULL__size_0),
         new_TestFixture(test_pktbuf_add_header__pkt_NULL__data_NOT_NULL__size_0),
@@ -675,16 +617,15 @@ Test *tests_pktbuf_tests(void)
         new_TestFixture(test_pktbuf_hold__pkt_null),
         new_TestFixture(test_pktbuf_hold__pkt_external),
         new_TestFixture(test_pktbuf_hold__success),
-            /*
-        new_TestFixture(test_pktbuf_release_ptr_null),
-        new_TestFixture(test_pktbuf_release_wrong_ptr),
-        new_TestFixture(test_pktbuf_release_success),
-        new_TestFixture(test_pktbuf_release_success2),
-        new_TestFixture(test_pktbuf_release_success3),
-        new_TestFixture(test_pktbuf_release_success4),
-        new_TestFixture(test_pktbuf_insert_packed_struct),
-        new_TestFixture(test_pktbuf_alloc_off_by_one1),
-        */
+        new_TestFixture(test_pktbuf_release__pkt_null),
+        new_TestFixture(test_pktbuf_release__pkt_external),
+        new_TestFixture(test_pktbuf_release__success),
+        new_TestFixture(test_pktbuf_start_write__NULL),
+        new_TestFixture(test_pktbuf_start_write__pkt_users_1),
+        new_TestFixture(test_pktbuf_start_write__pkt_users_2),
+        new_TestFixture(test_pktbuf_contains__NULL),
+        new_TestFixture(test_pktbuf_contains__external),
+        new_TestFixture(test_pktbuf_contains__success),
     };
 
     EMB_UNIT_TESTCALLER(pktbuf_tests, NULL, tear_down, fixtures);

@@ -192,6 +192,10 @@ pktsnip_t *pktbuf_add_header(pktsnip_t *pkt, void *data, pktsize_t size,
 
 void pktbuf_release(pktsnip_t *pkt)
 {
+    if (pkt == NULL) {
+        return;
+    }
+
     atomic_set_return(&(pkt->users), pkt->users - 1);
 
     if (pkt->users == 0 && pktbuf_contains(pkt->data)) {
@@ -210,7 +214,7 @@ void pktbuf_release(pktsnip_t *pkt)
 
 pktsnip_t *pktbuf_start_write(pktsnip_t *pkt)
 {
-    if (pkt->users > 1) {
+    if (pkt != NULL && pkt->users > 1) {
         pktsnip_t *res = NULL;
 
         mutex_lock(&_pktbuf_mutex);
