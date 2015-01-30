@@ -39,7 +39,7 @@ extern "C" {
 typedef struct pktqueue_node_t {
     struct pktqueue_node_t *next;   /**< next node in queue */
     uint32_t priority;              /**< priority of the node */
-    pkt_t *data;                    /**< pointer to the data */
+    pktsnip_t *data;                /**< pointer to the data */
 } pktqueue_node_t;
 
 /**
