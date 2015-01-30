@@ -38,28 +38,26 @@ extern "C"
  * @name Timer configuration
  * @{
  */
-#define TIMER_NUMOF         (2U)
-#define TIMER_0_EN          1
-#define TIMER_1_EN          1
-#define TIMER_IRQ_PRIO      1
+#define TIMER_NUMOF             (1U)
+#define TIMER_0_EN              1
+#define TIMER_1_EN              0
+#define TIMER_IRQ_PRIO          1
+#define TIMER_DEV               PIT
+#define TIMER_MAX_VALUE         (0xffffffff)
+#define TIMER_CLOCK             SystemBusClock
+#define TIMER_CLKEN()           (BITBAND_REG(SIM->SCGC6, SIM_SCGC6_PIT_SHIFT) = 1)
 
-/* Timer 0 configuration */
-#define TIMER_0_DEV         PIT
-#define TIMER_0_CHANNELS    1
-#define TIMER_0_MAX_VALUE   (0xffffffff)
-#define TIMER_0_CLKEN()     (SIM->SCGC6 |= SIM_SCGC6_PIT_MASK)
-#define TIMER_0_CLOCK       SystemBusClock
-#define TIMER_0_ISR         isr_pit0
-#define TIMER_0_IRQ_CHAN    PIT0_IRQn
+// Timer 0 configuration
+#define TIMER_0_PRESCALER_CH    0
+#define TIMER_0_COUNTER_CH      1
+#define TIMER_0_ISR             isr_pit1
+#define TIMER_0_IRQ_CHAN        PIT1_IRQn
 
-/* Timer 1 configuration */
-#define TIMER_1_DEV         PIT
-#define TIMER_1_CHANNELS    1
-#define TIMER_1_MAX_VALUE   (0xffffffff)
-#define TIMER_1_CLKEN()     (SIM->SCGC6 |= SIM_SCGC6_PIT_MASK)
-#define TIMER_1_CLOCK       SystemBusClock
-#define TIMER_1_ISR         isr_pit1
-#define TIMER_1_IRQ_CHAN    PIT1_IRQn
+// Timer 1 configuration
+#define TIMER_1_PRESCALER_CH    2
+#define TIMER_1_COUNTER_CH      3
+#define TIMER_1_ISR             isr_pit3
+#define TIMER_1_IRQ_CHAN        PIT3_IRQn
 
 /** @} */
 
@@ -78,13 +76,13 @@ extern "C"
 
 /* UART 0 device configuration */
 #define UART_0_DEV          UART1
-#define UART_0_CLKEN()      (SIM->SCGC4 |= SIM_SCGC4_UART1_MASK)
-#define UART_0_CLKDIS()     (SIM->SCGC4 &= ~(SIM_SCGC4_UART1_MASK))
+#define UART_0_CLKEN()      (BITBAND_REG(SIM->SCGC4, SIM_SCGC4_UART1_SHIFT) = 1)
+#define UART_0_CLKDIS()     (BITBAND_REG(SIM->SCGC4, SIM_SCGC4_UART1_SHIFT) = 0)
 #define UART_0_CLK          (SystemSysClock)
 #define UART_0_IRQ_CHAN     UART1_RX_TX_IRQn
 #define UART_0_ISR          isr_uart1_status
 /* UART 0 pin configuration */
-#define UART_0_PORT_CLKEN() (SIM->SCGC5 |= SIM_SCGC5_PORTC_MASK)
+#define UART_0_PORT_CLKEN() (BITBAND_REG(SIM->SCGC5, SIM_SCGC5_PORTC_SHIFT) = 1)
 #define UART_0_PORT         PORTC
 #define UART_0_TX_PIN       4
 #define UART_0_RX_PIN       3
@@ -106,33 +104,6 @@ extern "C"
 #define ADC_1_EN            1
 #define ADC_MAX_CHANNELS    2
 
-/* ADC 0 configuration */
-#define ADC_0_DEV           ADC1
-#define ADC_0_CHANNELS      2
-#define ADC_0_CLKEN()       (RCC->APB2ENR |= RCC_APB2ENR_ADC1EN)
-#define ADC_0_CLKDIS()      (RCC->APB2ENR &= ~(RCC_APB2ENR_ADC1EN))
-#define ADC_0_PORT          GPIOA
-#define ADC_0_PORT_CLKEN()  (RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN)
-/* ADC 0 channel 0 pin config */
-#define ADC_0_CH0           1
-#define ADC_0_CH0_PIN       1
-/* ADC 0 channel 1 pin config */
-#define ADC_0_CH1           4
-#define ADC_0_CH1_PIN       4
-
-/* ADC 0 configuration */
-#define ADC_1_DEV           ADC2
-#define ADC_1_CHANNELS      2
-#define ADC_1_CLKEN()       (RCC->APB2ENR |= RCC_APB2ENR_ADC2EN)
-#define ADC_1_CLKDIS()      (RCC->APB2ENR &= ~(RCC_APB2ENR_ADC2EN))
-#define ADC_1_PORT          GPIOC
-#define ADC_1_PORT_CLKEN()  (RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN)
-/* ADC 0 channel 0 pin config */
-#define ADC_1_CH0           11
-#define ADC_1_CH0_PIN       1
-/* ADC 0 channel 1 pin config */
-#define ADC_1_CH1           12
-#define ADC_1_CH1_PIN       2
 /** @} */
 
 
@@ -145,35 +116,6 @@ extern "C"
 #define PWM_1_EN            1
 #define PWM_MAX_CHANNELS    4
 
-/* PWM 0 device configuration */
-#define PWM_0_DEV           TIM1
-#define PWM_0_CHANNELS      4
-#define PWM_0_CLK           (168000000U)
-#define PWM_0_CLKEN()       (RCC->APB2ENR |= RCC_APB2ENR_TIM1EN)
-#define PWM_0_CLKDIS()      (RCC->APB2ENR &= ~RCC_APB2ENR_TIM1EN)
-/* PWM 0 pin configuration */
-#define PWM_0_PORT          GPIOE
-#define PWM_0_PORT_CLKEN()  (RCC->AHB1ENR |= RCC_AHB1ENR_GPIOEEN)
-#define PWM_0_PIN_CH0       9
-#define PWM_0_PIN_CH1       11
-#define PWM_0_PIN_CH2       13
-#define PWM_0_PIN_CH3       14
-#define PWM_0_PIN_AF        1
-
-/* PWM 1 device configuration */
-#define PWM_1_DEV           TIM3
-#define PWM_1_CHANNELS      3
-#define PWM_1_CLK           (84000000U)
-#define PWM_1_CLKEN()       (RCC->APB1ENR |= RCC_APB1ENR_TIM3EN)
-#define PWM_1_CLKDIS()      (RCC->APB1ENR &= ~RCC_APB1ENR_TIM3EN)
-/* PWM 1 pin configuration */
-#define PWM_1_PORT          GPIOB
-#define PWM_1_PORT_CLKEN()  (RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN)
-#define PWM_1_PIN_CH0       4
-#define PWM_1_PIN_CH1       5
-#define PWM_1_PIN_CH2       0
-#define PWM_1_PIN_CH3       1
-#define PWM_1_PIN_AF        2
 /** @} */
 
 
@@ -390,7 +332,7 @@ extern "C"
 #define GPIO_0_PORT_BASE    PORTC_BASE
 #define GPIO_0_DEV          PTC
 #define GPIO_0_PIN          15
-#define GPIO_0_CLKEN()      (SIM->SCGC5 |= SIM_SCGC5_PORTC_MASK)
+#define GPIO_0_CLKEN()      (BITBAND_REG(SIM->SCGC5, SIM_SCGC5_PORTC_SHIFT) = 1)
 #define GPIO_0_IRQ          PORTC_IRQn
 #define GPIO_0_ISR          isr_portc_pin_detect
 
@@ -400,7 +342,7 @@ extern "C"
 #define GPIO_1_PORT_BASE    PORTC_BASE
 #define GPIO_1_DEV          PTC
 #define GPIO_1_PIN          14
-#define GPIO_1_CLKEN()      (SIM->SCGC5 |= SIM_SCGC5_PORTC_MASK)
+#define GPIO_1_CLKEN()      (BITBAND_REG(SIM->SCGC5, SIM_SCGC5_PORTC_SHIFT) = 1)
 #define GPIO_1_IRQ          PORTC_IRQn
 #define GPIO_1_ISR          isr_portc_pin_detect
 
@@ -410,7 +352,7 @@ extern "C"
 #define GPIO_2_PORT_BASE    PORTC_BASE
 #define GPIO_2_DEV          PTC
 #define GPIO_2_PIN          13
-#define GPIO_2_CLKEN()      (SIM->SCGC5 |= SIM_SCGC5_PORTC_MASK)
+#define GPIO_2_CLKEN()      (BITBAND_REG(SIM->SCGC5, SIM_SCGC5_PORTC_SHIFT) = 1)
 #define GPIO_2_IRQ          PORTC_IRQn
 #define GPIO_2_ISR          isr_portc_pin_detect
 
@@ -420,7 +362,7 @@ extern "C"
 #define GPIO_3_PORT_BASE    PORTC_BASE
 #define GPIO_3_DEV          PTC
 #define GPIO_3_PIN          18
-#define GPIO_3_CLKEN()      (SIM->SCGC5 |= SIM_SCGC5_PORTC_MASK)
+#define GPIO_3_CLKEN()      (BITBAND_REG(SIM->SCGC5, SIM_SCGC5_PORTC_SHIFT) = 1)
 #define GPIO_3_IRQ          PORTC_IRQn
 #define GPIO_3_ISR          isr_portc_pin_detect
 
@@ -430,7 +372,7 @@ extern "C"
 #define GPIO_4_PORT_BASE    PORTC_BASE
 #define GPIO_4_DEV          PTC
 #define GPIO_4_PIN          17
-#define GPIO_4_CLKEN()      (SIM->SCGC5 |= SIM_SCGC5_PORTC_MASK)
+#define GPIO_4_CLKEN()      (BITBAND_REG(SIM->SCGC5, SIM_SCGC5_PORTC_SHIFT) = 1)
 #define GPIO_4_IRQ          PORTC_IRQn
 #define GPIO_4_ISR          isr_portc_pin_detect
 
@@ -440,7 +382,7 @@ extern "C"
 #define GPIO_5_PORT_BASE    PORTB_BASE
 #define GPIO_5_DEV          PTB
 #define GPIO_5_PIN          16
-#define GPIO_5_CLKEN()      (SIM->SCGC5 |= SIM_SCGC5_PORTB_MASK)
+#define GPIO_5_CLKEN()      (BITBAND_REG(SIM->SCGC5, SIM_SCGC5_PORTB_SHIFT) = 1)
 #define GPIO_5_IRQ          PORTB_IRQn
 #define GPIO_5_ISR          isr_portb_pin_detect
 
@@ -450,7 +392,7 @@ extern "C"
 #define GPIO_6_PORT_BASE    PORTB_BASE
 #define GPIO_6_DEV          PTB
 #define GPIO_6_PIN          17
-#define GPIO_6_CLKEN()      (SIM->SCGC5 |= SIM_SCGC5_PORTB_MASK)
+#define GPIO_6_CLKEN()      (BITBAND_REG(SIM->SCGC5, SIM_SCGC5_PORTB_SHIFT) = 1)
 #define GPIO_6_IRQ          PORTB_IRQn
 #define GPIO_6_ISR          isr_portb_pin_detect
 
@@ -460,7 +402,7 @@ extern "C"
 #define GPIO_7_PORT_BASE    PORTD_BASE
 #define GPIO_7_DEV          PTD
 #define GPIO_7_PIN          7
-#define GPIO_7_CLKEN()      (SIM->SCGC5 |= SIM_SCGC5_PORTD_MASK)
+#define GPIO_7_CLKEN()      (BITBAND_REG(SIM->SCGC5, SIM_SCGC5_PORTD_SHIFT) = 1)
 #define GPIO_7_IRQ          PORTD_IRQn
 #define GPIO_7_ISR          isr_portd_pin_detect
 
@@ -470,7 +412,7 @@ extern "C"
 #define GPIO_8_PORT_BASE    PORTB_BASE
 #define GPIO_8_DEV          PTB
 #define GPIO_8_PIN          23
-#define GPIO_8_CLKEN()      (SIM->SCGC5 |= SIM_SCGC5_PORTB_MASK)
+#define GPIO_8_CLKEN()      (BITBAND_REG(SIM->SCGC5, SIM_SCGC5_PORTB_SHIFT) = 1)
 #define GPIO_8_IRQ          PORTB_IRQn
 #define GPIO_8_ISR          isr_portb_pin_detect
 
@@ -480,7 +422,7 @@ extern "C"
 #define GPIO_9_PORT_BASE    PORTB_BASE
 #define GPIO_9_DEV          PTB
 #define GPIO_9_PIN          22
-#define GPIO_9_CLKEN()      (SIM->SCGC5 |= SIM_SCGC5_PORTB_MASK)
+#define GPIO_9_CLKEN()      (BITBAND_REG(SIM->SCGC5, SIM_SCGC5_PORTB_SHIFT) = 1)
 #define GPIO_9_IRQ          PORTB_IRQn
 #define GPIO_9_ISR          isr_portb_pin_detect
 
@@ -490,7 +432,7 @@ extern "C"
 #define GPIO_10_PORT_BASE   PORTB_BASE
 #define GPIO_10_DEV         PTB
 #define GPIO_10_PIN         9
-#define GPIO_10_CLKEN()     (SIM->SCGC5 |= SIM_SCGC5_PORTB_MASK)
+#define GPIO_10_CLKEN()     (BITBAND_REG(SIM->SCGC5, SIM_SCGC5_PORTB_SHIFT) = 1)
 #define GPIO_10_IRQ         PORTB_IRQn
 #define GPIO_10_ISR         isr_portb_pin_detect
 
@@ -500,7 +442,7 @@ extern "C"
 #define GPIO_11_PORT_BASE   PORTB_BASE
 #define GPIO_11_DEV         PTB
 #define GPIO_11_PIN         10
-#define GPIO_11_CLKEN()     (SIM->SCGC5 |= SIM_SCGC5_PORTB_MASK)
+#define GPIO_11_CLKEN()     (BITBAND_REG(SIM->SCGC5, SIM_SCGC5_PORTB_SHIFT) = 1)
 #define GPIO_11_IRQ         PORTB_IRQn
 #define GPIO_11_ISR         isr_portb_pin_detect
 
@@ -510,7 +452,7 @@ extern "C"
 #define GPIO_12_PORT_BASE   PORTB_BASE
 #define GPIO_12_DEV         PTB
 #define GPIO_12_PIN         9
-#define GPIO_12_CLKEN()     (SIM->SCGC5 |= SIM_SCGC5_PORTB_MASK)
+#define GPIO_12_CLKEN()     (BITBAND_REG(SIM->SCGC5, SIM_SCGC5_PORTB_SHIFT) = 1)
 #define GPIO_12_IRQ         PORTB_IRQn
 #define GPIO_12_ISR         isr_portb_pin_detect
 
@@ -520,7 +462,7 @@ extern "C"
 #define GPIO_13_PORT_BASE   PORTE_BASE
 #define GPIO_13_DEV         PTE
 #define GPIO_13_PIN         6
-#define GPIO_13_CLKEN()     (SIM->SCGC5 |= SIM_SCGC5_PORTE_MASK)
+#define GPIO_13_CLKEN()     (BITBAND_REG(SIM->SCGC5, SIM_SCGC5_PORTE_SHIFT) = 1)
 #define GPIO_13_IRQ         PORTE_IRQn
 #define GPIO_13_ISR         isr_porte_pin_detect
 
@@ -530,7 +472,7 @@ extern "C"
 #define GPIO_14_PORT_BASE   PORTD_BASE
 #define GPIO_14_DEV         PTD
 #define GPIO_14_PIN         4
-#define GPIO_14_CLKEN()     (SIM->SCGC5 |= SIM_SCGC5_PORTD_MASK)
+#define GPIO_14_CLKEN()     (BITBAND_REG(SIM->SCGC5, SIM_SCGC5_PORTD_SHIFT) = 1)
 #define GPIO_14_IRQ         PORTD_IRQn
 #define GPIO_14_ISR         isr_portd_pin_detect
 
@@ -540,7 +482,7 @@ extern "C"
 #define GPIO_15_PORT_BASE   PORTD_BASE
 #define GPIO_15_DEV         PTD
 #define GPIO_15_PIN         0
-#define GPIO_15_CLKEN()     (SIM->SCGC5 |= SIM_SCGC5_PORTD_MASK)
+#define GPIO_15_CLKEN()     (BITBAND_REG(SIM->SCGC5, SIM_SCGC5_PORTD_SHIFT) = 1)
 #define GPIO_15_IRQ         PORTD_IRQn
 #define GPIO_15_ISR         isr_portd_pin_detect
 
@@ -550,7 +492,7 @@ extern "C"
 #define GPIO_16_PORT_BASE   PORTD_BASE
 #define GPIO_16_DEV         PTD
 #define GPIO_16_PIN         6
-#define GPIO_16_CLKEN()     (SIM->SCGC5 |= SIM_SCGC5_PORTD_MASK)
+#define GPIO_16_CLKEN()     (BITBAND_REG(SIM->SCGC5, SIM_SCGC5_PORTD_SHIFT) = 1)
 #define GPIO_16_IRQ         PORTD_IRQn
 #define GPIO_16_ISR         isr_portd_pin_detect
 
@@ -560,7 +502,7 @@ extern "C"
 #define GPIO_17_PORT_BASE   PORTD_BASE
 #define GPIO_17_DEV         PTD
 #define GPIO_17_PIN         5
-#define GPIO_17_CLKEN()     (SIM->SCGC5 |= SIM_SCGC5_PORTD_MASK)
+#define GPIO_17_CLKEN()     (BITBAND_REG(SIM->SCGC5, SIM_SCGC5_PORTD_SHIFT) = 1)
 #define GPIO_17_IRQ         PORTD_IRQn
 #define GPIO_17_ISR         isr_portd_pin_detect
 
