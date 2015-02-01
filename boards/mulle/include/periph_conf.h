@@ -29,8 +29,23 @@ extern "C"
  * @name Clock system configuration
  * @{
  */
+#define KINETIS_CPU_USE_MCG               1
 
-#include "config-clocks.h"
+#define KINETIS_MCG_USE_ERC               1
+#define KINETIS_MCG_USE_PLL               0
+#define KINETIS_MCG_DCO_RANGE             (96000000U)
+#define KINETIS_MCG_ERC_OSCILLATOR        1
+#define KINETIS_MCG_ERC_FRDIV             0
+#define KINETIS_MCG_ERC_RANGE             0
+#define KINETIS_MCG_ERC_FREQ              (32768U)
+
+/* Base clocks, used by SystemCoreClockUpdate */
+#define CPU_XTAL_CLK_HZ                 8000000u /**< Value of the external crystal or oscillator clock frequency in Hz */
+#define CPU_XTAL32k_CLK_HZ              32768u   /**< Value of the external 32k crystal or oscillator clock frequency in Hz */
+#define CPU_INT_SLOW_CLK_HZ             32768u   /**< Value of the slow internal oscillator clock frequency in Hz  */
+#define CPU_INT_FAST_CLK_HZ             4000000u /**< Value of the fast internal oscillator clock frequency in Hz  */
+#define DEFAULT_SYSTEM_CLOCK            96000000u /**< Default System clock value */
+#define F_CPU DEFAULT_SYSTEM_CLOCK
 
 /** @} */
 
