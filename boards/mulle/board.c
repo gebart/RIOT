@@ -56,6 +56,9 @@ void board_init(void)
 
     /* Turn on Vperiph for peripherals */
     gpio_set(MULLE_POWER_VPERIPH);
+
+    /* Turn on AVDD for reading voltages */
+    gpio_set(MULLE_POWER_AVDD);
 }
 
 /**
