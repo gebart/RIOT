@@ -81,7 +81,7 @@ void board_init(void)
      * to read the initialization messages written on the UART.
      * (If the clock is not stable all UART output is garbled until it has
      * stabilized) */
-    for (int i = 0; i < 10000; ++i) {
+    for (int i = 0; i < 100000; ++i) {
         asm volatile("nop\n");
     }
 

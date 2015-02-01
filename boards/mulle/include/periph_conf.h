@@ -34,7 +34,7 @@ extern "C"
 #define KINETIS_MCG_USE_ERC               1
 #define KINETIS_MCG_USE_PLL               0
 #define KINETIS_MCG_DCO_RANGE             (96000000U)
-#define KINETIS_MCG_ERC_OSCILLATOR        1
+#define KINETIS_MCG_ERC_OSCILLATOR        0
 #define KINETIS_MCG_ERC_FRDIV             0
 #define KINETIS_MCG_ERC_RANGE             0
 #define KINETIS_MCG_ERC_FREQ              (32768U)
