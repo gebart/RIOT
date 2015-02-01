@@ -56,16 +56,6 @@ extern uint32_t SystemFlexBusClock;
  */
 extern uint32_t SystemFlashClock;
 
-
-/**
- * \brief Setup the microcontroller system.
- *
- * Typically this function configures the oscillator (PLL) that is part of the
- * microcontroller device. For systems with variable clock speed it also updates
- * the variable SystemCoreClock. SystemInit is called from startup_device file.
- */
-void SystemInit(void);
-
 /**
  * \brief Updates all of the SystemCoreClock variables.
  *

@@ -90,6 +90,16 @@ extern "C"
 /* Do not use 0xAB, it is reserved for ARM semihosting environment. */
 #define BREAK_SEMIHOSTING 0xAB
 
+
+#ifndef OSC0
+/* Compatibility definition */
+#define OSC0 OSC
+#endif
+#ifndef MCG_C2_RANGE0
+/* Rev 2 parts renamed the parameter RANGE -> RANGE0 */
+#define MCG_C2_RANGE0 MCG_C2_RANGE
+#endif
+
 /**
  * @name GPIO pin mux function numbers
  */
