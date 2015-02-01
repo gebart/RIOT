@@ -103,12 +103,6 @@ typedef uint8_t radio_packet_length_t;
 #endif
 
 /**
- * RTC crystal load capacitance configuration bits.
- */
-/* enable 12pF load capacitance, might need adjusting.. */
-#define BOARD_RTC_LOAD_CAP_BITS (RTC_CR_SC8P_MASK | RTC_CR_SC4P_MASK)
-
-/**
  * @name Define the interface to the AT86RF231 radio
  * @{
  */
@@ -139,6 +133,32 @@ typedef uint8_t radio_packet_length_t;
 #define MULLE_POWER_AVDD    GPIO_6 /**< AVDD enable pin */
 #define MULLE_POWER_VPERIPH GPIO_7 /**< VPERIPH enable pin */
 #define MULLE_POWER_VSEC    GPIO_5 /**< VSEC enable pin */
+/** @} */
+
+/**
+ * @name K60 clock dividers
+ */
+/** @{ */
+/**
+ * System clock divider setting, the actual hardware register value, see reference manual for details.
+ */
+#define CONFIG_CLOCK_K60_SYS_DIV 0x00
+
+/**
+ * Bus clock divider setting, the actual hardware register value, see reference manual for details
+ */
+#define CONFIG_CLOCK_K60_BUS_DIV 0x01
+
+/**
+ * Flexbus clock divider setting, the actual hardware register value, see reference manual for details
+ */
+#define CONFIG_CLOCK_K60_FB_DIV 0x01
+
+/**
+ * Flash clock divider setting, the actual hardware register value, see reference manual for details
+ */
+#define CONFIG_CLOCK_K60_FLASH_DIV 0x03
+
 /** @} */
 
 #endif /* BOARD_H_ */
