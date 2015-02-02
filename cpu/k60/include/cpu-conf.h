@@ -314,6 +314,12 @@ typedef enum llwu_wakeup_edge {
 
 /** @} */
 
+#define ISR_PORT_A isr_porta_pin_detect
+#define ISR_PORT_B isr_portb_pin_detect
+#define ISR_PORT_C isr_portc_pin_detect
+#define ISR_PORT_D isr_portd_pin_detect
+#define ISR_PORT_E isr_porte_pin_detect
+
 #define TRANSCEIVER_BUFFER_SIZE (3)
 
 #ifdef __cplusplus
