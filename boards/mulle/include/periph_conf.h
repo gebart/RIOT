@@ -521,7 +521,7 @@ extern "C"
 #define GPIO_10_PORT        PORTB
 #define GPIO_10_PORT_BASE   PORTB_BASE
 #define GPIO_10_DEV         PTB
-#define GPIO_10_PIN         9
+#define GPIO_10_PIN         21
 #define GPIO_10_CLKEN()     (BITBAND_REG(SIM->SCGC5, SIM_SCGC5_PORTB_SHIFT) = 1)
 #define GPIO_10_IRQ         PORTB_IRQn
 #define GPIO_10_ISR         isr_portb_pin_detect
@@ -531,7 +531,7 @@ extern "C"
 #define GPIO_11_PORT        PORTB
 #define GPIO_11_PORT_BASE   PORTB_BASE
 #define GPIO_11_DEV         PTB
-#define GPIO_11_PIN         10
+#define GPIO_11_PIN         20
 #define GPIO_11_CLKEN()     (BITBAND_REG(SIM->SCGC5, SIM_SCGC5_PORTB_SHIFT) = 1)
 #define GPIO_11_IRQ         PORTB_IRQn
 #define GPIO_11_ISR         isr_portb_pin_detect
