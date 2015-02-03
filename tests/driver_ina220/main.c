@@ -39,6 +39,7 @@
  */
 #define CONFIG   (INA220_MODE_CONTINUOUS_SHUNT_BUS | INA220_RANGE_320MV | \
                   INA220_BRNG_32V_FSR | INA220_SADC_12BIT | INA220_BADC_12BIT)
+#define CALIBRATION (0)
 #define SLEEP    (100 * 1000U)
 
 int main(void)
@@ -55,6 +56,21 @@ int main(void)
     printf("Initializing INA220 sensor at I2C_%i, address 0x%02x... ",
         TEST_INA220_I2C, TEST_INA220_ADDR);
     if (ina220_init(&dev, TEST_INA220_I2C, TEST_INA220_ADDR) == 0) {
+        puts("[OK]\n");
+    } else {
+        puts("[Failed]");
+        return 1;
+    }
+    puts("Set configuration register");
+    if (ina220_set_configuration(&dev, CONFIG) == 0) {
+        puts("[OK]\n");
+    } else {
+        puts("[Failed]");
+        return 1;
+    }
+
+    puts("Set calibration register");
+    if (ina220_set_calibration(&dev, CALIBRATION) == 0) {
         puts("[OK]\n");
     } else {
         puts("[Failed]");
