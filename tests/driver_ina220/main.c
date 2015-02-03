@@ -76,7 +76,7 @@ int main(void)
 
         ina220_read_power(&dev, &val);
 
-        printf("\tpower: %6d", val);
+        printf("\tpower: %6d\n", val);
 
         vtimer_usleep(SLEEP);
     }
