@@ -4,6 +4,9 @@ endif
 ifneq (,$(filter pktbuf,$(USEMODULE)))
     DIRS += net/crosslayer/pktbuf
 endif
+ifneq (,$(filter pktdump,$(USEMODULE)))
+    DIRS += net/crosslayer/pktdump
+endif
 ifneq (,$(filter hktbuf,$(USEMODULE)))
     DIRS += net/crosslayer/hktbuf
 endif

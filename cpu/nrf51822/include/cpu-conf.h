@@ -30,10 +30,10 @@ extern "C" {
  * @name Kernel configuration
  * @{
  */
-#define KERNEL_CONF_STACKSIZE_PRINTF    (1024)
+#define KERNEL_CONF_STACKSIZE_PRINTF    (512)
 
 #ifndef KERNEL_CONF_STACKSIZE_DEFAULT
-#define KERNEL_CONF_STACKSIZE_DEFAULT   (1024)
+#define KERNEL_CONF_STACKSIZE_DEFAULT   (1536)
 #endif
 
 #define KERNEL_CONF_STACKSIZE_IDLE      (512)
@@ -49,6 +49,16 @@ extern "C" {
 #define UART0_BUFSIZE                   (128)
 #endif
 /** @} */
+
+/**
+ * @brief Definition of different panic modes
+ */
+typedef enum {
+    HARD_FAULT,
+    WATCHDOG,
+    NMI_HANDLER,
+    DUMMY_HANDLER
+} panic_t;
 
 /**
  * @name Length in bytes for reading CPU_ID

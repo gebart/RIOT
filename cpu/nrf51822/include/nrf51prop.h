@@ -55,9 +55,10 @@ typedef struct __attribute__((packed)) {
 /**
  * @brief   Netdev compatible device descriptor for the NRF51 proprietary radio implementation
  */
-typedef struct __attribute__ ((packed)) {
+/* TODO: __attribute__((packed)) breaks the alignment, not sure what this is about... */
+typedef struct {
     /* netdev interface */
-    netdev_driver_t *driver;            /**< pointer to the drivers interface */
+    netdev_driver_t const * driver;            /**< pointer to the drivers interface */
     netdev_event_cb_t event_cb;         /**< netdev event callback */
     kernel_pid_t mac_pid;               /**< PID of the thread, the driver is running in */
     /* driver specific configuration */

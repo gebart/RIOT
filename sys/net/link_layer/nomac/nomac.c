@@ -19,7 +19,7 @@
 #include "netdev_dummy.h"
 #endif
 
-#define ENABLE_DEBUG    (0)
+#define ENABLE_DEBUG    (1)
 #include "debug.h"
 
 #define NOMAC_MSG_QUEUE_SIZE    (16)
@@ -30,13 +30,15 @@ static void _event_cb(netdev_event_t event, void *pkt)
 {
     msg_t msg;
 
+    DEBUG("nomac: event_cb\n");
     switch (event) {
         case NETDEV_EVENT_RX_COMPLETE:
+            DEBUG("nomac: NETDEV_EVENT_RX_COMPLETE\n");
             /* TODO: get list of recipients from somewhere */
 
             msg.type = NETAPI_MSG_TYPE_RCV;
             msg.content.ptr = pkt;
-
+            DEBUG("nomac: sending pointer to %i\n", who_to_hack);
             msg_send(&msg, who_to_hack);
             break;
         default:
@@ -102,7 +104,14 @@ static void *_nomac_runner(void *args)
     msg_init_queue(msg_queue, NOMAC_MSG_QUEUE_SIZE);
 
     /* connect to the device driver */
+    DEBUG("nomad: driver addr: %p\n", dev);
+    // dev = (netdev_t *)(((uint8_t *)dev) + 2);
+    // DEBUG("nomad: driver addr + 2: %p\n", dev);
+    printf("addr of into  : %p\n", dev->driver);
+
+    DEBUG("nomac: saving PID\n");
     dev->mac_pid = thread_getpid();
+    DEBUG("nomac: setting event callback\n");
     dev->driver->add_event_callback(dev, _event_cb);
 
     // netapi_cmd_t *cmd;
@@ -110,14 +119,41 @@ static void *_nomac_runner(void *args)
 
 
     while (1) {
+        DEBUG("nomac: waiting for incoming messages\n");
         msg_receive(&msg_cmd);
+        DEBUG("nomac: go message\n");
 
         if (msg_cmd.type == NETDEV_MSG_EVENT_TYPE) {
+            DEBUG("nomac: got message: MSG_EVENT_TYPE\n");
             dev->driver->isr_event(dev, msg_cmd.content.value);
         }
         else if (msg_cmd.type == NETAPI_MSG_TYPE_SND) {
+            DEBUG("nomac: got message: NETAPI_MSG_TYPE_SND\n");
             dev->driver->send_data(dev, (pktsnip_t *)msg_cmd.content.ptr);
         }
+        else if (msg_cmd.type == NETAPI_MSG_TYPE_SETOPT) {
+            DEBUG("nomac: got message: NETAPI_MSG_TYPE_SETOPT\n");
+            netapi_opt_t *opt = (netapi_opt_t *)msg_cmd.content.ptr;
+            int res = dev->driver->set_option(dev, opt->type, opt->data, opt->data_len);
+            msg_t reply;
+            reply.type = NETAPI_MSG_TYPE_ACK;
+            reply.content.value = res;
+            msg_reply(&msg_cmd, &reply);
+        }
+
+        // else if (msg_cmd.type == NETAPI_MSG_TYPE) {
+        //     DEBUG("nomac: got message: NETAPI_MSG_TYPE\n");
+        //     netapi_cmd_t *cmd = (netapi_cmd_t *)msg_cmd.content.ptr;
+        //     switch (cmd->type) {
+        //         case NETAPI_CMD_SET:
+        //             DEBUG("nomac: got NETAPI_CMD_SET\n");
+        //             break;
+        //         case NETAPI_CMD_GET:
+        //             DEBUG("nomac: got NETAPI_CMD_GET\n");
+        //             break;
+        //     }
+
+        // }
 
         // else if (msg_cmd.type == NETAPI_MSG_TYPE) {
         //     cmd = (netapi_cmd_t *)(msg_cmd.content.ptr);
@@ -189,6 +225,7 @@ static void *_nomac_runner(void *args)
 kernel_pid_t nomac_init(char *stack, int stacksize, char priority,
                         const char *name, netdev_t *dev)
 {
+    DEBUG("nomac: Creating nomac thread\n");
     return thread_create(stack, stacksize, priority, CREATE_STACKTEST,
                          _nomac_runner, (void *)dev, name);
 }

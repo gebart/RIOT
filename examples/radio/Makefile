@@ -40,8 +40,9 @@ USEMODULE += net
 USEMODULE += netapi
 USEMODULE += nrf51prop
 USEMODULE += nomac
-#USEMODULE += pktbuf
-USEMODULE += hktbuf
+USEMODULE += pktdump
+USEMODULE += pktbuf
+#USEMODULE += hktbuf
 
 FEATURES_OPTIONAL += config
 FEATURES_OPTIONAL += periph_rtc

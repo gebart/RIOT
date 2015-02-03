@@ -35,7 +35,7 @@
 #include "transceiver.h"
 #endif
 
-#define ENABLE_DEBUG    (0)
+#define ENABLE_DEBUG    (1)
 #include "debug.h"
 
 /**
@@ -191,6 +191,22 @@ static void _switch_to_idle(nrf51prop_t *dev);
  */
 static void _switch_to_rx(nrf51prop_t *dev);
 
+static int _send(netdev_t *dev, pktsnip_t *pkt);
+
+static int _add_event_cb(netdev_t *dev, netdev_event_cb_t cb);
+
+int _rem_event_cb(netdev_t *dev, netdev_event_cb_t cb);
+
+int _get_option(netdev_t *dev, netconf_opt_t opt, void *value, size_t *value_len);
+
+int _set_option(netdev_t *dev, netconf_opt_t opt, void *value, size_t value_len);
+
+int _get_state(netdev_t *dev, netdev_state_t *state);
+
+int _trigger(netdev_t *dev, netdev_action_t action);
+
+void _isr_event(netdev_t *dev, uint16_t event_type);
+
 
 /**
  * @brief   Save a pointer to the radios device descriptor to access it from
@@ -198,6 +214,16 @@ static void _switch_to_rx(nrf51prop_t *dev);
  */
 static nrf51prop_t *_radio;
 
+const netdev_driver_t nrf51prop_driver = {
+    .send_data = _send,
+    .add_event_callback = _add_event_cb,
+    .rem_event_callback = _rem_event_cb,
+    .get_option = _get_option,
+    .set_option = _set_option,
+    .get_state = _get_state,
+    .trigger = _trigger,
+    .isr_event = _isr_event,
+};
 
 int nrf51prop_init(nrf51prop_t *dev)
 {
@@ -205,6 +231,9 @@ int nrf51prop_init(nrf51prop_t *dev)
 
     /* save a pointer to the configured device */
     _radio = dev;
+
+    /* link the driver interface */
+    dev->driver = &nrf51prop_driver;
 
     /* power on the NRFs radio */
     NRF_RADIO->POWER = 1;
@@ -252,6 +281,7 @@ int nrf51prop_init(nrf51prop_t *dev)
 
 int _set_address(nrf51prop_t *dev, uint16_t address)
 {
+    DEBUG("nrf51prop: attempting to set address to %i\n", (int)address);
     /* make sure any ongoing transmit is finished */
     while (dev->state == STATE_TX);
     /* save old state */
@@ -267,7 +297,8 @@ int _set_address(nrf51prop_t *dev, uint16_t address)
     if (state == STATE_RX) {
         _switch_to_rx(dev);
     }
-    return 0;
+    DEBUG("nrf51prop: set address to %i\n", (int)dev->own_addr);
+    return address;
 }
 
 uint16_t _get_address(nrf51prop_t *dev)
@@ -312,6 +343,8 @@ nrf51prop_txpower_t _get_txpower(void)
 
 static void _receive_data(nrf51prop_t *dev)
 {
+    DEBUG("nrf51prop: reading data from memory and posting it to the MAC\n");
+
     if (dev->event_cb) {
         nrf51prop_packet_t *data = &(dev->rx_buf[(dev->rx_buf_next +1) & 0x01]);
         pktsnip_t *llhead, *payload;
@@ -364,6 +397,7 @@ static void _switch_to_idle(nrf51prop_t *dev)
 
 static void _switch_to_rx(nrf51prop_t *dev)
 {
+    DEBUG("nrf51prop: switching to RX mode\n");
     /* set pointer to receive buffer */
     NRF_RADIO->PACKETPTR = (uint32_t)&(dev->rx_buf[dev->rx_buf_next]);
     /* set address */
@@ -404,6 +438,7 @@ void isr_radio(void)
         if (_radio->state == STATE_RX) {
             /* check if CRC was OK */
             if (NRF_RADIO->CRCSTATUS == 1) { /* ok */
+                DEBUG("nrf51prop ISR: RX and CRC ok\n");
                 msg.content.value = ISR_EVENT_RX_DONE;
                 msg_send_int(&msg, _radio->mac_pid);
                 /* switch buffer */
@@ -423,8 +458,10 @@ void isr_radio(void)
         else if (_radio->state == STATE_TX) {
             /* disable radio again */
             _switch_to_idle(_radio);
+            DEBUG("nrf51prop ISR: tx done\n");
             /* if radio was receiving before, go back into RX state */
             if (_radio->old_state == STATE_RX) {
+                DEBUG("nrf51prop ISR: going back to RX\n");
                 _switch_to_rx(_radio);
             }
         }
@@ -444,6 +481,8 @@ int _send(netdev_t *dev, pktsnip_t *pkt)
     int count = 0;
     pktsnip_t *current = pkt->next;
     uint16_t dst_addr;
+
+    DEBUG("nrf51prop_send: sending data now!\n");
 
 #if DEVELHELP
     if (pkt->type != PKT_PROTO_LL_GEN) {
@@ -466,14 +505,14 @@ int _send(netdev_t *dev, pktsnip_t *pkt)
         count += current->size;
         current = current->next;
     }
-    pktbuf_release(pkt);
+    //pktbuf_release(pkt);
 
     if (count > NRF51PROP_MAX_PAYLOAD_LENGTH) {
         DEBUG("nrf51 TX: payload too large, dropping package\n");
         return 0;
     }
 
-    DEBUG("nrf51 TX: sending %i byte to addr %i\n", tx_buf.length, dst_addr);
+    DEBUG("nrf51 TX: sending %i byte to addr %i\n", radio->tx_buf.length, dst_addr);
 
     /* switch back to disabled in case we are in RX state */
     if (radio->state == STATE_RX) {
@@ -497,6 +536,7 @@ int _send(netdev_t *dev, pktsnip_t *pkt)
 
 int _add_event_cb(netdev_t *dev, netdev_event_cb_t cb)
 {
+    DEBUG("nrf51prop: adding event callback %p\n", cb);
     nrf51prop_t *radio = (nrf51prop_t *)dev;
 
     /* test if no other callback is already registered */
@@ -504,6 +544,7 @@ int _add_event_cb(netdev_t *dev, netdev_event_cb_t cb)
         return -1;
     }
     radio->event_cb = cb;
+    DEBUG("nrf51prop: cb set ok\n");
     return 0;
 }
 
@@ -523,7 +564,18 @@ int _get_option(netdev_t *dev, netconf_opt_t opt, void *value, size_t *value_len
 
 int _set_option(netdev_t *dev, netconf_opt_t opt, void *value, size_t value_len)
 {
-    return -1;
+    nrf51prop_t *radio = (nrf51prop_t *)dev;
+
+    printf("nrf51prop: set option: %i\n", (int)opt);
+
+    switch (opt) {
+        case NETCONF_OPT_ADDRESS:
+            return _set_address(radio, *((uint16_t *)value));
+        case NETCONF_OPT_STATE:
+            return _trigger(dev, *((int *)value));
+        default:
+            return -100;
+    }
 }
 
 int _get_state(netdev_t *dev, netdev_state_t *state)
@@ -562,6 +614,7 @@ int _trigger(netdev_t *dev, netdev_action_t action)
 
 void _isr_event(netdev_t *dev, uint16_t event_type)
 {
+    DEBUG("nrf51prop: after isr event\n");
     switch (event_type) {
         case ISR_EVENT_RX_DONE:
             _receive_data((nrf51prop_t *)dev);
@@ -574,14 +627,3 @@ void _isr_event(netdev_t *dev, uint16_t event_type)
             return;
     }
 }
-
-const netdev_driver_t nrf51prop_driver = {
-    .send_data = _send,
-    .add_event_callback = _add_event_cb,
-    .rem_event_callback = _rem_event_cb,
-    .get_option = _get_option,
-    .set_option = _set_option,
-    .get_state = _get_state,
-    .trigger = _trigger,
-    .isr_event = _isr_event,
-};

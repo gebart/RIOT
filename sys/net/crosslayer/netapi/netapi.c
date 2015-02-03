@@ -22,7 +22,7 @@
 
 #include "netapi.h"
 
-#define ENABLE_DEBUG    (0)
+#define ENABLE_DEBUG    (1)
 #include "debug.h"
 
 int netapi_send_command(kernel_pid_t pid, netapi_cmd_t *cmd)
@@ -31,7 +31,7 @@ int netapi_send_command(kernel_pid_t pid, netapi_cmd_t *cmd)
     netapi_ack_t ack;
     int ack_result;
 
-    DEBUG("send command to %" PRIkernel_pid ", cmd = %p, cmd->type = %d\n",
+    DEBUG("send command to %" PRIkernel_pid ", cmd = %p, cmd->type = %p\n",
           pid, (void *)cmd, (void *)(cmd->type));
 
     msg_cmd.type = NETAPI_MSG_TYPE;
@@ -89,7 +89,20 @@ int netapi_get_option(kernel_pid_t pid, netconf_opt_t param,
 int netapi_set_option(kernel_pid_t pid, netconf_opt_t param,
                       void *data, size_t data_len)
 {
-    return _get_set_option(pid, NETAPI_CMD_SET, param, data, data_len);
+    msg_t cmd;
+    msg_t ack;
+    netapi_opt_t opt;
+
+    opt.type = param;
+    opt.data = data;
+    opt.data_len = data_len;
+
+    cmd.type = NETAPI_MSG_TYPE_SETOPT;
+    cmd.content.ptr = (void *)&opt;
+
+    msg_send_receive(&cmd, &ack, pid);
+
+    return (int)ack.content.value;
 }
 
 static int _netapi_register_cmd(kernel_pid_t pid, netapi_cmd_type_t cmd,

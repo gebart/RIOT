@@ -72,12 +72,18 @@
 /**
  * @brief Message type for passing data up the network stack
  */
-#define NETAPI_MSG_TYPE_RCV     (0x02001)
+#define NETAPI_MSG_TYPE_RCV     (0x0201)
 
 /**
  * @brief Message type for passing data down the network stack
  */
 #define NETAPI_MSG_TYPE_SND     (0x0202)
+
+#define NETAPI_MSG_TYPE_SETOPT  (0x0203)
+
+#define NETAPI_MSG_TYPE_GETOPT  (0x0204)
+
+#define NETAPI_MSG_TYPE_ACK     (0x0205)
 
 /**
  * @brief   Basic communication types with a network layer.
@@ -186,6 +192,13 @@ typedef struct {
     /* cppcheck-suppress unusedStructMember because interface is not used yet */
     size_t data_len;            /**< Length of netapi_conf_t::data. */
 } netapi_conf_t;
+
+
+typedef struct {
+    netconf_opt_t type;
+    void *data;
+    size_t data_len;
+} netapi_opt_t;
 
 /**
  * @brief   Type for demultiplexing context of registration command.

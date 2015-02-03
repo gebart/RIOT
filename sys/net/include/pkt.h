@@ -68,6 +68,8 @@ typedef enum __attribute__((packed)) {
     PKT_PROTO_TCP           = 0x000d,   /**< TCP. */
     PKT_PROTO_CCNL          = 0x000e,   /**< CCN lite. */
     PKT_PROTO_LL_GEN        = 0x000f,   /**< generic link layer format */
+
+    PKT_PROTO_PAYLOAD       = 0x00ff,   /**< user payload */
 } pkt_proto_t;
 
 /**
@@ -136,15 +138,15 @@ typedef struct __attribute__((packed)) pktsnip_t {    /* packed to be aligned
                                                        * packet buffer */
     struct pktsnip_t *next;         /**< next snip in the packet. */
     void *data;                     /**< pointer to the data of the snip */
-    pktsize_t size;                 /**< the length of the snip in byte. */
-    pkt_proto_t type;               /**< protocol of the packet part. */
-
     /**
      * @brief   Counter of threads currently having control over this packet.
      *
      * @internal
      */
     unsigned int users;
+
+    pktsize_t size;                 /**< the length of the snip in byte. */
+    pkt_proto_t type;               /**< protocol of the packet part. */
 } pktsnip_t;
 
 

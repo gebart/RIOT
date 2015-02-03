@@ -66,6 +66,7 @@ typedef enum {
      * @brief   Set or get the protocol for the layer as of type netdev_proto_t.
      */
     NETCONF_OPT_PROTO,
+    NETCONF_OPT_STATE,
 } netconf_opt_t;
 
 

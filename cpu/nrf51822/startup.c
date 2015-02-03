@@ -19,8 +19,10 @@
  */
 
 #include <stdint.h>
+
 #include "board.h"
 #include "cpu.h"
+#include "crash.h"
 
 /**
  * memory markers as defined in the linker script
@@ -96,11 +98,9 @@ void isr_nmi(void)
 
 void isr_hard_fault(void)
 {
+    core_panic(HARD_FAULT, "HARD FAULT");
     while (1) {
-        for (int i = 0; i < 500000; i++) {
-            asm("nop");
-        }
-        LED_RED_TOGGLE;
+        asm("nop");
     }
 }
 
