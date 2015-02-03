@@ -122,19 +122,15 @@ typedef enum ina220_badc {
 int ina220_init(ina220_t *dev, i2c_t i2c, uint8_t address);
 
 /**
- * @brief Calibrate a sensor
+ * @brief Write to calibration register
  *
- * @param[in]  dev                  device descriptor of sensor to calibrate
- * @param[in]  vbus_max_mv          Maximum possible Vbus voltage, in millivolts
- * @param[in]  vshunt_max_mv        Maximum possible Vshunt voltage, in millivolts
- * @param[in]  rshunt_mohm          Rshunt resistance, in milliohms
- * @param[in]  ishunt_expected_ua   Maximum expected Ishunt current, in microamperes
+ * @param[in]  dev                  device descriptor of sensor to configure
+ * @param[in]  calibration          calibration register settings, see data sheet
  *
  * @return                  0 on success
  * @return                  <0 on error
  */
-int ina220_calibrate(ina220_t *dev, int vbus_max_mv, int vshunt_max_mv,
-                     int rshunt_mohm, int ishunt_expected_ua);
+int ina220_set_calibration(ina220_t *dev, uint16_t calibration);
 
 /**
  * @brief Configure sensor hardware
