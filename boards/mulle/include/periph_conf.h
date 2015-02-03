@@ -17,8 +17,8 @@
  * @author      Joakim Gebart <joakim.gebart@eistec.se>
  */
 
-#ifndef __PERIPH_CONF_H
-#define __PERIPH_CONF_H
+#ifndef MULLE_PERIPH_CONF_H
+#define MULLE_PERIPH_CONF_H
 
 #ifdef __cplusplus
 extern "C"
@@ -359,35 +359,25 @@ extern "C"
  * @name I2C configuration
  * @{
  */
-#define I2C_NUMOF           (0U)                                                /* TODO !!!!!!!*/
-#define I2C_0_EN            0
-#define I2C_0_EN            0
+#define I2C_NUMOF               (1U)
+#define I2C_CLK                 SystemBusClock
+#define I2C_0_EN                1
+#define I2C_1_EN                0
+#define I2C_IRQ_PRIO            1
 
-/* SPI 0 device configuration */
-#define I2C_0_DEV
-#define I2C_0_CLKEN()
-#define I2C_0_ISR
-#define I2C_0_IRQ
-#define I2C_0_IRQ_PRIO
-/* SPI 0 pin configuration */
-#define I2C_0_PORT
-#define I2C_0_PINS
-#define I2C_0_PORT_CLKEN()
-#define I2C_0_SCL_AFCFG()
-#define I2C_0_SDA_AFCFG()
-
-/* SPI 1 device configuration */
-#define I2C_1_DEV
-#define I2C_1_CLKEN()
-#define I2C_1_ISR
-#define I2C_1_IRQ
-#define I2C_1_IRQ_PRIO
-/* SPI 1 pin configuration */
-#define I2C_1_PORT
-#define I2C_1_PINS
-#define I2C_1_PORT_CLKEN()
-#define I2C_1_SCL_AFCFG()
-#define I2C_1_SDA_AFCFG()
+/* I2C 0 device configuration */
+#define I2C_0_DEV               I2C0
+#define I2C_0_CLKEN()           (BITBAND_REG(SIM->SCGC4, SIM_SCGC4_I2C0_SHIFT) = 1)
+#define I2C_0_CLKDIS()          (BITBAND_REG(SIM->SCGC4, SIM_SCGC4_I2C0_SHIFT) = 0)
+#define I2C_0_IRQ               I2C0_IRQn
+#define I2C_0_IRQ_HANDLER       isr_i2c0
+/* I2C 0 pin configuration */
+#define I2C_0_PORT              PORTB
+#define I2C_0_PORT_CLKEN()      (BITBAND_REG(SIM->SCGC5, SIM_SCGC5_PORTB_SHIFT) = 1)
+#define I2C_0_PIN_AF            2
+#define I2C_0_SDA_PIN           1
+#define I2C_0_SCL_PIN           2
+#define I2C_0_PORT_CFG          (PORT_PCR_MUX(I2C_0_PIN_AF) | PORT_PCR_ODE_MASK)
 /** @} */
 
 
@@ -628,5 +618,5 @@ extern "C"
 }
 #endif
 
-#endif /* __PERIPH_CONF_H */
+#endif /* MULLE_PERIPH_CONF_H */
 /** @} */
