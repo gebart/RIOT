@@ -39,7 +39,7 @@
  */
 #define CONFIG   (INA220_MODE_CONTINUOUS_SHUNT_BUS | INA220_RANGE_320MV | \
                   INA220_BRNG_32V_FSR | INA220_SADC_12BIT | INA220_BADC_12BIT)
-#define CALIBRATION (0)
+#define CALIBRATION (4096)
 #define SLEEP    (100 * 1000U)
 
 int main(void)
@@ -62,7 +62,7 @@ int main(void)
         return 1;
     }
     puts("Set configuration register");
-    if (ina220_set_configuration(&dev, CONFIG) == 0) {
+    if (ina220_set_config(&dev, CONFIG) == 0) {
         puts("[OK]\n");
     } else {
         puts("[Failed]");
