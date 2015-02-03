@@ -180,7 +180,7 @@ int ina220_read_current(ina220_t *dev, int16_t *current);
  * @brief Read power consumption
  *
  * @param[in]  dev          device descriptor of sensor
- * @param[out] voltage      measured power consumption
+ * @param[out] power      measured power consumption
  *
  * @return                  0 on success
  * @return                  -1 on error
