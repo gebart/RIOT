@@ -78,28 +78,9 @@ int ina220_init(ina220_t *dev, i2c_t i2c, uint8_t address)
     return 0;
 }
 
-int ina220_calibrate(ina220_t *dev, int vbus_max_mv, int vshunt_max_mv,
-                     int rshunt_mohm, int ishunt_expected_ua)
+int ina220_set_calibration(ina220_t *dev, uint16_t calibration)
 {
-    #if 0
-    /* Calibration procedure follows the outline in the INA220 data sheet. */
-    /* The magic numbers are also taken from the algorithm outline. */
-
-    /* Maximum possible current through shunt resistor */
-    int ishunt_max_ua = (1000 * vshunt_max_mv) / rshunt_mohm;
-    /* Minimum configurable Ishunt LSB, in nanoamperes */
-    int ishunt_min_lsb_na = (ishunt_expected_ua * 1000) / 32767;
-    /* Maximum configurable Ishunt LSB, in nanoamperes */
-    int ishunt_max_lsb_na = (ishunt_expected_ua * 1000) / 4096;
-
-    /* Power register LSB value */
-    int power_lsb_uw = ishunt_lsb_ua * 20;
-
-    if (i2c_write_reg(dev->i2c, dev->addr, L3G4200D_REG_CTRL4, tmp) != 1) {
-        return -1;
-    }
-#endif
-    return 0;
+    return ina220_write_reg(dev, INA220_REG_CALIBRATION, calibration);
 }
 
 int ina220_set_config(ina220_t *dev, uint16_t config)
