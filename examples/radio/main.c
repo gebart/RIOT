@@ -121,7 +121,6 @@ static void addr(int argc, char **argv)
     else {
         printf("setting address failed [%i]\n", res);
     }
-
 }
 
 static void trigger(int argc, char **argv)

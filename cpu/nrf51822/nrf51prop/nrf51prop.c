@@ -172,16 +172,6 @@ int _set_txpower(nrf51prop_txpower_t power);
 nrf51prop_txpower_t _get_txpower(void);
 
 /**
- * @brief Power on the radio
- */
-void _poweron(nrf51prop_t *dev);
-
-/**
- * @brief Power off the radio
- */
-void _poweroff(nrf51prop_t *dev);
-
-/**
  * @brief Change the radios internal state to DISABLED
  */
 static void _switch_to_idle(nrf51prop_t *dev);
@@ -190,6 +180,9 @@ static void _switch_to_idle(nrf51prop_t *dev);
  * @brief Put the radio into receiving state
  */
 static void _switch_to_rx(nrf51prop_t *dev);
+
+static void _power_off(nrf51prop_t *dev);
+static void _power_on(nrf51prop_t *dev);
 
 static int _send(netdev_t *dev, pktsnip_t *pkt);
 
@@ -200,10 +193,6 @@ int _rem_event_cb(netdev_t *dev, netdev_event_cb_t cb);
 int _get_option(netdev_t *dev, netconf_opt_t opt, void *value, size_t *value_len);
 
 int _set_option(netdev_t *dev, netconf_opt_t opt, void *value, size_t value_len);
-
-int _get_state(netdev_t *dev, netdev_state_t *state);
-
-int _trigger(netdev_t *dev, netdev_action_t action);
 
 void _isr_event(netdev_t *dev, uint16_t event_type);
 
@@ -220,8 +209,6 @@ const netdev_driver_t nrf51prop_driver = {
     .rem_event_callback = _rem_event_cb,
     .get_option = _get_option,
     .set_option = _set_option,
-    .get_state = _get_state,
-    .trigger = _trigger,
     .isr_event = _isr_event,
 };
 
@@ -384,6 +371,27 @@ static void _receive_data(nrf51prop_t *dev)
         /* hand data over to MAC layer */
         dev->event_cb(NETDEV_EVENT_RX_COMPLETE, llhead);
     }
+}
+
+static int _set_state(nrf51prop_t *dev, netconf_state_t state)
+{
+    switch (state) {
+        case NETCONF_STATE_OFF:
+            _power_off(dev);
+            break;
+        case NETCONF_STATE_SLEEP:
+            _power_on(dev);
+            break;
+        case NETCONF_STATE_IDLE:
+            _switch_to_idle(dev);
+            break;
+        case NETCONF_STATE_RX:
+            _switch_to_rx(dev);
+            break;
+        default:
+            return -ENOTSUP;
+    }
+    return state;
 }
 
 static void _switch_to_idle(nrf51prop_t *dev)
@@ -572,44 +580,10 @@ int _set_option(netdev_t *dev, netconf_opt_t opt, void *value, size_t value_len)
         case NETCONF_OPT_ADDRESS:
             return _set_address(radio, *((uint16_t *)value));
         case NETCONF_OPT_STATE:
-            return _trigger(dev, *((int *)value));
+            return _set_state(radio, *((netconf_state_t *)value));
         default:
             return -100;
     }
-}
-
-int _get_state(netdev_t *dev, netdev_state_t *state)
-{
-    return -1;
-}
-
-int _trigger(netdev_t *dev, netdev_action_t action)
-{
-    nrf51prop_t *radio = (nrf51prop_t *)dev;
-
-#if DEVELHELP
-    if (!radio) {
-        return -ENODEV;
-    }
-#endif
-
-    switch (action) {
-        case NETDEV_ACTION_POWEROFF:
-            _power_off(radio);
-            break;
-        case NETDEV_ACTION_POWERON:
-            _power_on(radio);
-            break;
-        case NETDEV_ACTION_IDLE:
-            _switch_to_idle(radio);
-            break;
-        case NETDEV_ACTION_RX:
-            _switch_to_rx(radio);
-            break;
-        default:
-            return -ENOTSUP;
-    }
-    return 0;
 }
 
 void _isr_event(netdev_t *dev, uint16_t event_type)

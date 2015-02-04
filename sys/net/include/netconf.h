@@ -70,6 +70,14 @@ typedef enum {
 } netconf_opt_t;
 
 
+typedef enum {
+    NETCONF_STATE_OFF = 0,
+    NETCONF_STATE_SLEEP,
+    NETCONF_STATE_IDLE,
+    NETCONF_STATE_RX,
+    NETCONF_STATE_TX
+} netconf_state_t;
+
 #ifdef __cplusplus
 }
 #endif

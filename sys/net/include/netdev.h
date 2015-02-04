@@ -39,19 +39,6 @@ extern "C" {
 #define NETDEV_MSG_EVENT_TYPE   (0x0100)
 
 /**
- * @brief   Definition of basic network device.
- * @note    Feel free to expand if your device needs/supports more
- */
-typedef enum {
-    NETDEV_ACTION_POWEROFF = 0,
-    NETDEV_ACTION_POWERON,
-    NETDEV_ACTION_SLEEP,
-    NETDEV_ACTION_IDLE,
-    NETDEV_ACTION_RX,
-    NETDEV_ACTION_TX,               /**< only needed if pre-loading is enabled */
-} netdev_action_t;
-
-/**
  * TODO: document...
  */
 typedef enum {
@@ -63,21 +50,12 @@ typedef enum {
 } netdev_event_t;
 
 /**
- * @brief   Definition of basic network device.
- * @note    Feel free to expand if your device needs/supports more
+ * @brief   Event callback for signaling event to a MAC layer.
+ *
+ * @param[in] type          type of the event
+ * @param[in] arg           event argument, can e.g. contain a pktsnip_t pointer
  */
-typedef enum {
-    NETDEV_STATE_OFF = 0,           /**< Device is powered off */
-    NETDEV_STATE_SLEEP,             /**< Device is sleeping */
-    NETDEV_STATE_IDLE,              /**< Device is idle */
-    NETDEV_STATE_RX,                /**< Device is in receive mode */
-    NETDEV_STATE_TX,                /**< Device is transmit mode */
-    NETDEV_STATE_PROMISCUOUS,       /**< Device is in receive mode and
-                                         accepts all packets without regard
-                                         for their destination */
-    NETDEV_STATE_TX_BURST,          /**< Device is burst sending and
-                                         does not accept packets */
-} netdev_state_t;
+typedef void (*netdev_event_cb_t)(netdev_event_t type, void *arg);
 
 /**
  * @brief   The netdev data-structure holds the minimum information needed for
@@ -86,14 +64,6 @@ typedef enum {
  * The netdev structure is the parent for all network device driver descriptors.
  */
 typedef struct netdev_t netdev_t;
-
-/**
- * @brief   Event callback for signaling event to a MAC layer.
- *
- * @param[in] type          type of the event
- * @param[in] arg           event argument, can e.g. contain a pktsnip_t pointer
- */
-typedef void (*netdev_event_cb_t)(netdev_event_t type, void *arg);
 
 /**
  * @brief   Network device API definition.
@@ -182,31 +152,6 @@ typedef struct {
      */
     int (*set_option)(netdev_t *dev, netconf_opt_t opt, void *value,
                       size_t value_len);
-
-    /**
-     * @brief   Get state from a given network device.
-     *
-     * @param[in] dev       the network device
-     * @param[out] state    the network device
-     *
-     * @return  0, on success
-     * @return  -ENODEV, if *dev* is not recognized
-     * @return  -ETIME, if device timed out on trying to acquire state
-     */
-    int (*get_state)(netdev_t *dev, netdev_state_t *state);
-
-    /**
-     * @brief   Set state from a given network device.
-     *
-     * @param[in] dev      the network device
-     * @param[in] action   action to trigger
-     *
-     * @return  0, on success
-     * @return  -ENODEV, if *dev* is not recognized
-     * @return  -ENOTSUP, if *state* is not supported
-     * @return  -ETIME, if device timed out on trying to change state
-     */
-    int (*trigger)(netdev_t *dev, netdev_action_t action);
 
     /**
      * @brief   Must be called by a controlling thread if a message of type
