@@ -165,7 +165,8 @@ ifdef BUILD_WITH_CLANG
 ifneq ($(BUILD_WITH_CLANG),0)
 export CFLAGS += -target $(TARGET_TRIPLE) -ffreestanding
 export CC       = clang
-export LD       = clang
+export CXX      = clang++
+export LINK     = clang
 export LLVMPREFIX ?= llvm-
 export AS       = $(LLVMPREFIX)as
 export AR       = $(LLVMPREFIX)ar
