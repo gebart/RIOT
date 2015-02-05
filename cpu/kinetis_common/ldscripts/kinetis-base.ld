@@ -17,6 +17,7 @@ SECTIONS
     . = 0x00;
 
     /* Interrupt vectors 0x00-0x3ff. */
+    ASSERT (. == 0x00000000, "Interrupt vector table at invalid location.")
     .vector_table :
     {
         _vector_rom = .;
