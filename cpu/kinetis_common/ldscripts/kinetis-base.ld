@@ -13,11 +13,7 @@ STACK_SIZE = DEFINED(STACK_SIZE) ? STACK_SIZE : 0x200; /* 512 byte */
 
 SECTIONS
 {
-    /* Start at address 0x00. */
-    . = 0x00;
-
     /* Interrupt vectors 0x00-0x3ff. */
-    ASSERT (. == 0x00000000, "Interrupt vector table at invalid location.")
     .vector_table :
     {
         _vector_rom = .;
@@ -25,7 +21,8 @@ SECTIONS
         KEEP(*(.vector_table))
     } > vectors
     ASSERT (SIZEOF(.vector_table) == 0x400, "Interrupt vector table of invalid size.")
-    ASSERT (. == 0x400, "Interrupt vector table at invalid location.")
+    ASSERT (ADDR(.vector_table) == 0x00000000, "Interrupt vector table at invalid location (linker-script error?)")
+    ASSERT (LOADADDR(.vector_table) == 0x00000000, "Interrupt vector table at invalid location (linker-script error?)")
 
     /*
      * Allocate space for interrupt vector in RAM
@@ -64,7 +61,8 @@ SECTIONS
         BYTE (0xff)
     } > flashsec
     ASSERT (SIZEOF(.fcfield) == 0x10, "Flash configuration field of invalid size (linker-script error?)")
-    ASSERT (. == 0x410, "Flash configuration field of invalid size or position (linker-script error?)")
+    ASSERT (ADDR(.fcfield) == 0x400, "Flash configuration field at invalid position (linker-script error?)")
+    ASSERT (LOADADDR(.fcfield) == 0x400, "Flash configuration field at invalid position (linker-script error?)")
 
     /* Program code 0x410-. */
     .text :
