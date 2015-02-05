@@ -10,4 +10,4 @@ MEMORY
     sram_u (rwx)   : ORIGIN = 0x20000000, LENGTH = 32K /* Only accessible via system bus. */
 }
 
-INCLUDE K60-base.ld
+INCLUDE kinetis-base.ld
