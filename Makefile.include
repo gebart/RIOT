@@ -10,6 +10,9 @@ RIOTCPU := $(abspath $(RIOTCPU))
 RIOTBOARD ?= $(RIOTBASE)/boards
 RIOTBOARD := $(abspath $(RIOTBOARD))
 
+RIOTPROJECT ?= $(CURDIR)
+RIOTPROJECT := $(abspath $(RIOTPROJECT))
+
 BINDIRBASE ?= $(CURDIR)/bin
 BINDIRBASE := $(abspath $(BINDIRBASE))
 
@@ -225,6 +228,23 @@ reset:
 
 objdump:
 	$(PREFIX)objdump -S -D -h $(ELFFILE) | less
+
+ifneq ($(DOCKER_IMAGE),)
+docker:
+	docker run $(DOCKERFLAGS) -i -t -u $$(id -u) \
+	    -v $(RIOTBASE):/data/riotbuild/riotbase \
+	    -v $(RIOTCPU):/data/riotbuild/riotcpu \
+	    -v $(RIOTBOARD):/data/riotbuild/riotboard \
+	    -v $(RIOTPROJECT):/data/riotbuild/riotproject \
+	    -v $(CURDIR):/data/riotbuild/build \
+	    -e RIOTBASE=/data/riotbuild/riotbase \
+	    -e RIOTCPU=/data/riotbuild/riotcpu \
+	    -e RIOTBOARD=/data/riotbuild/riotboard \
+	    -e RIOTPROJECT=/data/riotbuild/riotproject \
+	    -e BOARD=$(BOARD) \
+	    -w /data/riotbuild/build \
+	    $(DOCKER_IMAGE) make
+endif
 
 # Extra make goals for testing and comparing changes.
 include $(RIOTBASE)/Makefile.buildtests
