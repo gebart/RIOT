@@ -16,7 +16,6 @@ RAMVECT_SIZE = DEFINED(RAMVECT_SIZE) ? RAMVECT_SIZE : 0;
 SECTIONS
 {
     /* Interrupt vectors 0x00-0x3ff. */
-    ASSERT (. == 0x00000000, "Interrupt vector table at invalid location.")
     .vector_table :
     {
         _vector_rom = .;
