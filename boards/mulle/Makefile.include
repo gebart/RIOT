@@ -158,7 +158,7 @@ export LINKFLAGS += \
     -nostartfiles \
     -Wl,--fatal-warnings \
     #
-export LINKFLAGS += -L$(LINKERSCRIPTPATH) -T$(LINKERSCRIPT)
+export LINKFLAGS += -T$(LINKERSCRIPT)
 export OFLAGS ?= -O binary
 
 ifdef BUILD_WITH_CLANG
