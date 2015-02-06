@@ -276,6 +276,7 @@ docker:
 	    -e RIOTBOARD=/data/riotbuild/riotboard \
 	    -e RIOTPROJECT=/data/riotbuild/riotproject \
 	    -e BOARD=$(BOARD) \
+	    -e RIOT_VERSION="$(RIOT_VERSION)" \
 	    -w /data/riotbuild/build \
 	    $(DOCKER_IMAGE) make
 endif
