@@ -159,6 +159,13 @@ _getpid(void)
     return sched_active_pid;
 }
 
+pid_t
+_getpid_r(struct _reent *ptr)
+{
+    (void) ptr;
+    return sched_active_pid;
+}
+
 clock_t
 _times_r(struct _reent *r, struct tms *buf)
 {
