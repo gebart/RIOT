@@ -72,18 +72,30 @@ typedef enum ina220_brng {
  * @see Table 5 in INA220 data sheet
  */
 typedef enum ina220_sadc {
-    INA220_SADC_9BIT            = 0x0000, /**< 9 bit resolution, 84 us conversion time */
-    INA220_SADC_10BIT           = 0x0008, /**< 10 bit resolution, 148 us conversion time */
-    INA220_SADC_11BIT           = 0x0010, /**< 11 bit resolution, 276 us conversion time */
-    INA220_SADC_12BIT           = 0x0018, /**< 12 bit resolution, 532 us conversion time, default */
-    INA220_SADC_AVG_1_SAMPLE    = 0x0040, /**< 12 bit resolution, 532 us conversion time, same as INA220_SADC_12BIT */
-    INA220_SADC_AVG_2_SAMPLES   = 0x0048, /**< 2 sample average, 1.06 ms conversion time */
-    INA220_SADC_AVG_4_SAMPLES   = 0x0050, /**< 4 sample average, 2.13 ms conversion time */
-    INA220_SADC_AVG_8_SAMPLES   = 0x0058, /**< 8 sample average, 4.26 ms conversion time */
-    INA220_SADC_AVG_16_SAMPLES  = 0x0060, /**< 16 sample average, 8.51 ms conversion time */
-    INA220_SADC_AVG_32_SAMPLES  = 0x0068, /**< 32 sample average, 17.02 ms conversion time */
-    INA220_SADC_AVG_64_SAMPLES  = 0x0070, /**< 64 sample average, 34.05 ms conversion time */
-    INA220_SADC_AVG_128_SAMPLES = 0x0078, /**< 128 sample average, 68.10 ms conversion time */
+    /** 9 bit resolution, 84 us conversion time */
+    INA220_SADC_9BIT            = 0x0000,
+    /** 10 bit resolution, 148 us conversion time */
+    INA220_SADC_10BIT           = 0x0008,
+    /** 11 bit resolution, 276 us conversion time */
+    INA220_SADC_11BIT           = 0x0010,
+    /** 12 bit resolution, 532 us conversion time, default */
+    INA220_SADC_12BIT           = 0x0018,
+    /** 12 bit resolution, 532 us conversion time, same as INA220_SADC_12BIT */
+    INA220_SADC_AVG_1_SAMPLE    = 0x0040,
+    /** 2 sample average, 1.06 ms conversion time */
+    INA220_SADC_AVG_2_SAMPLES   = 0x0048,
+    /** 4 sample average, 2.13 ms conversion time */
+    INA220_SADC_AVG_4_SAMPLES   = 0x0050,
+    /** 8 sample average, 4.26 ms conversion time */
+    INA220_SADC_AVG_8_SAMPLES   = 0x0058,
+    /** 16 sample average, 8.51 ms conversion time */
+    INA220_SADC_AVG_16_SAMPLES  = 0x0060,
+    /** 32 sample average, 17.02 ms conversion time */
+    INA220_SADC_AVG_32_SAMPLES  = 0x0068,
+    /** 64 sample average, 34.05 ms conversion time */
+    INA220_SADC_AVG_64_SAMPLES  = 0x0070,
+    /** 128 sample average, 68.10 ms conversion time */
+    INA220_SADC_AVG_128_SAMPLES = 0x0078,
 } ina220_sadc_t;
 
 /**
@@ -92,18 +104,30 @@ typedef enum ina220_sadc {
  * @see Table 5 in INA220 data sheet
  */
 typedef enum ina220_badc {
-    INA220_BADC_9BIT            = 0x0000, /**< 9 bit resolution, 84 us conversion time */
-    INA220_BADC_10BIT           = 0x0080, /**< 10 bit resolution, 148 us conversion time */
-    INA220_BADC_11BIT           = 0x0100, /**< 11 bit resolution, 276 us conversion time */
-    INA220_BADC_12BIT           = 0x0180, /**< 12 bit resolution, 532 us conversion time, default */
-    INA220_BADC_AVG_1_SAMPLE    = 0x0400, /**< 12 bit resolution, 532 us conversion time, same as INA220_BADC_12BIT */
-    INA220_BADC_AVG_2_SAMPLES   = 0x0480, /**< 2 sample average, 1.06 ms conversion time */
-    INA220_BADC_AVG_4_SAMPLES   = 0x0500, /**< 4 sample average, 2.13 ms conversion time */
-    INA220_BADC_AVG_8_SAMPLES   = 0x0580, /**< 8 sample average, 4.26 ms conversion time */
-    INA220_BADC_AVG_16_SAMPLES  = 0x0600, /**< 16 sample average, 8.51 ms conversion time */
-    INA220_BADC_AVG_32_SAMPLES  = 0x0680, /**< 32 sample average, 17.02 ms conversion time */
-    INA220_BADC_AVG_64_SAMPLES  = 0x0700, /**< 64 sample average, 34.05 ms conversion time */
-    INA220_BADC_AVG_128_SAMPLES = 0x0780, /**< 128 sample average, 68.10 ms conversion time */
+    /** 9 bit resolution, 84 us conversion time */
+    INA220_BADC_9BIT            = 0x0000,
+    /** 10 bit resolution, 148 us conversion time */
+    INA220_BADC_10BIT           = 0x0080,
+    /** 11 bit resolution, 276 us conversion time */
+    INA220_BADC_11BIT           = 0x0100,
+    /** 12 bit resolution, 532 us conversion time, default */
+    INA220_BADC_12BIT           = 0x0180,
+    /** 12 bit resolution, 532 us conversion time, same as INA220_BADC_12BIT */
+    INA220_BADC_AVG_1_SAMPLE    = 0x0400,
+    /** 2 sample average, 1.06 ms conversion time */
+    INA220_BADC_AVG_2_SAMPLES   = 0x0480,
+    /** 4 sample average, 2.13 ms conversion time */
+    INA220_BADC_AVG_4_SAMPLES   = 0x0500,
+    /** 8 sample average, 4.26 ms conversion time */
+    INA220_BADC_AVG_8_SAMPLES   = 0x0580,
+    /** 16 sample average, 8.51 ms conversion time */
+    INA220_BADC_AVG_16_SAMPLES  = 0x0600,
+    /** 32 sample average, 17.02 ms conversion time */
+    INA220_BADC_AVG_32_SAMPLES  = 0x0680,
+    /** 64 sample average, 34.05 ms conversion time */
+    INA220_BADC_AVG_64_SAMPLES  = 0x0700,
+    /** 128 sample average, 68.10 ms conversion time */
+    INA220_BADC_AVG_128_SAMPLES = 0x0780,
 } ina220_badc_t;
 
 /** INA220 reset command bit (in configuration register) */
@@ -124,8 +148,8 @@ int ina220_init(ina220_t *dev, i2c_t i2c, uint8_t address);
 /**
  * @brief Write to calibration register
  *
- * @param[in]  dev                  device descriptor of sensor to configure
- * @param[in]  calibration          calibration register settings, see data sheet
+ * @param[in]  dev          device descriptor of sensor to configure
+ * @param[in]  calibration  calibration register settings, see data sheet
  *
  * @return                  0 on success
  * @return                  <0 on error
@@ -133,10 +157,10 @@ int ina220_init(ina220_t *dev, i2c_t i2c, uint8_t address);
 int ina220_set_calibration(ina220_t *dev, uint16_t calibration);
 
 /**
- * @brief Configure sensor hardware
+ * @brief Write to configuration register
  *
- * @param[in]  dev                  device descriptor of sensor to configure
- * @param[in]  config               configuration register settings, see data sheet
+ * @param[in]  dev          device descriptor of sensor to configure
+ * @param[in]  config       configuration register settings, see data sheet
  *
  * @return                  0 on success
  * @return                  <0 on error
@@ -150,7 +174,7 @@ int ina220_set_config(ina220_t *dev, uint16_t config);
  * @param[out] voltage      measured voltage across shunt resistor
  *
  * @return                  0 on success
- * @return                  -1 on error
+ * @return                  <0 on error
  */
 int ina220_read_shunt(ina220_t *dev, int16_t *voltage);
 
@@ -161,7 +185,7 @@ int ina220_read_shunt(ina220_t *dev, int16_t *voltage);
  * @param[out] voltage      measured bus voltage
  *
  * @return                  0 on success
- * @return                  -1 on error
+ * @return                  <0 on error
  */
 int ina220_read_bus(ina220_t *dev, int16_t *voltage);
 
@@ -172,7 +196,7 @@ int ina220_read_bus(ina220_t *dev, int16_t *voltage);
  * @param[out] current      measured current through shunt resistor
  *
  * @return                  0 on success
- * @return                  -1 on error
+ * @return                  <0 on error
  */
 int ina220_read_current(ina220_t *dev, int16_t *current);
 
@@ -180,10 +204,10 @@ int ina220_read_current(ina220_t *dev, int16_t *current);
  * @brief Read power consumption
  *
  * @param[in]  dev          device descriptor of sensor
- * @param[out] power      measured power consumption
+ * @param[out] power        measured power consumption
  *
  * @return                  0 on success
- * @return                  -1 on error
+ * @return                  <0 on error
  */
 int ina220_read_power(ina220_t *dev, int16_t *power);
 
