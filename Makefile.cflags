@@ -39,8 +39,9 @@ ifeq ($(shell $(CC) -Wstrict-prototypes -Werror=strict-prototypes -Wold-style-de
   CXXUWFLAGS += -Wstrict-prototypes -Wold-style-definition
 endif
 
-# Unwanted flags for c++
-CXXUWFLAGS += -std=%
+# Unwanted flags for c++, filter out any C standards but not C++ standards
+CXXUWFLAGS += -std=c89 -std=c90 -std=c99 -std=c9x -std=c11 -std=c1x \
+  -std=gnu89 -std=gnu90 -std=gnu99 -std=gnu9x -std=gnu11 -std=gnu1x
 
 ifeq ($(LTO),yes)
   LTOFLAGS = -flto -ffat-lto-objects
