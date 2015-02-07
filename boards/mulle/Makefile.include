@@ -158,12 +158,14 @@ export LINKFLAGS += \
     -nostartfiles \
     -Wl,--fatal-warnings \
     #
-export LINKFLAGS += -L$(LINKERSCRIPTPATH) -T$(LINKERSCRIPT)
+export LINKFLAGS += -T$(LINKERSCRIPT)
 export OFLAGS ?= -O binary
 
 ifdef BUILD_WITH_CLANG
 ifneq ($(BUILD_WITH_CLANG),0)
-export CFLAGS += -target $(TARGET_TRIPLE) -ffreestanding
+export CFLAGS += -target $(TARGET_TRIPLE)
+export CXXFLAGS += -target $(TARGET_TRIPLE)
+export LINKFLAGS += -target $(TARGET_TRIPLE)
 export CC       = clang
 export CXX      = clang++
 export LINK     = clang
@@ -250,7 +252,7 @@ export TERMFLAGS += -p "$(PORT)"
 
 # use newlib nano-specs if available
 ifeq ($(shell $(LINK) -specs=nano.specs -E - 2>/dev/null >/dev/null </dev/null ; echo $$?),0)
-export LINKFLAGS += -specs=nano.specs -lc -lnosys
+export LINKFLAGS += -specs=nano.specs -lc
 endif
 
 # export board specific includes to the global includes-listing
