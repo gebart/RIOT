@@ -163,7 +163,9 @@ export OFLAGS ?= -O binary
 
 ifdef BUILD_WITH_CLANG
 ifneq ($(BUILD_WITH_CLANG),0)
-export CFLAGS += -target $(TARGET_TRIPLE) -ffreestanding
+export CFLAGS += -target $(TARGET_TRIPLE)
+export CXXFLAGS += -target $(TARGET_TRIPLE)
+export LINKFLAGS += -target $(TARGET_TRIPLE)
 export CC       = clang
 export CXX      = clang++
 export LINK     = clang
