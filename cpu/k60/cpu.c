@@ -40,7 +40,7 @@ uint32_t PIT_ticks_per_usec = (DEFAULT_SYSTEM_CLOCK / 1000000ul);
  * @brief Check the running CPU identification to find if we are running on the
  *        wrong hardware.
  */
-static int check_running_cpu_revision(void);
+static void check_running_cpu_revision(void);
 
 /**
  * @brief Initialize the CPU, set IRQ priorities
@@ -58,7 +58,7 @@ void cpu_init(void)
 
 }
 
-static int check_running_cpu_revision(void)
+static void check_running_cpu_revision(void)
 {
     /* Check that the running CPU revision matches the compiled revision */
     if (SCB->CPUID != K60_EXPECTED_CPUID) {
