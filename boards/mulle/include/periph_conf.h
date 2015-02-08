@@ -608,18 +608,31 @@ extern "C"
 
 
 /**
-* @name RTC configuration
-* @{
-*/
+ * @name RTC configuration
+ * @{
+ */
+/* RIOT RTC implementation uses RTT for underlying timekeeper */
 #define RTC_NUMOF           (1U)
-#define RTC_DEV             RTC
-#define RTC_UNLOCK()        (BITBAND_REG(SIM->SCGC6, SIM_SCGC6_RTC_SHIFT) = 1)
+/** @} */
+
 /**
- * RTC crystal load capacitance configuration bits.
+ * @name RTT configuration
+ * @{
+ */
+#define RTT_NUMOF           (1U)
+#define RTT_IRQ_PRIO        1
+#define RTT_IRQ             RTC_IRQn
+#define RTT_ISR             isr_rtc_alarm
+#define RTT_DEV             RTC
+#define RTT_UNLOCK()        (BITBAND_REG(SIM->SCGC6, SIM_SCGC6_RTC_SHIFT) = 1)
+
+/**
+ * RTC module crystal load capacitance configuration bits.
  */
 /* enable 12pF load capacitance, might need adjusting.. */
-#define RTC_LOAD_CAP_BITS   (RTC_CR_SC8P_MASK | RTC_CR_SC4P_MASK)
+#define RTT_LOAD_CAP_BITS   (RTC_CR_SC8P_MASK | RTC_CR_SC4P_MASK)
 /** @} */
+
 
 /**
  * @name Random Number Generator configuration
