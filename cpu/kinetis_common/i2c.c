@@ -113,7 +113,7 @@ int i2c_init_master(i2c_t dev, i2c_speed_t speed)
     i2c_port->PCR[pin_scl] = I2C_0_PORT_CFG;
     i2c_port->PCR[pin_sda] = I2C_0_PORT_CFG;
 
-    /*
+    /* 
      * TODO: Add baud rate selection function
      * See the Chapter "I2C divider and hold values":
      *     Kinetis K60 Reference Manual, section 51.4.1.10, Table 51-41.
@@ -123,7 +123,7 @@ int i2c_init_master(i2c_t dev, i2c_speed_t speed)
      *
      * The assignment below will set baud rate to I2C_module_clock / (240 x 2).
      */
-    i2c->F = I2C_F_MULT(1) | I2C_F_ICR(0x1f);
+    i2c->F = I2C_F_MULT(0) | I2C_F_ICR(0x17);
 
     /* enable i2c-module and interrupt */
     i2c->C1 = I2C_C1_IICEN_MASK | I2C_C1_IICIE_MASK | I2C_C1_TXAK_MASK;
