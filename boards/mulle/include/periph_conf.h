@@ -625,6 +625,8 @@ extern "C"
 #define RTT_ISR             isr_rtc_alarm
 #define RTT_DEV             RTC
 #define RTT_UNLOCK()        (BITBAND_REG(SIM->SCGC6, SIM_SCGC6_RTC_SHIFT) = 1)
+#define RTT_MAX_VALUE       (0xffffffff)
+#define RTT_FREQUENCY       (1)             /* in Hz */
 
 /**
  * RTC module crystal load capacitance configuration bits.
