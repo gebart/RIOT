@@ -123,7 +123,7 @@ void hwtimer_arch_init(void (*handler)(int), uint32_t fcpu)
     }
 
     LPTIMER_DEV->CMR = (uint16_t)(LPTMR_MAXTICKS);
-    /* enable lptrm interrupt */
+    /* enable lptmr interrupt */
     LPTIMER_DEV->CSR = LPTMR_CSR_TIE_MASK;
 
     stimer.counter32b = 0;
