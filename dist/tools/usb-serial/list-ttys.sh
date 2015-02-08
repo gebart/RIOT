@@ -13,12 +13,16 @@ if [ ! -d /sys/bus/usb/devices ]; then
 fi
 
 # iterate over usb-tty devices:
-for dev in $(find /sys/bus/usb/devices/ -regex '/sys/bus/usb/devices/[0-9]+[^:/]*/[^/]*:.*' -mindepth 3 -maxdepth 4 -name tty -follow -printf '%h\n' 2>/dev/null); do
-    parent=$(echo ${dev} | sed -e 's%\(/sys/bus/usb/devices/[^/]*\)/.*%\1%')
+for basedev in $(find /sys/bus/usb/devices/ -regex "/sys/bus/usb/devices/[0-9]+[^:/]*" -maxdepth 2 -follow 2>/dev/null); do
+    tty=$(find ${basedev} -regex "${basedev}/[^/]*:.*" -mindepth 2 -maxdepth 3 -name tty -follow 2>/dev/null)
+    if [ -z "${tty}" ]; then
+        continue
+    fi
+    parent=$(echo ${basedev} | sed -e 's%\(/sys/bus/usb/devices/[^/]*\)/.*%\1%')
     serial=$(cat "${parent}/serial" 2>/dev/null)
     manuf=$(cat "${parent}/manufacturer" 2>/dev/null)
     product=$(cat "${parent}/product" 2>/dev/null)
-    ttys=$(ls ${dev}/tty 2>/dev/null)
+    ttys=$(ls ${tty} 2>/dev/null)
     # If at least one tty is assigned to the device we will write its info to stdout.
     if [ ! -z "${ttys}" ]; then
         echo "${parent}: ${manuf} ${product} serial: '${serial}', tty(s): ${ttys}"
