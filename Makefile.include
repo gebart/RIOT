@@ -230,20 +230,22 @@ objdump:
 	$(PREFIX)objdump -S -D -h $(ELFFILE) | less
 
 ifneq ($(DOCKER_IMAGE),)
+DOCKER_BUILD_ROOT ?= /data/riotbuild
 docker:
 	docker run $(DOCKERFLAGS) -i -t -u $$(id -u) \
-	    -v $(RIOTBASE):/data/riotbuild/riotbase \
-	    -v $(RIOTCPU):/data/riotbuild/riotcpu \
-	    -v $(RIOTBOARD):/data/riotbuild/riotboard \
-	    -v $(RIOTPROJECT):/data/riotbuild/riotproject \
-	    -v $(CURDIR):/data/riotbuild/build \
-	    -e RIOTBASE=/data/riotbuild/riotbase \
-	    -e RIOTCPU=/data/riotbuild/riotcpu \
-	    -e RIOTBOARD=/data/riotbuild/riotboard \
-	    -e RIOTPROJECT=/data/riotbuild/riotproject \
-	    -e BOARD=$(BOARD) \
-	    -e RIOT_VERSION="$(RIOT_VERSION)" \
-	    -w /data/riotbuild/build \
+	    -v $(RIOTBASE):$(DOCKER_BUILD_ROOT)/riotbase \
+	    -v $(RIOTCPU):$(DOCKER_BUILD_ROOT)/riotcpu \
+	    -v $(RIOTBOARD):$(DOCKER_BUILD_ROOT)/riotboard \
+	    -v $(RIOTPROJECT):$(DOCKER_BUILD_ROOT)/riotproject \
+	    -v $(CURDIR):$(DOCKER_BUILD_ROOT)/build \
+	    -e RIOTBASE=$(DOCKER_BUILD_ROOT)/riotbase \
+	    -e RIOTCPU=$(DOCKER_BUILD_ROOT)/riotcpu \
+	    -e RIOTBOARD=$(DOCKER_BUILD_ROOT)/riotboard \
+	    -e RIOTPROJECT=$(DOCKER_BUILD_ROOT)/riotproject \
+	    -e BOARD='$(BOARD)' \
+	    -e RIOT_VERSION='$(RIOT_VERSION)' \
+	    -e __RIOTBUILD_FLAG=$(__RIOTBUILD_FLAG) \
+	    -w $(DOCKER_BUILD_ROOT)/build \
 	    $(DOCKER_IMAGE) make
 endif
 
