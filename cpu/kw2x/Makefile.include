@@ -34,5 +34,5 @@ export CFLAGS += -DCPU_MODEL_$(MODEL)
 export INCLUDES += -I$(RIOTCPU)/$(CPU)/include
 
 # add the CPU specific system calls implementations for the linker
+export UNDEF += $(BINDIR)cpu/interrupt-vector.o
 export UNDEF += $(BINDIR)cpu/syscalls.o
-export UNDEF += $(BINDIR)cpu/startup.o
