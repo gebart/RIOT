@@ -42,23 +42,9 @@ SECTIONS
     /* Flash configuration field 0x400-0x40f. */
     .fcfield :
     {
-        /* Backdoor key. */
-        LONG (0x01234567) LONG (0x89abcdef)
-
-        /* FPROT0-3: no region of the flash is protected. */
-        LONG (0xffffffff)
-
-        /* FSEC: place MCU in unsecure mode. */
-        BYTE (0xfe)
-
-        /* FOPT: disable EzPort. */
-        BYTE (0xfd)
-
-        /* FEPROT: default. */
-        BYTE (0xff)
-
-        /* FDPROT: default. */
-        BYTE (0xff)
+        . = ALIGN(4);
+        KEEP(*(.fcfield))
+        . = ALIGN(4);
     } > flashsec
     ASSERT (SIZEOF(.fcfield) == 0x10, "Flash configuration field of invalid size (linker-script error?)")
     ASSERT (ADDR(.fcfield) == 0x400, "Flash configuration field at invalid position (linker-script error?)")
@@ -67,7 +53,7 @@ SECTIONS
     /* Program code 0x410-. */
     .text :
     {
-        . = ALIGN(8);
+        . = ALIGN(4);
         _text_load = LOADADDR(.text);
         _text_start = .;
         /* preinit data */
@@ -75,21 +61,21 @@ SECTIONS
         KEEP(*(SORT(.preinit_array.*)))
         KEEP(*(.preinit_array))
         PROVIDE_HIDDEN (__preinit_array_end = .);
-        . = ALIGN(8);
+        . = ALIGN(4);
 
         /* init data */
         PROVIDE_HIDDEN (__init_array_start = .);
         KEEP(*(SORT(.init_array.*)))
         KEEP(*(.init_array))
         PROVIDE_HIDDEN (__init_array_end = .);
-        . = ALIGN(8);
+        . = ALIGN(4);
 
         /* fini data */
         PROVIDE_HIDDEN (__fini_array_start = .);
         KEEP(*(SORT(.fini_array.*)))
         KEEP(*(.fini_array))
         PROVIDE_HIDDEN (__fini_array_end = .);
-        . = ALIGN(8);
+        . = ALIGN(4);
 
         KEEP (*(SORT_NONE(.init)))
         KEEP (*(SORT_NONE(.fini)))
@@ -127,23 +113,23 @@ SECTIONS
         KEEP (*(EXCLUDE_FILE (*crtend.o *crtend?.o ) .dtors))
         KEEP (*(SORT(.dtors.*)))
         KEEP (*(.dtors))
-        . = ALIGN(8);
+        . = ALIGN(4);
         _rodata_start = .;
         *(.rodata .rodata* .gnu.linkonce.r.*)
-        . = ALIGN(8);
+        . = ALIGN(4);
         _rodata_end = .;
         _text_end = .;
     } > flash
 
     .ramcode :
     {
-        . = ALIGN(8);
+        . = ALIGN(4);
         _ramcode_load = LOADADDR(.ramcode);
         _ramcode_start = .;
         *(.ramcode*)
-        . = ALIGN(8);
+        . = ALIGN(4);
         _ramcode_end = .;
-    } > sram_l AT>flash
+    } > sram_l AT > flash
 
     /* The .extab, .exidx sections are used for C++ exception handling */
     .ARM.extab :
@@ -158,43 +144,57 @@ SECTIONS
     } > flash
     PROVIDE_HIDDEN (__exidx_end = .);
 
-    .eh_frame_hdr : { *(.eh_frame_hdr) } > flash
-    .eh_frame       : ONLY_IF_RO { KEEP (*(.eh_frame)) } > flash
-    .gcc_except_table   : ONLY_IF_RO { *(.gcc_except_table .gcc_except_table.*) } > flash
+    .eh_frame_hdr :
+    {
+        *(.eh_frame_hdr)
+    } > flash
+
+    .eh_frame : ONLY_IF_RO
+    {
+        KEEP (*(.eh_frame))
+    } > flash
+
+    .gcc_except_table : ONLY_IF_RO
+    {
+        *(.gcc_except_table .gcc_except_table.*)
+    } > flash
 
 /*
     .eh_frame       : ONLY_IF_RW { KEEP (*(.eh_frame)) } > sram_u AT > flash
     .gcc_except_table   : ONLY_IF_RW { *(.gcc_except_table .gcc_except_table.*) } > sram_u AT > flash
 */
+
+    . = ALIGN(4);
+    _etext = .;
+
     /* Program data, values stored in flash and loaded upon init. */
-    .data :
+    .relocate : AT (_etext)
     {
-        . = ALIGN(8);
-        _data_load  = LOADADDR(.data);
+        . = ALIGN(4);
+        _data_load  = LOADADDR(.relocate);
         _data_start = .;
-
-        *(.data*)
-        . = ALIGN(8);
-
+        _srelocate = .;
+        *(.ramfunc .ramfunc.*);
+        *(.data .data.*);
+        . = ALIGN(4);
+        _erelocate = .;
         _data_end = .;
-        /* edata is used instead of _data_end by some RTOSes startup code (e.g. ChibiOS) */
-        PROVIDE(edata = .);
-    } > sram_u AT >flash
+    } > sram_u
 
-    /* Program bss, zeroed out during init. */
-    .bss (NOLOAD):
+
+    /* .bss section, zeroed out during init. */
+    .bss (NOLOAD) :
     {
-        . = ALIGN(8);
-        _bss_start = .;
+        . = ALIGN(4);
+        _sbss = . ;
         __bss_start = .;
-        __bss_start__ = .;
-        *(.bss*)
+        _szero = .;
+        *(.bss .bss.*)
         *(COMMON)
-        . = ALIGN(8);
-        _bss_end = .;
+        . = ALIGN(4);
+        _ebss = . ;
         __bss_end = .;
-        __bss_end__ = .;
-        . = ALIGN(8);
+        _ezero = .;
     } > sram_u
 
     /* Make sure we set _end, in case we want dynamic memory management... */
@@ -203,25 +203,25 @@ SECTIONS
     __end__ = .;
     PROVIDE(end = .);
 
+    . = ALIGN(4);
     HEAP_SIZE = ORIGIN(sram_u) + LENGTH(sram_u) - STACK_SIZE - .;
 
     .heap (NOLOAD):
     {
-        . = ALIGN(8);
         _heap_start = .;
-        __heap_start = .;
+        PROVIDE(__heap_start = .); /*__heap_start = .; */
         . = . + HEAP_SIZE;
-        . = ALIGN(8);
         _heap_end = .;
+        PROVIDE(__heap_max = .);
     } > sram_u
 
     /* stack section */
     .stack (NOLOAD):
     {
-        . = ALIGN(8);
+        . = ALIGN(4);
         _sstack = .;
         . = . + STACK_SIZE;
-        . = ALIGN(8);
+        . = ALIGN(4);
         _estack = .;
     } > sram_u
 
