@@ -11,6 +11,8 @@ __sram_l_end    = __sram_l_start + __sram_l_length;
    small. 512 byte should be a safe assumption here */
 STACK_SIZE = DEFINED(STACK_SIZE) ? STACK_SIZE : 0x200; /* 512 byte */
 
+RAMVECT_SIZE = DEFINED(RAMVECT_SIZE) ? RAMVECT_SIZE : 0;
+
 SECTIONS
 {
     /* Interrupt vectors 0x00-0x3ff. */
@@ -33,7 +35,7 @@ SECTIONS
     {
         . = ALIGN(1024);
         _vector_ram_start = .;
-        . = _vector_ram_start + 0x400;
+        . = _vector_ram_start + RAMVECT_SIZE;
         _vector_ram_end = .;
     } > sram_u
 
