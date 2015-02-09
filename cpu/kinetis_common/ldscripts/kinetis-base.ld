@@ -220,10 +220,10 @@ SECTIONS
     /* stack section */
     .stack (NOLOAD):
     {
-        . = ALIGN(4);
+        . = ALIGN(8);
         _sstack = .;
         . = . + STACK_SIZE;
-        . = ALIGN(4);
+        . = ALIGN(8);
         _estack = .;
     } > sram_u
 
