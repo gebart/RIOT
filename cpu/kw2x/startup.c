@@ -207,7 +207,7 @@ void isr_swi(void)                  __attribute__((weak, alias("dummy_handler"))
 
 
 /* interrupt vector table */
-__attribute__((section(".vectors")))
+__attribute__((section(".vector_table")))
 const void *interrupt_vector[] = {
     /* Stack pointer */
     (void *)(&_estack),             /* pointer to the top of the empty stack */
