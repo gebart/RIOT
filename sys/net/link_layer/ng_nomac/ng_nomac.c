@@ -103,10 +103,10 @@ static void *_nomac_thread(void *args)
                 DEBUG("nomac: NG_NETAPI_MSG_TYPE_SND received");
                 dev->driver->send_data(dev, (ng_pktsnip_t *)msg.content.ptr);
                 break;
-            case NG_NETAPI_MSG_TYPE_SETOPT:
+            case NG_NETAPI_MSG_TYPE_SET:
                 /* TODO: filter out MAC layer options -> for now forward
                          everything to the device driver */
-                DEBUG("nomac: NG_NETAPI_MSG_TYPE_SETOPT received");
+                DEBUG("nomac: NG_NETAPI_MSG_TYPE_SET received");
                 /* read incoming options */
                 opt = (ng_netapi_opt_t *)msg.content.ptr;
                 /* set option for device driver */
@@ -116,10 +116,10 @@ static void *_nomac_thread(void *args)
                 reply.content.value = (uint32_t)res;
                 msg_reply(&msg, &reply);
                 break;
-            case NG_NETAPI_MSG_TYPE_GETOPT:
+            case NG_NETAPI_MSG_TYPE_GET:
                 /* TODO: filter out MAC layer options -> for now forward
                          everything to the device driver */
-                DEBUG("nomac: NG_NETAPI_MSG_TYPE_GETOPT received");
+                DEBUG("nomac: NG_NETAPI_MSG_TYPE_GET received");
                 /* read incoming options */
                 opt = (ng_netapi_opt_t *)msg.content.ptr;
                 /* get option from device driver */
