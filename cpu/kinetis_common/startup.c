@@ -25,16 +25,24 @@
 #include "wdog.h"
 
 /**
- * memory markers as defined in the linker script
+ * @name Memory markers as defined in the linker script
+ * @{
  */
-extern uint32_t _sfixed;
-extern uint32_t _efixed;
-extern uint32_t _etext;
-extern uint32_t _srelocate;
-extern uint32_t _erelocate;
-extern uint32_t _szero;
-extern uint32_t _ezero;
-extern uint32_t _sstack;
+extern uint32_t _sfixed[];
+extern uint32_t _efixed[];
+extern uint32_t _etext[];
+extern uint32_t _srelocate[];
+extern uint32_t _erelocate[];
+extern uint32_t _szero[];
+extern uint32_t _ezero[];
+extern uint32_t _sstack[];
+extern uint32_t _ramcode_start[];
+extern uint32_t _ramcode_end[];
+extern uint32_t _ramcode_load[];
+extern uint32_t _vector_ram_start[];
+extern uint32_t _vector_ram_end[];
+extern uint32_t _vector_rom[];
+/** @} */
 
 /**
  * @brief functions for initializing the board, std-lib and kernel
@@ -57,19 +65,36 @@ extern void __libc_init_array(void);
 void reset_handler(void)
 {
     uint32_t *dst;
-    uint32_t *src = &_etext;
+    uint32_t *src = _etext;
 
     /* disable the WDOG */
     wdog_disable();
 
-    /* load data section from flash to ram */
-    for (dst = &_srelocate; dst < &_erelocate;) {
+    /* load .data section from flash to ram */
+    for (dst = _srelocate; dst < _erelocate;) {
         *(dst++) = *(src++);
     }
 
-    /* default bss section to zero */
-    for (dst = &_szero; dst < &_ezero;) {
+    /* default .bss section to zero */
+    for (dst = _szero; dst < _ezero;) {
         *(dst++) = 0;
+    }
+
+    /* copy .ramcode from flash to RAM */
+    src = _ramcode_load;
+    for (dst = _ramcode_start; dst < _ramcode_end;) {
+        *(dst++) = *(src++);
+    }
+
+    /*
+     * Copy ISR vector from flash to RAM.
+     *
+     * To use this CPU feature, define RAMVECT_SIZE=0x400 when building and write
+     * the new vector table address in RAM to SCB->VTOR.
+     */
+    src = _vector_rom;
+    for (dst = _vector_ram_start; dst < _vector_ram_end;) {
+        *(dst++) = *(src++);
     }
 
     /* initialize the board and startup the kernel */
