@@ -22,6 +22,7 @@
  */
 
 #include <stdint.h>
+#include "cpu.h"
 #include "periph_conf.h"
 
 #ifndef KINETIS_WDOG_ADVANCED
