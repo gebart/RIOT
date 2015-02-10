@@ -27,6 +27,7 @@
 #include "net/ng_nettype.h"
 #include "net/ng_netdev.h"
 #include "net/ng_netapi.h"
+#include "net/ng_netif.h"
 
 #define ENABLE_DEBUG    (0)
 #include "debug.h"
@@ -82,8 +83,9 @@ static void *_nomac_thread(void *args)
 
     /* setup the MAC layers message queue */
     msg_init_queue(msg_queue, NG_NOMAC_MSG_QUEUE_SIZE);
-    /* save the PID to the device descriptor */
+    /* save the PID to the device descriptor and register the device */
     dev->mac_pid = thread_getpid();
+    ng_netif_add(dev->mac_pid);
     /* register the event callback with the device driver */
     dev->driver->add_event_callback(dev, _event_cb);
 
@@ -134,7 +136,7 @@ static void *_nomac_thread(void *args)
     return NULL;
 }
 
-kernel_pid_t nomac_init(char *stack, int stacksize, char priority,
+kernel_pid_t ng_nomac_init(char *stack, int stacksize, char priority,
                         const char *name, ng_netdev_t *dev)
 {
     kernel_pid_t res;

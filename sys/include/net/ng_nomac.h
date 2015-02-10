@@ -51,7 +51,7 @@ extern "C" {
  * @return                  -EINVAL if creation of thread fails
  * @return                  -ENODEV if *dev* is invalid
  */
-kernel_pid_t nomac_init(char *stack, int stacksize, char priority,
+kernel_pid_t ng_nomac_init(char *stack, int stacksize, char priority,
                         const char *name, ng_netdev_t *dev);
 
 #ifdef __cplusplus
