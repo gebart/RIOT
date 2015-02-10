@@ -95,8 +95,8 @@ static void *_nomac_thread(void *args)
         msg_receive(&msg);
         /* dispatch NETDEV and NETAPI messages */
         switch (msg.type) {
-            case NG_NETDEV_MSG_EVENT_TYPE:
-                DEBUG("nomac: NG_NETDEV_MSG_EVENT_TYPE received");
+            case NG_NETDEV_MSG_TYPE_EVENT:
+                DEBUG("nomac: NG_NETDEV_MSG_TYPE_EVENT received");
                 dev->driver->isr_event(dev, msg.content.value);
                 break;
             case NG_NETAPI_MSG_TYPE_SND:
