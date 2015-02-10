@@ -77,6 +77,9 @@ endif
 ifneq (,$(filter ng_netapi,$(USEMODULE)))
     DIRS += net/crosslayer/ng_netapi
 endif
+ifneq (,$(filter ng_udp,$(USEMODULE)))
+    DIRS += net/transport_layer/ng_udp
+endif
 
 DIRS += $(dir $(wildcard $(addsuffix /Makefile, ${USEMODULE})))
 
