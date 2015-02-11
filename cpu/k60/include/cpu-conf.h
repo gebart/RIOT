@@ -332,33 +332,6 @@ typedef enum llwu_wakeup_edge {
 /** @brief Convert bit-band region address and bit number to bit-band alias address */
 #define BITBAND_ADDR(addr, bit) ((((uint32_t) (addr)) & 0xF0000000u) + 0x2000000 + ((((uint32_t) (addr)) & 0xFFFFF) << 5) + ((bit) << 2))
 
-#if 0
-/* old code */
-/** @brief Base address of peripheral register bit-band region */
-#define PERIPH_BITBAND_BASE 0x40000000u
-
-/** @brief Base address of peripheral register bit-band alias */
-#define PERIPH_BITBAND_ALIAS 0x42000000u
-
-/**
- * @brief Base address of SRAM_U bit-band region
- *
- * @note SRAM_L is not bit band aliased on the K60.
- */
-#define RAM_BITBAND_BASE 0x20000000u
-
-/** @brief Base address of SRAM_U bit-band alias */
-#define RAM_BITBAND_ALIAS 0x22000000u
-
-/**
- * @brief Bitband address of peripheral register
- */
-#define BITBAND_PERIPH_ADDR(reg, bit) (PERIPH_BITBAND_ALIAS + \
-        (32u * ((uint32_t)&(addr) - (uint32_t)PERIPH_BITBAND_BASE)) + \
-        (4u * ((uint32_t)(bit))))
-
-#endif /* end disabled old code */
-
 /**
  * @brief Macro for computing bitband addresses in SRAM_U
  *
