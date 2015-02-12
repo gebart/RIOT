@@ -9,7 +9,8 @@
 /**
  * @defgroup    net_nomac Simplest possible MAC layer
  * @ingroup     net
- * @brief       Simplest possible MAC protocol that sends whenever it sees fit
+ * @brief       Simplest possible MAC protocol that sends without considering
+ *              the state of the medium
  * @{
  *
  * @file
