@@ -96,17 +96,17 @@ static void *_nomac_thread(void *args)
         /* dispatch NETDEV and NETAPI messages */
         switch (msg.type) {
             case NG_NETDEV_MSG_TYPE_EVENT:
-                DEBUG("nomac: NG_NETDEV_MSG_TYPE_EVENT received");
+                DEBUG("nomac: NG_NETDEV_MSG_TYPE_EVENT received\n");
                 dev->driver->isr_event(dev, msg.content.value);
                 break;
             case NG_NETAPI_MSG_TYPE_SND:
-                DEBUG("nomac: NG_NETAPI_MSG_TYPE_SND received");
+                DEBUG("nomac: NG_NETAPI_MSG_TYPE_SND received\n");
                 dev->driver->send_data(dev, (ng_pktsnip_t *)msg.content.ptr);
                 break;
             case NG_NETAPI_MSG_TYPE_SET:
                 /* TODO: filter out MAC layer options -> for now forward
                          everything to the device driver */
-                DEBUG("nomac: NG_NETAPI_MSG_TYPE_SET received");
+                DEBUG("nomac: NG_NETAPI_MSG_TYPE_SET received\n");
                 /* read incoming options */
                 opt = (ng_netapi_opt_t *)msg.content.ptr;
                 /* set option for device driver */
@@ -119,7 +119,7 @@ static void *_nomac_thread(void *args)
             case NG_NETAPI_MSG_TYPE_GET:
                 /* TODO: filter out MAC layer options -> for now forward
                          everything to the device driver */
-                DEBUG("nomac: NG_NETAPI_MSG_TYPE_GET received");
+                DEBUG("nomac: NG_NETAPI_MSG_TYPE_GET received\n");
                 /* read incoming options */
                 opt = (ng_netapi_opt_t *)msg.content.ptr;
                 /* get option from device driver */
