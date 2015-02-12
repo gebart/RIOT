@@ -52,7 +52,7 @@ typedef enum {
     NETCONF_OPT_PRELOADING,         /**< en/disable preloading or read the
                                          current state. Preload using
                                          *send_data*, send setting state to
-                                         *NETNETCONF_STATE_TX* */
+                                         *NETCONF_STATE_TX* */
     NETCONF_OPT_PROMISCUOUSMODE,    /**< en/disable promiscuous mode or read
                                          the current state */
     NETCONF_OPT_AUTOACK,            /**< en/disable link layer auto ACKs or read
@@ -81,8 +81,9 @@ typedef enum {
     NETCONF_STATE_SLEEP,            /**< sleep mode */
     NETCONF_STATE_IDLE,             /**< idle mode */
     NETCONF_STATE_RX,               /**< receive mode */
-    NETCONF_STATE_TX,               /**< transmit mode */
-    NETCONF_STATE_RESET,            /**< reset mode */
+    NETCONF_STATE_TX,               /**< triggers a transmition */
+    NETCONF_STATE_RESET,            /**< triggers a hardware reset. The resulting
+                                         state of the radio device is NETCONF_STATE_IDLE */
     /* add other states if needed */
 } ng_netconf_state_t;
 
