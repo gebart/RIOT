@@ -26,35 +26,35 @@
 
 void isr_nmi(void)
 {
-    core_panic(NMI_HANDLER, "NMI HANDLER");
+    core_panic(PANIC_NMI, "NMI HANDLER");
 }
 
 void isr_hard_fault(void)
 {
-    core_panic(HARD_FAULT, "HARD FAULT");
+    core_panic(PANIC_HARD_FAULT, "HARD FAULT");
 }
 
 void isr_mem_manage(void)
 {
-    core_panic(MEM_MANAGE, "MEM MANAGE HANDLER");
+    core_panic(PANIC_MEM_MANAGE, "MEM MANAGE HANDLER");
 }
 
 void isr_bus_fault(void)
 {
-    core_panic(BUS_FAULT, "BUS FAULT");
+    core_panic(PANIC_BUS_FAULT, "BUS FAULT");
 }
 
 void isr_usage_fault(void)
 {
-    core_panic(USAGE_FAULT, "ISR USAGE FAULT");
+    core_panic(PANIC_USAGE_FAULT, "ISR USAGE FAULT");
 }
 
 void isr_debug_mon(void)
 {
-    core_panic(DEBUG_MON, "DEBUG MON HANDLER");
+    core_panic(PANIC_DEBUG_MON, "DEBUG MON HANDLER");
 }
 
 void isr_unhandled(void)
 {
-    core_panic(UNHANDLED_ISR, "UNHANDLED ISR");
+    core_panic(PANIC_UNHANDLED_ISR, "UNHANDLED ISR");
 }
