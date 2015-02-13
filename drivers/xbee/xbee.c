@@ -18,6 +18,8 @@
  * @}
  */
 
+#include <string.h>
+
 #include "xbee.h"
 
 #include "crash.h"
@@ -30,8 +32,22 @@
 /* hardware-dependent configuration */
 #include "xbee-config.h"
 
-#define ENABLE_DEBUG    (0)
+#define ENABLE_DEBUG    (1)
 #include "debug.h"
+
+/**
+ * @brief   maximum length of AT commands
+ *
+ * The largest known length for parameters is 20 byte, so this value should
+ * be sufficient.
+ */
+#define MAX_AT_CMD_LEN          (32U)
+
+#define INC_CKSUM(x)   (sum = (sum + (x)) & 0xff)
+
+
+#define API_CMD_AT              (0x08)
+#define API_CMD_SND             (0x7e)
 
 
 typedef enum xbee_at_cmd_response_kind {
@@ -79,30 +95,111 @@ typedef struct xbee_tx_status_report {
 /*                    Driver's internal utility functions                    */
 /*****************************************************************************/
 
-/* callback function to upper layers for RXed packets */
-static receive_802154_packet_callback_t rx_callback;
 
-/* next ID for sent frames */
-static uint8_t frame_id;
-
-/* AT command response management data */
-static struct mutex_t mutex_wait_at_reponse;
-static xbee_at_cmd_response_t latest_at_response;
-
-/* TX status response management data */
-static struct mutex_t mutex_wait_tx_status;
-static xbee_tx_status_report_t latest_tx_report;
-
-
-/* send a character, via UART, to the XBee module */
-static void send_xbee(const uint8_t c)
+static void _at_cmd(xbee_t *dev, const char *cmd)
 {
-    int res = uart_write_blocking(XBEE_UART_LINK, c);
-    if (res < 0) {
-        core_panic(0x0bee,
-                   "Could not send char to XBee module");
+    for (int i = 0; cmd[i] != '\0'; i++) {
+        uart_write_blocking(dev->uart, cmd[i]);
     }
+    uart_write_blocking(dev->uart, '\r');
 }
+
+static void _api_cmd(xbee_t *dev, uint8_t cmd_id, const uint8_t *data,
+                     uint16_t length)
+{
+    uint8_t cksum = cmd_id;
+
+    /* get access for writing UART data */
+    mutex_lock(&dev->tx_lock);
+    /* write data into the TX buffer */
+    rinfbuffer_add_one(&rx->buf, 0x7e);     /* start condition */
+    rinfbuffer_add_one(&rx->buf, (char)(length >> 8));
+    rinfbuffer_add_one(&rx->buf, (char)(length & 0xff));
+    rinfbuffer_add_one(&rx->buf, (char)cmd_id);
+    for (int i = 0; i < length; i++) {
+        rinfbuffer_add_one(&rx->buf, (char)data[i]);
+        cksum += data[i];
+    }
+    rinfbuffer_add_one(&rx->buf, (0xff - cksum));
+    /* trigger transmission */
+    uart_tx_begin(dev->uart);
+}
+
+static at_response_t _at_frame(xbee_t *dev, const char *cmd)
+{
+    uint8_t buf[MAX_AT_CMD_LEN];
+    uint16_t size;
+
+    /* construct API command */
+    size = strlen(cmd);
+    buf[0] = (char)dev->frame_id++;
+    memcpy(buf + 1, cmd, size);
+    /* send it */
+    _api_cmd(dev, API_CMD_AT, buf, size + 1);
+    /* wait for response */
+    mutex_lock(&dev->response_lock);
+    mutex_lock(&dev->response_lock);
+}
+
+
+
+
+/* send an "AT" (i.e. high-level) command to the XBee modem,
+    and wait for its response */
+static xbee_at_cmd_response_t xbee_send_AT_command(unsigned int len,
+                                                   const uint8_t *str)
+{
+    /* encode AT command into an API frame */
+    static uint8_t buf[MAX_AT_CMD_LEN];
+    buf[0] = frame_id;
+    frame_id++;
+    for (int i = 0; i < len; i++) {
+        buf[i + 1] = str[i];
+    }
+    xbee_send_API_command(0x08, len + 1, buf);
+    /* wait for response */
+    mutex_lock(&mutex_wait_at_reponse);
+    mutex_lock(&mutex_wait_at_reponse);
+    mutex_unlock(&mutex_wait_at_reponse);  // release lock once response is here
+    /* process response */
+    if ( (latest_at_response.frame_num != buf[0])
+      || (latest_at_response.command != ((buf[1] << 8) | buf[2])) ) {
+        /* response doesn't correspond to sent AT command ! */
+        core_panic(0x0bee,
+                   "AT response doesn't correspond to sent command");
+    }
+    xbee_at_cmd_response_t ret_val;
+    ret_val.status = latest_at_response.status;
+    ret_val.parameter = latest_at_response.parameter;
+    return ret_val;
+}
+
+
+
+
+/*
+ * interrupt callbacks
+ */
+int _tx_cb(void *arg)
+{
+    xbee_t *dev = (xbee_t *)arg;
+    int c = ringbuffer_get_one(&dev->tx_buf);
+    if (c != -1) {
+        uart_write(dev->uart, (char)c);
+        return 1;
+    }
+    /* unlock TX mutex when transmission is done */
+    mutex_unlock(&dev->tx_lock);
+    return 0;
+}
+
+int _rx_cb(void *arg)
+{
+    xbee_t *dev = (xbee_t *)arg;
+}
+
+
+
 
 /* handle the reception of a data packet from XBee modem */
 static void xbee_process_rx_packet(ieee802154_node_addr_t src_addr,
@@ -119,9 +216,6 @@ static void xbee_process_rx_packet(ieee802154_node_addr_t src_addr,
         rx_callback(buf, len, rssi, 0, true);
     }
 }
-
-/* forward declaration of the driver's init function */
-void xbee_initialize(void);
 
 /* handle XBee event arrival */
 static void xbee_process_modem_status_event(uint8_t status)
@@ -184,65 +278,6 @@ static void xbee_process_tx_status(uint8_t st,
     }
 }
 
-#define INC_CKSUM(x)   (sum = (sum + (x)) & 0xff)
-
-/* send an "API" (i.e. low-level) command to XBee modem */
-static void xbee_send_API_command(uint8_t cmd_id,
-                                  uint16_t payload_len,
-                                  const uint8_t *payload)
-{
-    /* send the start byte on UART */
-    send_xbee(0x7e);
-    /* send the length of the payload */
-    payload_len++;   /* cmd_id is part of the payload */
-    send_xbee((uint8_t)(payload_len >> 8));
-    send_xbee((uint8_t)(payload_len & 0xff));
-    /* send the payload, while computing the checksum */
-    send_xbee(cmd_id);
-    uint8_t sum = cmd_id;
-    for (int i = 0; i < payload_len; i++) {
-        send_xbee(payload[i]);
-        INC_CKSUM(payload[i]);
-    }
-    /* finish computing the checksum, then send it */
-    sum = 0xff - sum;
-    send_xbee(sum);
-}
-
-#define MAX_AT_CMD_LEN  32
-  /* should be sufficient, since currently, largest parameter known
-      for existing AT commands is 20 bytes long */
-
-/* send an "AT" (i.e. high-level) command to the XBee modem,
-    and wait for its response */
-static xbee_at_cmd_response_t xbee_send_AT_command(unsigned int len,
-                                                   const uint8_t *str)
-{
-    /* encode AT command into an API frame */
-    static uint8_t buf[MAX_AT_CMD_LEN];
-    buf[0] = frame_id;
-    frame_id++;
-    for (int i = 0; i < len; i++) {
-        buf[i + 1] = str[i];
-    }
-    xbee_send_API_command(0x08, len + 1, buf);
-    /* wait for response */
-    mutex_lock(&mutex_wait_at_reponse);
-    mutex_lock(&mutex_wait_at_reponse);
-    mutex_unlock(&mutex_wait_at_reponse);  // release lock once response is here
-    /* process response */
-    if ( (latest_at_response.frame_num != buf[0])
-      || (latest_at_response.command != ((buf[1] << 8) | buf[2])) ) {
-        /* response doesn't correspond to sent AT command ! */
-        core_panic(0x0bee,
-                   "AT response doesn't correspond to sent command");
-    }
-    xbee_at_cmd_response_t ret_val;
-    ret_val.status = latest_at_response.status;
-    ret_val.parameter = latest_at_response.parameter;
-    return ret_val;
-}
-
 
 /*****************************************************************************/
 /*                          Handling incoming data                           */
@@ -279,16 +314,35 @@ static uint8_t cksum;
 
 /**
  * @brief Handler for incoming data from the XBee module.
- * 
+ *
  * @details The low-level UART driver must call this function when receiving
  *          a character from the XBee module via the UART, passing
  *          the received character as a parameter.
  *
  * @param[in] c character received from the XBee module via UART.
  */
-void xbee_incoming_char(char c)
+void xbee_incoming_char(void *arg, char c)
 {
+    (void)arg;
     uint8_t in = (uint8_t) c;
+    for (int i = 0; cmd[i] != '\0'; i++) {
+        uart_write_blocking(dev->uart, cmd[i]);
+    }
+    uart_write_blocking(dev->uart, '\r');
+}
+
+    for (int i = 0; cmd[i] != '\0'; i++) {
+        uart_write_blocking(dev->uart, cmd[i]);
+    }
+    uart_write_blocking(dev->uart, '\r');
+}
+
+    for (int i = 0; cmd[i] != '\0'; i++) {
+        uart_write_blocking(dev->uart, cmd[i]);
+    }
+    uart_write_blocking(dev->uart, '\r');
+}
+
     uint16_t cmd;
     uint32_t param;
     switch (recv_fsm_state) {
@@ -403,24 +457,24 @@ void xbee_initialize(void)
 {
     int res;
     /* no RX callback function by default */
-    rx_callback = NULL;
+    //rx_callback = NULL;
     /* UART initialization */
-    res = uart_init(xbee_uart_link,
+    res = uart_init(XBEE_UART_LINK,
                     9600U,
                     xbee_incoming_char,
-                    NULL);
+                    NULL, NULL);
     switch (res) {
-    case 0:     /* OK */
-        break;
-    case -1:    /* wrong rate */
-        core_panic(0x0bee,
-                   "Invalid baud rate for XBee-link UART");
-    default:    /* unexpected error! */
-        core_panic(0x0bee,
-                   "UART initialization failure for XBee link");
+        case 0:     /* OK */
+            break;
+        case -1:    /* wrong rate */
+            core_panic(0x0bee,
+                       "Invalid baud rate for XBee-link UART");
+        default:    /* unexpected error! */
+            core_panic(0x0bee,
+                       "UART initialization failure for XBee link");
     }
     /* GPIO initialization (for sleep/weke-up...) */
-    if (XBEE_SLEEP_RQ_GPIO != GPIO_UNDEFINED) {
+    if (XBEE_SLEEP_RQ_GPIO != -1) {
         /* don't try to initialize GPIOs if undefined */
         res = gpio_init_out(XBEE_SLEEP_RQ_GPIO,
                             GPIO_NOPULL);
@@ -438,7 +492,7 @@ void xbee_initialize(void)
                        "XBEE_SLEEP_RQ_GPIO initialization failure");
         }
     }
-    if (XBEE_ON_STATUS_GPIO != GPIO_UNDEFINED) {
+    if (XBEE_ON_STATUS_GPIO != -1) {
         res = gpio_init_in(XBEE_ON_STATUS_GPIO,
                            GPIO_NOPULL);
         switch (res) {
@@ -483,23 +537,117 @@ void xbee_initialize(void)
     uint8_t buf[2];
     buf[0] = 'V';
     buf[1] = 'R';
-    xbee_at_cmd_response_t res = xbee_send_AT_command(2, buf);
-    if (res.status != XBEE_AT_CMD_OK) {
+    xbee_at_cmd_response_t stat = xbee_send_AT_command(2, buf);
+    if (stat.status != XBEE_AT_CMD_OK) {
         core_panic(0x0bee,
                    "failed to query firware version from XBee modem");
     }
     printf("XBee modem initialized. Firmare version = %X.%X.%X.%X \n",
-           (uint8_t)((res.parameter >> 12) & 0x0f),
-           (uint8_t)((res.parameter >> 8) & 0x0f),
-           (uint8_t)((res.parameter >> 4) & 0x0f),
-           (uint8_t)(res.parameter & 0x0f) );
+           (uint8_t)((stat.parameter >> 12) & 0x0f),
+           (uint8_t)((stat.parameter >> 8) & 0x0f),
+           (uint8_t)((stat.parameter >> 4) & 0x0f),
+           (uint8_t)(stat.parameter & 0x0f) );
+}
+
+
+
+int xbee_init(xbee_t *dev, uart_t uart, uint32_t baudrate,
+              gpio_t sleep_pin, gpio_t status_pin)
+{
+
+    /* check device and bus parameters */
+    if (dev == NULL) {
+        return -ENODEV;
+    }
+    if (uart >= UART_NUMOF) {
+        return -ENXIO;
+    }
+    /* initialize device descriptor */
+    dev->uart = uart;
+    dev->sleep_pin = sleep_pin;
+    dev->status_pin = status_pin;
+    dev->options = 0;
+    /* initialize UART and GPIO pins */
+    if (uart_init(uart, baudrate, _rx_cb, _tx_cb, dev) < 0) {
+        DEBUG("xbee: error initializing UART\n");
+        return -ENXIO;
+    }
+    if (sleep_pin < GPIO_NUMOF) {
+        if (gpio_init_out(sleep_pin, GPIO_NOPULL) < 0) {
+            DEBUG("xbee: error initializing SLEEP pin\n");
+            return -ENXIO;
+        }
+    }
+    if (status_pin < GPIO_NUMOF) {
+        if (gpio_init_in(status_pin, GPIO_NOPULL) < 0) {
+            DEBUG("xbee: error initializing STATUS pin\n");
+            return -ENXIO;
+        }
+    }
+    /* initialize mutexes */
+    mutex_init(&dev->tx_lock);
+    mutex_init(&dev->response_lock);
+    mutex_init($dev->tx_report_lock);
+    /* initialize TX ringbuffer */
+    ringbuffer_init(&dev->tx_buf, dev->tx_mem, sizeof(dev->tx_mem));
+
+     /* send initial command */
+    _at_cmd(dev, "+++");
+    /* reset device */
+    _at_cmd("ATFR");
+    /* disable non IEEE802.15.4 extensions */
+    _at_cmd("ATMM2");
+    /* put XBee module in "API mode" */
+    _at_cmd("ATAP1");
+    /* apply AT commands */
+    _at_cmd("ATAC");
+
+#if ENABLE_DEBUG
+    /* print firmware version of the XBee module */
+    uint8_t buf[]
+#endif
+
+
+    /* print firmware version of the XBee module */
+    uint8_t buf[2];
+    buf[0] = 'V';
+    buf[1] = 'R';
+    xbee_at_cmd_response_t stat = xbee_send_AT_command(2, buf);
+    if (stat.status != XBEE_AT_CMD_OK) {
+        core_panic(0x0bee,
+                   "failed to query firware version from XBee modem");
+    }
+    printf("XBee modem initialized. Firmare version = %X.%X.%X.%X \n",
+           (uint8_t)((stat.parameter >> 12) & 0x0f),
+           (uint8_t)((stat.parameter >> 8) & 0x0f),
+           (uint8_t)((stat.parameter >> 4) & 0x0f),
+           (uint8_t)(stat.parameter & 0x0f) );
+
+
+    return 0;
+}
+
+bool xbee_is_on(void)
+{
+    if (XBEE_ON_STATUS_GPIO == -1) {
+        /* STATUS pin of XBee modem not accessible... */
+        if (XBEE_SLEEP_RQ_GPIO == -1) {
+            /* if /SLEEP_RQ pin is not accessible,
+               then modem is always on */
+            return true;
+        }
+        /* XBee is on if SLEEP_RQ pin is not asserted */
+        return (gpio_read(XBEE_SLEEP_RQ_GPIO) == 0);
+    }
+    /* XBee is on if pin ON/SLEEP is asserted */
+    return (gpio_read(XBEE_ON_STATUS_GPIO) != 0);
 }
 
 bool xbee_on(void)
 {
-    if (XBEE_SLEEP_RQ_GPIO == GPIO_UNDEFINED) {
+    if (XBEE_SLEEP_RQ_GPIO == -1) {
         /* if GPIO isn't defined, do nothing */
-        return;
+        return true;
     }
     /* turn XBee sleep mode off, by clearing SLEEP_RQ */
     gpio_clear(XBEE_SLEEP_RQ_GPIO);
@@ -511,28 +659,12 @@ bool xbee_on(void)
 
 void xbee_off(void)
 {
-    if (XBEE_SLEEP_RQ_GPIO == GPIO_UNDEFINED) {
+    if (XBEE_SLEEP_RQ_GPIO == -1) {
         /* if GPIO isn't defined, do nothing */
         return;
     }
     /* put XBee into sleep mode, by asserting SLEEP_RQ */
     gpio_set(XBEE_SLEEP_RQ_GPIO);
-}
-
-bool xbee_is_on(void)
-{
-    if (XBEE_ON_STATUS_GPIO == GPIO_UNDEFINED) {
-        /* STATUS pin of XBee modem not accessible... */
-        if (XBEE_SLEEP_RQ_GPIO == GPIO_UNDEFINED) {
-            /* if /SLEEP_RQ pin is not accessible,
-               then modem is always on */
-            return true;
-        }
-        /* XBee is on if SLEEP_RQ pin is not asserted */
-        return (gpio_read(XBEE_SLEEP_RQ_GPIO) == 0);
-    }
-    /* XBee is on if pin ON/SLEEP is asserted */
-    return (gpio_read(XBEE_ON_STATUS_GPIO) != 0);
 }
 
 radio_tx_status_t xbee_load_tx_buf(ieee802154_packet_kind_t kind,
@@ -554,101 +686,6 @@ radio_tx_status_t xbee_transmit_tx_buf(void)
        a previously loaded TX buffer... :( */
     core_panic(0x0bee,
                "Cannot transmit TX buf without loading with XBee modules");
-}
-
-radio_tx_status_t xbee_do_send(ieee802154_packet_kind_t kind,
-                               ieee802154_node_addr_t dest,
-                               bool use_long_addr,
-                               bool wants_ack,
-                               void *buf,
-                               unsigned int len)
-{
-    if (len > 100) {
-        return RADIO_TX_PACKET_TOO_LONG;
-    }
-
-    /* prepare TX packet header */
-    uint8_t cmd_id;
-    uint16_t payload_len = len;
-    if (use_long_addr) {
-        cmd_id = 0x00;
-        payload_len += 11;
-    } else {
-        cmd_id = 0x01;
-        payload_len += 5;
-    }
-
-    /* send the start byte on UART */
-    send_xbee(0x7e);
-    /* send the length of the payload */
-    send_xbee((uint8_t)(payload_len >> 8));
-    send_xbee((uint8_t)(payload_len & 0xff));
-    /* send the payload, while computing the checksum */
-    send_xbee(cmd_id);
-    uint8_t sum = cmd_id;
-    send_xbee(frame_id);
-    INC_CKSUM(frame_id);
-    if (use_long_addr) {
-        send_xbee(dest.long_addr >> 56);
-        INC_CKSUM(dest.long_addr >> 56);
-        send_xbee(dest.long_addr >> 48);
-        INC_CKSUM(dest.long_addr >> 48);
-        send_xbee(dest.long_addr >> 40);
-        INC_CKSUM(dest.long_addr >> 40);
-        send_xbee(dest.long_addr >> 32);
-        INC_CKSUM(dest.long_addr >> 32);
-        send_xbee(dest.long_addr >> 24);
-        INC_CKSUM(dest.long_addr >> 24);
-        send_xbee(dest.long_addr >> 16);
-        INC_CKSUM(dest.long_addr >> 16);
-        send_xbee(dest.long_addr >> 8);
-        INC_CKSUM(dest.long_addr >> 8);
-        send_xbee(dest.long_addr & 0xff);
-        INC_CKSUM(dest.long_addr & 0xff);
-    } else {
-        send_xbee(dest.pan.addr >> 8);
-        INC_CKSUM(dest.pan.addr >> 8);
-        send_xbee(dest.pan.addr & 0xff);
-        INC_CKSUM(dest.pan.addr & 0xff);
-    }
-    if (wants_ack) {
-        send_xbee(0x00);
-    } else {
-        send_xbee(0x01);
-        INC_CKSUM(0x01);
-    }
-    uint8_t *payload = (uint8_t *)buf;
-    for (int i = 0; i < len; i++) {
-        send_xbee(payload[i]);
-        INC_CKSUM(payload[i]);
-    }
-    /* finish computing the checksum, then send it */
-    sum = 0xff - sum;
-    send_xbee(sum);
-
-    /* wait for TX status response */
-    mutex_lock(&mutex_wait_tx_status);
-    mutex_lock(&mutex_wait_tx_status);
-    mutex_unlock(&mutex_wait_tx_status); // release lock once status is here
-
-    /* ensure status received is for TXed packet */
-    if (latest_tx_report.frame_num != frame_id) {
-        /* status doesn't correspond to TXed packet ! */
-        core_panic(0x0bee,
-                   "TX status doesn't correspond to sent packet");
-    }
-    frame_id++;
-    /* return status for the TXed packet */
-    switch (latest_tx_report.status) {
-    case XBEE_TX_SUCCESS:
-        return RADIO_TX_OK;
-    case XBEE_TX_NOACK:
-        return RADIO_TX_NOACK;
-    case XBEE_TX_MEDIUM_BUSY:
-        return RADIO_TX_MEDIUM_BUSY;
-    default:
-        return RADIO_TX_ERROR;
-    }
 }
 
 void xbee_set_recv_callback(receive_802154_packet_callback_t recv_func)
@@ -853,6 +890,130 @@ bool xbee_get_monitor(void)
     return false;
 }
 
+int _send(ng_netdev_t *dev, ng_pktsnip_t *pkt)
+{
+    xbee_t *xbee = (xbee_t *)dev;
+    l2hdr_t *
+    size_t size;
+
+    /* test arguments for validity */
+    if (xbee == NULL) {
+        return -ENODEV;
+    }
+    if (pkt == NULL) {
+        return -ENOMSG;
+    }
+    /* link layer header */
+    /* calculate packet size */
+    size = ng_pkt_len(pkt->next);       /* payload size w/o l2hdr */
+    size +=
+
+    /* acquire TX lock */
+    mutex_lock(&dev->tx_lock);
+    /* write TX data into tx buffer */
+    rinbuffer_add_one(&dev->tx_buf, API_CMD_SND);
+
+
+
+    return count;
+}
+
+
+radio_tx_status_t xbee_do_send(ieee802154_packet_kind_t kind,
+                               ieee802154_node_addr_t dest,
+                               bool use_long_addr,
+                               bool wants_ack,
+                               void *buf,
+                               unsigned int len)
+{
+    if (len > 100) {
+        return RADIO_TX_PACKET_TOO_LONG;
+    }
+
+    /* prepare TX packet header */
+    uint8_t cmd_id;
+    uint16_t payload_len = len;
+    if (use_long_addr) {
+        cmd_id = 0x00;
+        payload_len += 11;
+    } else {
+        cmd_id = 0x01;
+        payload_len += 5;
+    }
+
+    /* send the start byte on UART */
+    send_xbee(0x7e);
+    /* send the length of the payload */
+    send_xbee((uint8_t)(payload_len >> 8));
+    send_xbee((uint8_t)(payload_len & 0xff));
+    /* send the payload, while computing the checksum */
+    send_xbee(cmd_id);
+    uint8_t sum = cmd_id;
+    send_xbee(frame_id);
+    INC_CKSUM(frame_id);
+    if (use_long_addr) {
+        send_xbee(dest.long_addr >> 56);
+        INC_CKSUM(dest.long_addr >> 56);
+        send_xbee(dest.long_addr >> 48);
+        INC_CKSUM(dest.long_addr >> 48);
+        send_xbee(dest.long_addr >> 40);
+        INC_CKSUM(dest.long_addr >> 40);
+        send_xbee(dest.long_addr >> 32);
+        INC_CKSUM(dest.long_addr >> 32);
+        send_xbee(dest.long_addr >> 24);
+        INC_CKSUM(dest.long_addr >> 24);
+        send_xbee(dest.long_addr >> 16);
+        INC_CKSUM(dest.long_addr >> 16);
+        send_xbee(dest.long_addr >> 8);
+        INC_CKSUM(dest.long_addr >> 8);
+        send_xbee(dest.long_addr & 0xff);
+        INC_CKSUM(dest.long_addr & 0xff);
+    } else {
+        send_xbee(dest.pan.addr >> 8);
+        INC_CKSUM(dest.pan.addr >> 8);
+        send_xbee(dest.pan.addr & 0xff);
+        INC_CKSUM(dest.pan.addr & 0xff);
+    }
+    if (wants_ack) {
+        send_xbee(0x00);
+    } else {
+        send_xbee(0x01);
+        INC_CKSUM(0x01);
+    }
+    uint8_t *payload = (uint8_t *)buf;
+    for (int i = 0; i < len; i++) {
+        send_xbee(payload[i]);
+        INC_CKSUM(payload[i]);
+    }
+    /* finish computing the checksum, then send it */
+    sum = 0xff - sum;
+    send_xbee(sum);
+
+    /* wait for TX status response */
+    mutex_lock(&mutex_wait_tx_status);
+    mutex_lock(&mutex_wait_tx_status);
+    mutex_unlock(&mutex_wait_tx_status); // release lock once status is here
+
+    /* ensure status received is for TXed packet */
+    if (latest_tx_report.frame_num != frame_id) {
+        /* status doesn't correspond to TXed packet ! */
+        core_panic(0x0bee,
+                   "TX status doesn't correspond to sent packet");
+    }
+    frame_id++;
+    /* return status for the TXed packet */
+    switch (latest_tx_report.status) {
+    case XBEE_TX_SUCCESS:
+        return RADIO_TX_OK;
+    case XBEE_TX_NOACK:
+        return RADIO_TX_NOACK;
+    case XBEE_TX_MEDIUM_BUSY:
+        return RADIO_TX_MEDIUM_BUSY;
+    default:
+        return RADIO_TX_ERROR;
+    }
+}
+
 
 /* XBee low-level radio driver definition */
 const ieee802154_radio_driver_t xbee_radio_driver = {
@@ -879,3 +1040,12 @@ const ieee802154_radio_driver_t xbee_radio_driver = {
     .set_promiscuous_mode = xbee_set_monitor,
     .in_promiscuous_mode = xbee_get_monitor
 };
+
+const ng_netdev_driver_t xbee_driver = {
+    .send_data = _send,
+    .add_event_callback = _add_cb,
+    .rem_event_callback = _rem_cb,
+    .get = _get,
+    .set = _set,
+    .isr_event = _isr_event,
+}
