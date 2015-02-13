@@ -13,7 +13,12 @@
  * @{
  *
  * @file
- * @brief       Low-level RTT interface implementation for Freescale Kinetis MCUs.
+ * @brief       Low-level RTT interface implementation for Freescale Kinetis
+ *              MCUs. Freescale's RTC module is what RIOT calls a Real-Time
+ *              Timer (RTT), a simple counter which counts seconds; RIOT Real-
+ *              Time Clocks (RTC) counts seconds, minutes, hours etc. We provide
+ *              an RTT->RTC wrapper layer in a separate file to allow using the
+ *              RTT as a system real time clock.
  *
  * @author      Johann Fischer <j.fischer@phytec.de>
  * @author      Joakim Gebart <joakim.gebart@eistec.se>
@@ -49,56 +54,56 @@ static rtt_state_t rtt_callback;
 
 void rtt_init(void)
 {
-    RTC_Type *rtc = RTT_DEV;
+    RTC_Type *rtt = RTT_DEV;
 
     RTT_UNLOCK();
     /* Reset RTC */
-    rtc->CR = RTC_CR_SWR_MASK;
-    rtc->CR = 0;
+    rtt->CR = RTC_CR_SWR_MASK;
+    rtt->CR = 0;
 
-    if (rtc->SR & RTC_SR_TIF_MASK) {
+    if (rtt->SR & RTC_SR_TIF_MASK) {
         /* Clear TIF by writing TSR. */
-        rtc->TSR = 0;
+        rtt->TSR = 0;
     }
 
     /* Enable RTC oscillator and non-supervisor mode accesses. */
     /* Enable load capacitance as configured by periph_conf.h */
-    rtc->CR = RTC_CR_OSCE_MASK | RTC_CR_SUP_MASK | RTC_LOAD_CAP_BITS;
+    rtt->CR = RTC_CR_OSCE_MASK | RTC_CR_SUP_MASK | RTC_LOAD_CAP_BITS;
 
     /* Clear TAF by writing TAR. */
-    rtc->TAR = 0xffffff42;
+    rtt->TAR = 0xffffff42;
 
     /* Disable all RTC interrupts. */
-    rtc->IER = 0;
+    rtt->IER = 0;
 
     rtt_poweron();
 }
 
 void rtt_set_overflow_cb(rtt_cb_t cb, void *arg)
 {
-    RTC_Type *rtc = RTT_DEV;
+    RTC_Type *rtt = RTT_DEV;
     rtt_callback.overflow_cb = cb;
     rtt_callback.overflow_arg = arg;
-    rtc->IER |= RTC_IER_TOIE_MASK;
+    rtt->IER |= RTC_IER_TOIE_MASK;
 }
 
 void rtt_clear_overflow_cb(void)
 {
-    RTC_Type *rtc = RTT_DEV;
+    RTC_Type *rtt = RTT_DEV;
     rtt_callback.overflow_cb = NULL;
     rtt_callback.overflow_arg = NULL;
-    rtc->IER &= ~(RTC_IER_TOIE_MASK);
+    rtt->IER &= ~(RTC_IER_TOIE_MASK);
 }
 
 uint32_t rtt_get_counter(void)
 {
-    RTC_Type *rtc = RTT_DEV;
+    RTC_Type *rtt = RTT_DEV;
     uint32_t t;
     for (int i = 0; i < 3; i++) {
         /* Read twice to make sure we get a stable reading */
-        t = rtc->TSR;
+        t = rtt->TSR;
 
-        if (t == rtc->TSR) {
+        if (t == rtt->TSR) {
             return t;
         }
     }
@@ -108,30 +113,30 @@ uint32_t rtt_get_counter(void)
 
 void rtt_set_counter(uint32_t counter)
 {
-    RTC_Type *rtc = RTT_DEV;
+    RTC_Type *rtt = RTT_DEV;
 
     /* Disable time counter before writing to the timestamp register */
-    rtc->SR &= ~RTC_SR_TCE_MASK;
-    rtc->TSR = counter;
+    rtt->SR &= ~RTC_SR_TCE_MASK;
+    rtt->TSR = counter;
     /* Enable when done */
-    rtc->SR |= RTC_SR_TCE_MASK;
+    rtt->SR |= RTC_SR_TCE_MASK;
 }
 
 
 void rtt_set_alarm(uint32_t alarm, rtt_cb_t cb, void *arg)
 {
-    RTC_Type *rtc = RTT_DEV;
+    RTC_Type *rtt = RTT_DEV;
 
     /* Disable Timer Alarm Interrupt */
-    rtc->IER &= ~(RTC_IER_TAIE_MASK);
+    rtt->IER &= ~(RTC_IER_TAIE_MASK);
 
-    rtc->TAR = alarm;
+    rtt->TAR = alarm;
 
     rtt_callback.alarm_cb = cb;
     rtt_callback.alarm_arg = arg;
 
     /* Enable Timer Alarm Interrupt */
-    rtc->IER |= RTC_IER_TAIE_MASK;
+    rtt->IER |= RTC_IER_TAIE_MASK;
 
     /* Enable RTC interrupts */
     NVIC_SetPriority(RTT_IRQ, RTT_IRQ_PRIO);
@@ -140,17 +145,17 @@ void rtt_set_alarm(uint32_t alarm, rtt_cb_t cb, void *arg)
 
 uint32_t rtt_get_alarm(void)
 {
-    RTC_Type *rtc = RTT_DEV;
-    return rtc->TAR;
+    RTC_Type *rtt = RTT_DEV;
+    return rtt->TAR;
 }
 
 void rtt_clear_alarm(void)
 {
-    RTC_Type *rtc = RTT_DEV;
+    RTC_Type *rtt = RTT_DEV;
 
     /* Disable Timer Alarm Interrupt */
-    rtc->IER &= ~RTC_IER_TAIE_MASK;
-    rtc->TAR = 0;
+    rtt->IER &= ~RTC_IER_TAIE_MASK;
+    rtt->TAR = 0;
     rtt_callback.alarm_cb = NULL;
     rtt_callback.alarm_arg = NULL;
 }
@@ -159,31 +164,31 @@ void rtt_clear_alarm(void)
 
 void rtt_poweron(void)
 {
-    RTC_Type *rtc = RTT_DEV;
+    RTC_Type *rtt = RTT_DEV;
     /* Enable Time Counter */
-    rtc->SR |= RTC_SR_TCE_MASK;
+    rtt->SR |= RTC_SR_TCE_MASK;
 }
 
 void rtt_poweroff(void)
 {
-    RTC_Type *rtc = RTT_DEV;
+    RTC_Type *rtt = RTT_DEV;
     /* Disable Time Counter */
-    rtc->SR &= ~RTC_SR_TCE_MASK;
+    rtt->SR &= ~RTC_SR_TCE_MASK;
 }
 
 void RTT_ISR(void)
 {
-    RTC_Type *rtc = RTT_DEV;
+    RTC_Type *rtt = RTT_DEV;
 
-    if (rtc->SR & RTC_SR_TAF_MASK) {
+    if (rtt->SR & RTC_SR_TAF_MASK) {
         if (rtt_callback.alarm_cb != NULL) {
             /* Disable Timer Alarm Interrupt */
-            rtc->IER &= ~RTC_IER_TAIE_MASK;
+            rtt->IER &= ~RTC_IER_TAIE_MASK;
             rtt_callback.alarm_cb(rtt_callback.alarm_arg);
         }
     }
 
-    if (rtc->SR & RTC_SR_TOF_MASK) {
+    if (rtt->SR & RTC_SR_TOF_MASK) {
         if (rtt_callback.overflow_cb != NULL) {
             rtt_callback.overflow_cb(rtt_callback.overflow_arg);
         }
