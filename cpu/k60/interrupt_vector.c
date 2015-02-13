@@ -29,6 +29,13 @@
 
 #include "cpu.h"
 #include "fault_handlers.h"
+#include "wdog.h"
+
+extern void *_estack[];
+extern void *_sstack[];
+
+typedef void (*ISR_func)(void);
+
 
 /**
  * @brief Unconditional jump to isr_unhandled()
@@ -42,6 +49,52 @@ void isr_default_handler(void) __attribute__((naked));
 void isr_default_handler(void)
 {
     __ASM volatile ("b isr_unhandled\n");
+    while(1);
+}
+
+/**
+ * @brief Early reset handler used to instrument the stack before it becomes in use.
+ *
+ * This function will fill the interrupt context-stack with canary values so
+ * that it can be checked to measure stack usage, similar to CREATE_STACKTEST in
+ * @ref thread_create
+ */
+void pre_reset_handler(void) __attribute__((naked));
+
+/** @brief Interrupt stack canary value
+ *
+ * @note 0xe7fe is the ARM Thumb machine code equivalent of asm('bl #-2') or
+ * 'while(1);', i.e. an infinite loop.
+ */
+#define STACK_CANARY_WORD 0xE7FEE7FEu
+
+void pre_reset_handler(void)
+{
+    /*
+     * Important: Keep this function as simple as possible, we must not use any
+     * stack space or we will crash, since we will overwrite all of the stack.
+     */
+    /* Disable watchdog first, it is necessary to do within 256 cycles.
+     * After this we will completely overwrite the stack so all necessary
+     * variables must be stored in registers or as immediate values in the
+     * machine code. */
+    wdog_disable();
+    /*
+     * The register keyword suggests to the compiler to place the variable in a
+     * register instead of on the stack. Using the register keyword is not a
+     * guarantee that the variable will be placed in a register. However, this
+     * function has been verified manually by disassembling the GCC output to
+     * ensure no stack is being used until after the write loop is finished.
+     */
+    register uint32_t *p;
+    /* Fill stack space with canary values */
+    for (p = (uint32_t *)_sstack; p < (uint32_t *)_estack; ++p)
+    {
+        *p = STACK_CANARY_WORD;
+    }
+    /* Now launch the real reset handler. */
+    __ASM volatile ("b reset_handler\n");
+    /* reset_handler should never return */
     while(1);
 }
 
@@ -166,17 +219,13 @@ void isr_porte_pin_detect(void) UNHANDLED_ALIAS;
 /* void isr_reserved(void) UNHANDLED_ALIAS; */
 void isr_software(void) UNHANDLED_ALIAS;
 
-extern void *_estack[];
-
-typedef void (*ISR_func)(void);
-
 /**
  * @brief Interrupt vector definition
  */
 const ISR_func isr_vector[256] ISR_VECTOR_SECTION = {
     /* ARM Cortex defined interrupt vectors */
     (ISR_func)_estack,
-    reset_handler,
+    pre_reset_handler,
     isr_nmi,
     isr_hard_fault,
     isr_mem_manage,
