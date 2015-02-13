@@ -27,31 +27,38 @@
  * @{
  */
 
+#include "cpu.h"
+#include "fault_handlers.h"
+
+/**
+ * @brief Unconditional jump to isr_unhandled()
+ *
+ * This function is only necessary since we can not declare weak aliases to
+ * functions outside the translation unit (.c-file). The default isr_unhandled()
+ * is defined in kinetis_common/fault_handlers.c.
+ */
+void isr_default_handler(void) __attribute__((naked));
+
+void isr_default_handler(void)
+{
+    __ASM volatile ("b isr_unhandled\n");
+    while(1);
+}
+
 #define ISR_VECTOR_SECTION __attribute__ ((used,section(".vector_table")))
-void reset_handler(void) __attribute__((naked));
 
-/* Default handler for interrupts, infinite loop */
-static void unhandled_interrupt(void) __attribute__((unused));
-
-#define UNHANDLED_ALIAS __attribute__((weak, alias("unhandled_interrupt")));
-
-/* __attribute__((naked)) in order to not add any function prologue to the
- * default hardfault handler written in asm */
-/* __attribute__((unused)) in order to avoid (incorrect) compiler warnings about
- * the functions being unused when only referenced from the weak alias. */
-static void dHardFault_handler(void) __attribute__((naked, unused));
-static void dMemManage_handler(void) __attribute__((unused));
-static void dUsageFault_handler(void) __attribute__((unused));
-static void dBusFault_handler(void) __attribute__((unused));
-static void dNMI_handler(void) __attribute__((unused));
+#define UNHANDLED_ALIAS __attribute__((weak, alias("isr_default_handler")));
 
 /* ARM Cortex defined interrupt vectors */
+/**
+ * @brief Default reset handler.
+ */
 void reset_handler(void) __attribute__((naked));
-void isr_nmi(void) __attribute__((weak, alias("dNMI_handler")));
-void isr_hard_fault(void) __attribute__((weak, alias("dHardFault_handler")));
-void isr_mem_manage(void) __attribute__((weak, alias("dMemManage_handler")));
-void isr_bus_fault(void) __attribute__((weak, alias("dBusFault_handler")));
-void isr_usage_fault(void) __attribute__((weak, alias("dUsageFault_handler")));
+void isr_nmi(void) UNHANDLED_ALIAS;
+void isr_hard_fault(void) UNHANDLED_ALIAS;
+void isr_mem_manage(void) UNHANDLED_ALIAS;
+void isr_bus_fault(void) UNHANDLED_ALIAS;
+void isr_usage_fault(void) UNHANDLED_ALIAS;
 void isr_reserved(void) UNHANDLED_ALIAS;
 /* void isr_reserved(void) UNHANDLED_ALIAS; */
 /* void isr_reserved(void) UNHANDLED_ALIAS; */
@@ -428,67 +435,6 @@ const ISR_func isr_vector[256] ISR_VECTOR_SECTION = {
     isr_reserved /* vector 255 */
 };
 
-/**
- * @brief Default handler for Non-Maskable Interrupt
- */
-void
-dNMI_handler(void)
-{
-    while (1);
-}
-
-/**
- * @brief Default handler for unhandled interrupts.
- */
-static void
-unhandled_interrupt(void)
-{
-    while (1);
-}
-/**
- * Default handler of Hard Faults
- *
- * This function is only an assembly language wrapper for the function
- * hard_fault_handler_c, defined in fault-handlers.c
- */
-static void
-dHardFault_handler(void)
-{
-    __asm volatile
-    (
-        "tst lr, #4\n"
-        "ite eq\n"
-        "mrseq r0, msp\n"
-        "mrsne r0, psp\n"
-        "b hard_fault_handler_c\n"
-    );
-
-    while (1);
-}
-/**
- * Default handler of Usage Fault
- */
-static void
-dUsageFault_handler(void)
-{
-    while (1);
-}
-/**
- * Default handler of MemManage Fault
- */
-static void
-dMemManage_handler(void)
-{
-    while (1);
-}
-/**
- * Default handler of Bus Fault
- */
-static void
-dBusFault_handler(void)
-{
-    while (1);
-}
 /** @} */
 
 /** @} */
