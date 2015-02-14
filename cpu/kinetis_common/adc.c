@@ -423,4 +423,26 @@ float adc_mapf(adc_t dev, int value, float min, float max)
     return ((max - min) / ((float)adc_config[dev].max_value)) * value;
 }
 
+float kinetis_adc_to_core_temp(int value)
+{
+    /* Straight from the reference manual:
+     * Temp = 25 - ( ( V_temp - V_temp25 ) / m )
+     * where V_temp25 is the voltage at 25 celsius, m is the slope parameter
+     * which can be found in the data sheet.
+     */
+    float temp;
+    float V_temp = value;
+    static const float V_temp25 = 716.0f;
+    static const float slope_hot = 1.62f;
+    static const float slope_cold = slope_hot;
+    float slope;
+    if (V_temp > V_temp25) {
+        slope = slope_hot;
+    } else {
+        slope = slope_cold;
+    }
+    temp = 25.f - ((V_temp - V_temp25) / slope);
+    return temp;
+}
+
 #endif /* ADC_NUMOF */

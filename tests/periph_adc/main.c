@@ -29,10 +29,12 @@
 #error "Please enable at least 1 ADC device to run this test"
 #endif
 
-#define RES             ADC_RES_10BIT
+#define RES             ADC_RES_16BIT
 #define DELAY           (100 * 1000U)
 
 static int values[ADC_NUMOF][ADC_MAX_CHANNELS];
+
+float kinetis_adc_to_core_temp(int value);
 
 int main(void)
 {
@@ -56,7 +58,11 @@ int main(void)
     }
 
     puts("\n");
-
+    BITBAND_REG8(PMC->REGSC, PMC_REGSC_BGBE_SHIFT) = 1;
+    //~ ADC0->SC2 &= ~(ADC_SC2_REFSEL_MASK);
+    //~ ADC0->SC2 |= ADC_SC2_REFSEL(1);
+    #undef ADC_NUMOF
+    #define ADC_NUMOF 1
     while (1) {
         /* convert each channel for this ADC device */
         for (int i = 0; i < ADC_NUMOF; i++) {
@@ -74,6 +80,15 @@ int main(void)
                 }
             }
         }
+        /* Compute voltage using band gap voltage */
+        float bandgap = values[0][1];
+        float Vrefh = 1.00f * ((float) values[0][2]) / bandgap;
+        float Vrefl = 1.00f * ((float) values[0][3]) / bandgap;
+        float Vtemp = 1.00f * ((float) values[0][0]) / bandgap;
+        float temp = kinetis_adc_to_core_temp(Vtemp * 1000);
+        printf("VH: %1d.%06u ", (int)Vrefh, (unsigned int) (Vrefh * 1000000) % 1000000);
+        printf("VL: %1d.%06u ", (int)Vrefl, (unsigned int) (Vrefl * 1000000) % 1000000);
+        printf("CT: %2d.%06u ", (int)temp, (unsigned int) (temp * 1000000) % 1000000);
         printf("\n");
 
         /* sleep a little while */
