@@ -58,9 +58,14 @@ int main(void)
     }
 
     puts("\n");
+    /* Buffer 1.00 V band gap from PMC to ADC input */
     BITBAND_REG8(PMC->REGSC, PMC_REGSC_BGBE_SHIFT) = 1;
-    //~ ADC0->SC2 &= ~(ADC_SC2_REFSEL_MASK);
-    //~ ADC0->SC2 |= ADC_SC2_REFSEL(1);
+    /* Enable VREF low noise parameters */
+    BITBAND_REG8(VREF->TRM, VREF_TRM_CHOPEN_SHIFT) = 1;
+    VREF->SC = VREF_SC_VREFEN_MASK | VREF_SC_ICOMPEN_MASK | VREF_SC_REGEN_MASK | VREF_SC_MODE_LV(2);
+    /* Select VREF as analog reference */
+    ADC0->SC2 &= ~(ADC_SC2_REFSEL_MASK);
+    ADC0->SC2 |= ADC_SC2_REFSEL(1);
     #undef ADC_NUMOF
     #define ADC_NUMOF 1
     while (1) {
