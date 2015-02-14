@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Eistec AB
+ * Copyright (C) 2014-2015 Eistec AB
  *
  * This file is subject to the terms and conditions of the GNU Lesser General
  * Public License v2.1. See the file LICENSE in the top level directory for more
@@ -7,7 +7,7 @@
  */
 
 /**
- * @ingroup     board_k60
+ * @ingroup     board_mulle
  * @{
  *
  * @file
