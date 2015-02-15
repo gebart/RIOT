@@ -468,12 +468,15 @@ extern "C"
 /** @} */
 
 /**
-* @name RTC configuration
+* @name RTT and RTC configuration
 * @{
 */
+#define RTT_NUMOF            (1U)
 #define RTC_NUMOF            (1U)
-#define RTC_DEV              RTC
-#define RTC_UNLOCK()         (SIM->SCGC6 |= (SIM_SCGC6_RTC_MASK))
+#define RTT_DEV              RTC
+#define RTT_IRQ              RTC_IRQn
+#define RTT_IRQ_PRIO         10
+#define RTT_UNLOCK()         (SIM->SCGC6 |= (SIM_SCGC6_RTC_MASK))
 /** @} */
 
 /**
