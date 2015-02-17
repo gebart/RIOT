@@ -17,17 +17,18 @@
  *
  * @author      Joakim Gebart <joakim.gebart@eistec.se>
  *
+ * @note Waiting for PR #2353 (NVRAM API) before implementing this.
  */
 
 #include <stdint.h>
 #include <string.h>
 #include "config.h"
-#include "nvram.h"
 
 void config_load(void) {
-
+    /* TODO: Implement */
 }
 
 uint8_t config_save(void) {
+    /* TODO: Implement */
     return 0;
 }
