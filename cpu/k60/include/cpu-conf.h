@@ -26,6 +26,8 @@ extern "C"
 {
 #endif
 
+#include <stdint.h>
+
 #if defined(CPU_MODEL_K60DN512VLL10) || defined(CPU_MODEL_K60DN256VLL10)
 
 /* Rev. 2.x silicon */
@@ -322,6 +324,31 @@ typedef enum llwu_wakeup_edge {
 
 #define TRANSCEIVER_BUFFER_SIZE (3)
 
+/**
+ * @name Bit band macros
+ * @{
+ */
+/* Generic bitband conversion routine */
+/** @brief Convert bit-band region address and bit number to bit-band alias address */
+#define BITBAND_ADDR(addr, bit) ((((uint32_t) (addr)) & 0xF0000000u) + 0x2000000 + ((((uint32_t) (addr)) & 0xFFFFF) << 5) + ((bit) << 2))
+
+/**
+ * @brief Macro for computing bitband addresses in SRAM_U
+ *
+ * @note SRAM_L is not bit band aliased on the K60, only SRAM_U (0x20000000 and up)
+ * @note var must be declared 'volatile'
+ */
+#define BITBAND_VAR32(var, bit) (*((uint32_t volatile*) BITBAND_ADDR(&(var), (bit))))
+#define BITBAND_VAR16(var, bit) (*((uint16_t volatile*) BITBAND_ADDR(&(var), (bit))))
+#define BITBAND_VAR8(var, bit) (*((uint8_t volatile*) BITBAND_ADDR(&(var), (bit))))
+#define BITBAND_VAR(var, bit) (BITBAND_VAR32((var), (bit)))
+
+#define BITBAND_PERIPH32(var, bit) (*((uint32_t volatile*) BITBAND_ADDR(&(var), (bit))))
+#define BITBAND_PERIPH16(var, bit) (*((uint16_t volatile*) BITBAND_ADDR(&(var), (bit))))
+#define BITBAND_PERIPH8(var, bit) (*((uint8_t volatile*) BITBAND_ADDR(&(var), (bit))))
+#define BITBAND_PERIPH(var, bit) (BITBAND_PERIPH32((var), (bit)))
+
+/** @} */
 #ifdef __cplusplus
 }
 #endif
