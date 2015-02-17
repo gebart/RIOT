@@ -64,26 +64,32 @@ OOCD_BOARD_FLAGS = -f '$(RIOTBOARD)/$(BOARD)/dist/openocd/mulle-programmer-$(PRO
 # Add serial matching command
 ifneq ($(PROGRAMMER_SERIAL),)
   OOCD_BOARD_FLAGS += -c 'ftdi_serial $(PROGRAMMER_SERIAL)'
+endif
 
-  ifeq ($(PORT),)
-    # try to find tty name by serial number, only works on Linux currently.
-    ifeq ($(OS),Linux)
-      PORT :=$(shell $(RIOTBOARD)/dist/tools/ftdi/find-tty.sh $(PROGRAMMER_SERIAL))
-    endif
+ifeq ($(PORT),)
+  ifeq ($(OS),Linux)
   endif
 endif
 
 ifeq ($(PORT),)
-    ifeq ($(OS),Linux)
-      PORT := /dev/ttyUSB0
-    else ifeq ($(OS),Darwin)
-      PORT := $(shell ls -1 /dev/tty.SLAB_USBtoUART* | head -n 1)
-    endif
+  # try to find tty name by serial number, only works on Linux currently.
+  ifeq ($(OS),Linux)
+    ifneq ($(PROGRAMMER_SERIAL),)
+      PORT := $(shell $(RIOTBASE)/dist/tools/usb-serial/find-tty.sh '^$(PROGRAMMER_SERIAL)$$')
+    else
+      # find-tty.sh will return the first USB tty if no serial is given.
+      PORT := $(shell $(RIOTBASE)/dist/tools/usb-serial/find-tty.sh)
+  endif
+  else ifeq ($(OS),Darwin)
+    PORT := $(shell ls -1 /dev/tty.usbserial* | head -n 1)
+  endif
 endif
 
 # TODO: add support for windows as host platform
 ifeq ($(PORT),)
+  # None of the above methods worked, set some sane default value for PORT.
   $(info CAUTION: No terminal port for your host system found!)
+  PORT := /dev/ttyUSB0
 endif
 export PORT
 
@@ -193,10 +199,20 @@ export SIZE     = $(LLVMPREFIX)size
 # Gentoo crossdev places newlib headers in /usr/arm-none-eabi/include
 # Ubuntu also seem to put a copy of the newlib headers in the same place as
 # Gentoo crossdev, but we prefer to look at /etc/alternatives first.
-NEWLIB_INCLUDES ?= \
-  -isystem /etc/alternatives/gcc-$(TARGET_TRIPLE)-include \
-  -isystem /usr/$(TARGET_TRIPLE)/include \
+# On OSX, newlib includes are possibly located in
+# /usr/local/opt/arm-none-eabi*/arm-none-eabi/include
+NEWLIB_INCLUDE_PATTERNS ?= \
+  /etc/alternatives/gcc-$(TARGET_TRIPLE)-include \
+  /usr/$(TARGET_TRIPLE)/include \
+  /usr/local/opt/$(TARGET_TRIPLE)*/$(TARGET_TRIPLE)/include \
   #
+# Use the wildcard Makefile function to search for existing directories matching
+# the patterns above. We use the -isystem gcc/clang argument to add the include
+# directories as system include directories.
+NEWLIB_INCLUDES ?= \
+    $(foreach dir, \
+        $(foreach pat, $(NEWLIB_INCLUDE_PATTERNS), $(wildcard $(pat))), \
+        -isystem $(dir))
 
 endif
 endif
@@ -212,8 +228,8 @@ FFLAGS += \
     -c 'init' \
     -c 'targets' \
     -c 'reset halt' \
-    -c 'flash write_image erase bin/$(BOARD)/$(APPLICATION).elf 0x00000000 elf' \
-    -c 'verify_image bin/$(BOARD)/$(APPLICATION).elf' \
+    -c 'flash write_image erase $(ELFFILE) 0x00000000 elf' \
+    -c 'verify_image $(ELFFILE)' \
     -c 'reset run' \
     -c 'shutdown'
 
