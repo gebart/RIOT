@@ -403,7 +403,7 @@ extern "C"
  * @name GPIO configuration
  * @{
  */
-#define GPIO_NUMOF          17
+#define GPIO_NUMOF          26
 #define GPIO_0_EN           1
 #define GPIO_1_EN           1
 #define GPIO_2_EN           1
@@ -422,6 +422,14 @@ extern "C"
 #define GPIO_15_EN          1
 #define GPIO_16_EN          1
 #define GPIO_17_EN          1
+#define GPIO_18_EN          1
+#define GPIO_19_EN          1
+#define GPIO_20_EN          1
+#define GPIO_21_EN          1
+#define GPIO_22_EN          1
+#define GPIO_23_EN          1
+#define GPIO_24_EN          1
+#define GPIO_25_EN          1
 #define GPIO_IRQ_PRIO       1
 
 /* GPIO channel 0 config */
@@ -604,22 +612,117 @@ extern "C"
 #define GPIO_17_IRQ         PORTD_IRQn
 #define GPIO_17_ISR         isr_portd_pin_detect
 
+/* GPIO channel 18 config */
+/* General purpose expansion PTB18 */
+#define GPIO_18_PORT        PORTB
+#define GPIO_18_PORT_BASE   PORTB_BASE
+#define GPIO_18_DEV         PTB
+#define GPIO_18_PIN         18
+#define GPIO_18_CLKEN()     (BITBAND_REG(SIM->SCGC5, SIM_SCGC5_PORTB_SHIFT) = 1)
+#define GPIO_18_IRQ         PORTB_IRQn
+#define GPIO_18_ISR         isr_portb_pin_detect
+
+/* GPIO channel 19 config */
+/* General purpose expansion PTB19 */
+#define GPIO_19_PORT        PORTB
+#define GPIO_19_PORT_BASE   PORTB_BASE
+#define GPIO_19_DEV         PTB
+#define GPIO_19_PIN         19
+#define GPIO_19_CLKEN()     (BITBAND_REG(SIM->SCGC5, SIM_SCGC5_PORTB_SHIFT) = 1)
+#define GPIO_19_IRQ         PORTB_IRQn
+#define GPIO_19_ISR         isr_portb_pin_detect
+
+/* GPIO channel 20 config */
+/* General purpose expansion PTC0 */
+#define GPIO_20_PORT        PORTC
+#define GPIO_20_PORT_BASE   PORTC_BASE
+#define GPIO_20_DEV         PTC
+#define GPIO_20_PIN         0
+#define GPIO_20_CLKEN()     (BITBAND_REG(SIM->SCGC5, SIM_SCGC5_PORTC_SHIFT) = 1)
+#define GPIO_20_IRQ         PORTC_IRQn
+#define GPIO_20_ISR         isr_portc_pin_detect
+
+/* GPIO channel 21 config */
+/* General purpose expansion PTC1 */
+#define GPIO_21_PORT        PORTC
+#define GPIO_21_PORT_BASE   PORTC_BASE
+#define GPIO_21_DEV         PTC
+#define GPIO_21_PIN         1
+#define GPIO_21_CLKEN()     (BITBAND_REG(SIM->SCGC5, SIM_SCGC5_PORTC_SHIFT) = 1)
+#define GPIO_21_IRQ         PORTC_IRQn
+#define GPIO_21_ISR         isr_portc_pin_detect
+
+/* GPIO channel 22 config */
+/* General purpose expansion PTC2 */
+#define GPIO_22_PORT        PORTC
+#define GPIO_22_PORT_BASE   PORTC_BASE
+#define GPIO_22_DEV         PTC
+#define GPIO_22_PIN         2
+#define GPIO_22_CLKEN()     (BITBAND_REG(SIM->SCGC5, SIM_SCGC5_PORTC_SHIFT) = 1)
+#define GPIO_22_IRQ         PORTC_IRQn
+#define GPIO_22_ISR         isr_portc_pin_detect
+
+/* GPIO channel 23 config */
+/* General purpose expansion PTC5 */
+#define GPIO_23_PORT        PORTC
+#define GPIO_23_PORT_BASE   PORTC_BASE
+#define GPIO_23_DEV         PTC
+#define GPIO_23_PIN         5
+#define GPIO_23_CLKEN()     (BITBAND_REG(SIM->SCGC5, SIM_SCGC5_PORTC_SHIFT) = 1)
+#define GPIO_23_IRQ         PORTC_IRQn
+#define GPIO_23_ISR         isr_portc_pin_detect
+
+/* GPIO channel 24 config */
+/* General purpose expansion PTC6 */
+#define GPIO_24_PORT        PORTC
+#define GPIO_24_PORT_BASE   PORTC_BASE
+#define GPIO_24_DEV         PTC
+#define GPIO_24_PIN         6
+#define GPIO_24_CLKEN()     (BITBAND_REG(SIM->SCGC5, SIM_SCGC5_PORTC_SHIFT) = 1)
+#define GPIO_24_IRQ         PORTC_IRQn
+#define GPIO_24_ISR         isr_portc_pin_detect
+
+/* GPIO channel 25 config */
+/* General purpose expansion PTC7 */
+#define GPIO_25_PORT        PORTC
+#define GPIO_25_PORT_BASE   PORTC_BASE
+#define GPIO_25_DEV         PTC
+#define GPIO_25_PIN         7
+#define GPIO_25_CLKEN()     (BITBAND_REG(SIM->SCGC5, SIM_SCGC5_PORTC_SHIFT) = 1)
+#define GPIO_25_IRQ         PORTC_IRQn
+#define GPIO_25_ISR         isr_portc_pin_detect
+
 /** @} */
 
 
 /**
-* @name RTC configuration
-* @{
-*/
+ * @name RTC configuration
+ * @{
+ */
+/* RIOT RTC implementation uses RTT for underlying timekeeper */
 #define RTC_NUMOF           (1U)
-#define RTC_DEV             RTC
-#define RTC_UNLOCK()        (BITBAND_REG(SIM->SCGC6, SIM_SCGC6_RTC_SHIFT) = 1)
+/** @} */
+
 /**
- * RTC crystal load capacitance configuration bits.
+ * @name RTT configuration
+ * @{
+ */
+#define RTT_NUMOF           (1U)
+#define RTT_IRQ_PRIO        1
+#define RTT_IRQ             RTC_IRQn
+#define RTT_ISR             isr_rtc_alarm
+#define RTT_DEV             RTC
+#define RTT_UNLOCK()        (BITBAND_REG(SIM->SCGC6, SIM_SCGC6_RTC_SHIFT) = 1)
+#define RTT_MAX_VALUE       (0xffffffff)
+#define RTT_FREQUENCY       (1)             /* in Hz */
+
+/**
+ * RTC module crystal load capacitance configuration bits.
  */
 /* enable 12pF load capacitance, might need adjusting.. */
-#define RTC_LOAD_CAP_BITS   (RTC_CR_SC8P_MASK | RTC_CR_SC4P_MASK)
+#define RTT_LOAD_CAP_BITS   (RTC_CR_SC8P_MASK | RTC_CR_SC4P_MASK)
 /** @} */
+
 
 /**
  * @name Random Number Generator configuration
