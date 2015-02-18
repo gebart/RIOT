@@ -46,8 +46,20 @@
 #define INC_CKSUM(x)   (sum = (sum + (x)) & 0xff)
 
 
-#define API_CMD_AT              (0x08)
-#define API_CMD_SND             (0x7e)
+#define API_AT                  (0x08)
+#define API_MODE_START_DELIMITER    (0x7e)
+
+#define API_CMD_MODEM_STATUS        (0x8a)
+#define API_CMD_AT                  (0x08)
+#define API_CMD_AT_QUEUE            (0x09)
+#define API_CMD_AT_RESP             (0x88)
+#define API_CMD_TX_LONG_ADDR        (0x00)
+#define API_CMD_TX_SHORT_ADDR       (0x01)
+#define API_CMD_TX_RESP             (0x89)
+#define API_CMD_RX_LONG_ADDR        (0x80)
+#define API_CMD_RX_SHORT_ADDR       (0x81)
+
+
 
 
 typedef enum xbee_at_cmd_response_kind {
@@ -89,6 +101,19 @@ typedef struct xbee_tx_status_report {
     xbee_tx_status_t status;
     uint8_t frame_num;
 } xbee_tx_status_report_t;
+
+
+
+
+
+/* reception buffer for incoming data from XBee module */
+static uint8_t recv_buf[XBEE_RECV_BUF_SIZE];
+/* size of data currently stored in the reception buffer */
+static uint16_t recv_data_len;
+/* expected size of the currently incoming packet */
+static uint16_t expect_data_len;
+/* current checksum of the incoming data */
+static uint8_t cksum;
 
 
 /*****************************************************************************/
@@ -183,134 +208,45 @@ static xbee_at_cmd_response_t xbee_send_AT_command(unsigned int len,
 int _tx_cb(void *arg)
 {
     xbee_t *dev = (xbee_t *)arg;
-    int c = ringbuffer_get_one(&dev->tx_buf);
-    if (c != -1) {
-        uart_write(dev->uart, (char)c);
+    if (dev->tx_count < dev->tx_limit) {
+        char c = dev->tx_buffer[dev->tx_count++];
+        uart_write(dev->uart, c);
+        dev->tx_cksum += (uint8_t)c;
         return 1;
     }
     /* unlock TX mutex when transmission is done */
-    mutex_unlock(&dev->tx_lock);
+    mutex_unlock(&dev->inner_tx_lock);
+    dev->tx_count = 0;
     return 0;
 }
 
-int _rx_cb(void *arg)
+int _rx_cb(void *arg, char c)
 {
     xbee_t *dev = (xbee_t *)arg;
-}
 
+    switch (dev->rx_state) {
+        case XBEE_RX_STATE_IDLE:
+            /* check for beginning of new data frame */
+            if (c == API_MODE_START_DELIMITER) {
+                dev->rx_state = XBEE_RX_STATE_SIZE1;
+            }
+            break;
+        case XBEE_RX_STATE_SIZE1:
+            dev->rx_len = ((uint16_t)c) << 8;
+            dev->rx_state = XBEE_RX_STATE_SIZE2;
+            break;
+        case XBEE_RX_STATE_SIZE2:
+            dev->rx_len += (uint8_t)c;
+            dev->rx_cksum = 0;
+            dev->rx_state = XBEE_RX_STATE_DATA;
+            break;
+        case XBEE_RX_STATE_DATA:
 
-
-
-/* handle the reception of a data packet from XBee modem */
-static void xbee_process_rx_packet(ieee802154_node_addr_t src_addr,
-                                   bool use_long_addr,
-                                   int8_t rssi,
-                                   void *buf,
-                                   unsigned int len)
-{
-    /* nothing more to do than relay to upper layers, if possible */
-    if (rx_callback != NULL) {
-        /* Since we don't know LQI, we pass just 0;
-           packet validity is to be verified by the XBee modem,
-           so we assume CRC is always correct */
-        rx_callback(buf, len, rssi, 0, true);
-    }
-}
-
-/* handle XBee event arrival */
-static void xbee_process_modem_status_event(uint8_t status)
-{
-    switch (status) {
-    case XBEE_EVENT_HW_RESET:
-    case XBEE_EVENT_WDT_RESET:
-        /* mode has resetted: reinit our driver */
-        xbee_initialize();
-        break;
-    default:
-        /* other events should not happen, and don't interest us */
-        __asm__ ("nop");
-    }
-}
-
-/* handle AT command response from XBee */
-static void xbee_process_AT_command_response(uint8_t st,
-                                             uint8_t fnum,
-                                             uint16_t cmd,
-                                             uint32_t param)
-{
-    switch (st) {
-    case XBEE_AT_CMD_OK:
-    case XBEE_AT_CMD_INVALID:
-    case XBEE_AT_CMD_BAD_PARAM:
-        /* record the received info from XBee module */
-        latest_at_response.status = st;
-        latest_at_response.frame_num = fnum;
-        latest_at_response.command = cmd;
-        latest_at_response.parameter = param;
-        /* flag the info arrival for send_AT_command() function */
-        mutex_unlock(&mutex_wait_at_reponse);
-        break;
-    default:
-        /* other/unknown error */
-        core_panic(0x0bee,
-                   "Unexpected error during AT command on XBee");
-    }
-}
-
-/* handle TX status response from XBee */
-static void xbee_process_tx_status(uint8_t st,
-                                   uint8_t fnum)
-{
-    switch (st) {
-    case XBEE_TX_SUCCESS:
-    case XBEE_TX_NOACK:
-    case XBEE_TX_MEDIUM_BUSY:
-        /* record the received info from XBee module */
-        latest_tx_report.status = st;
-        latest_tx_report.frame_num = fnum;
-        /* flag the info arrival for do_send() function */
-        mutex_unlock(&mutex_wait_tx_status);
-        break;
-    default:
-        /* other/unknown error */
-        core_panic(0x0bee,
-                   "Unexpected error when TXing packet to XBee");
     }
 }
 
 
-/*****************************************************************************/
-/*                          Handling incoming data                           */
-/*****************************************************************************/
 
-unsigned int xbee_rx_error_count = 0;
-
-#define XBEE_RECV_BUF_SIZE   128
-
-/* We implement a finite state machine (FSM) to handle the incoming data,
-   reconstruct the packets, extract their payload, and handle its
-   processing and/or forward it to the upper layers.
-   The following enum lits the states of this FSM. */
-static enum {
-    RECV_FSM_IDLE,                /* no data stored for now */
-    RECV_FSM_SIZE1,               /* waiting for the first byte (MSB)
-                                     of the size of the packet to come */
-    RECV_FSM_SIZE2,               /* waiting for the second byte (LSB)
-                                     of the size of the packet to come */
-    RECV_FSM_PACKET_INCOMPLETE,   /* a packet (whose size we know) has begun
-                                     to arrive, but isn't complete yet */
-    RECV_FSM_PACKET_COMPLETE,     /* we now have a complete packet,
-                                     wait for checksum byte */
-} recv_fsm_state;
-
-/* reception buffer for incoming data from XBee module */
-static uint8_t recv_buf[XBEE_RECV_BUF_SIZE];
-/* size of data currently stored in the reception buffer */
-static uint16_t recv_data_len;
-/* expected size of the currently incoming packet */
-static uint16_t expect_data_len;
-/* current checksum of the incoming data */
-static uint8_t cksum;
 
 /**
  * @brief Handler for incoming data from the XBee module.
@@ -321,28 +257,13 @@ static uint8_t cksum;
  *
  * @param[in] c character received from the XBee module via UART.
  */
-void xbee_incoming_char(void *arg, char c)
+void org_rx_cb(void *arg, char c)
 {
     (void)arg;
+
+
+
     uint8_t in = (uint8_t) c;
-    for (int i = 0; cmd[i] != '\0'; i++) {
-        uart_write_blocking(dev->uart, cmd[i]);
-    }
-    uart_write_blocking(dev->uart, '\r');
-}
-
-    for (int i = 0; cmd[i] != '\0'; i++) {
-        uart_write_blocking(dev->uart, cmd[i]);
-    }
-    uart_write_blocking(dev->uart, '\r');
-}
-
-    for (int i = 0; cmd[i] != '\0'; i++) {
-        uart_write_blocking(dev->uart, cmd[i]);
-    }
-    uart_write_blocking(dev->uart, '\r');
-}
-
     uint16_t cmd;
     uint32_t param;
     switch (recv_fsm_state) {
@@ -447,6 +368,94 @@ void xbee_incoming_char(void *arg, char c)
         DEBUG("Received and processed packet from XBee module.\n");
     }
 }
+
+
+/* handle the reception of a data packet from XBee modem */
+static void xbee_process_rx_packet(ieee802154_node_addr_t src_addr,
+                                   bool use_long_addr,
+                                   int8_t rssi,
+                                   void *buf,
+                                   unsigned int len)
+{
+    /* nothing more to do than relay to upper layers, if possible */
+    if (rx_callback != NULL) {
+        /* Since we don't know LQI, we pass just 0;
+           packet validity is to be verified by the XBee modem,
+           so we assume CRC is always correct */
+        rx_callback(buf, len, rssi, 0, true);
+    }
+}
+
+/* handle XBee event arrival */
+static void xbee_process_modem_status_event(uint8_t status)
+{
+    switch (status) {
+    case XBEE_EVENT_HW_RESET:
+    case XBEE_EVENT_WDT_RESET:
+        /* mode has resetted: reinit our driver */
+        xbee_initialize();
+        break;
+    default:
+        /* other events should not happen, and don't interest us */
+        __asm__ ("nop");
+    }
+}
+
+/* handle AT command response from XBee */
+static void xbee_process_AT_command_response(uint8_t st,
+                                             uint8_t fnum,
+                                             uint16_t cmd,
+                                             uint32_t param)
+{
+    switch (st) {
+    case XBEE_AT_CMD_OK:
+    case XBEE_AT_CMD_INVALID:
+    case XBEE_AT_CMD_BAD_PARAM:
+        /* record the received info from XBee module */
+        latest_at_response.status = st;
+        latest_at_response.frame_num = fnum;
+        latest_at_response.command = cmd;
+        latest_at_response.parameter = param;
+        /* flag the info arrival for send_AT_command() function */
+        mutex_unlock(&mutex_wait_at_reponse);
+        break;
+    default:
+        /* other/unknown error */
+        core_panic(0x0bee,
+                   "Unexpected error during AT command on XBee");
+    }
+}
+
+/* handle TX status response from XBee */
+static void xbee_process_tx_status(uint8_t st,
+                                   uint8_t fnum)
+{
+    switch (st) {
+    case XBEE_TX_SUCCESS:
+    case XBEE_TX_NOACK:
+    case XBEE_TX_MEDIUM_BUSY:
+        /* record the received info from XBee module */
+        latest_tx_report.status = st;
+        latest_tx_report.frame_num = fnum;
+        /* flag the info arrival for do_send() function */
+        mutex_unlock(&mutex_wait_tx_status);
+        break;
+    default:
+        /* other/unknown error */
+        core_panic(0x0bee,
+                   "Unexpected error when TXing packet to XBee");
+    }
+}
+
+
+/*****************************************************************************/
+/*                          Handling incoming data                           */
+/*****************************************************************************/
+
+unsigned int xbee_rx_error_count = 0;
+
+#define XBEE_RECV_BUF_SIZE   128
+
 
 
 /*****************************************************************************/
@@ -594,13 +603,13 @@ int xbee_init(xbee_t *dev, uart_t uart, uint32_t baudrate,
      /* send initial command */
     _at_cmd(dev, "+++");
     /* reset device */
-    _at_cmd("ATFR");
+    _at_cmd(dev, "ATFR");
     /* disable non IEEE802.15.4 extensions */
-    _at_cmd("ATMM2");
-    /* put XBee module in "API mode" */
-    _at_cmd("ATAP1");
+    _at_cmd(dev, "ATMM2");
+    /* put XBee module in "API mode without escaped characters" */
+    _at_cmd(dev, "ATAP1");
     /* apply AT commands */
-    _at_cmd("ATAC");
+    _at_cmd(dev, "ATAC");
 
 #if ENABLE_DEBUG
     /* print firmware version of the XBee module */
@@ -893,8 +902,11 @@ bool xbee_get_monitor(void)
 int _send(ng_netdev_t *dev, ng_pktsnip_t *pkt)
 {
     xbee_t *xbee = (xbee_t *)dev;
-    l2hdr_t *
-    size_t size;
+    ng_pktsnip_t *snip = pkt->next;
+    ng_l2hdr_t *l2hdr;
+    uint8_t buffer[11];                     /* tmp for address and hdr field */
+    uint16_t size = 3;                      /* cmd + 2 byte size field */
+    uint8_t cmd_id;
 
     /* test arguments for validity */
     if (xbee == NULL) {
@@ -903,18 +915,67 @@ int _send(ng_netdev_t *dev, ng_pktsnip_t *pkt)
     if (pkt == NULL) {
         return -ENOMSG;
     }
-    /* link layer header */
-    /* calculate packet size */
-    size = ng_pkt_len(pkt->next);       /* payload size w/o l2hdr */
-    size +=
+    /* add payload size to overall frame size */
+    size += ng_pkt_len(pkt->next);          /* payload size w/o l2hdr */
+    /* account for destination address */
+    l2hdr = (l2hdr_t *)pkt->data;
+    dst_addr = l2hdr_get_dst_addr(l2hdr);
+    if (l2hdr->dst_addr_len == 2) {
+        cmd_id = 0x01;
+        size += 2;
+    }
+    else if (l2hdr->dst_addr_len == 8) {
+        cmd_id = 0x00;
+        size += 8;
 
-    /* acquire TX lock */
+    }
+    else {
+        DEBUG("xbee: error: packet to send has invalid destination address\n");
+        return -ENOMSG;
+    }
+
+    /* acquire TX lock and reset checksum */
     mutex_lock(&dev->tx_lock);
-    /* write TX data into tx buffer */
-    rinbuffer_add_one(&dev->tx_buf, API_CMD_SND);
+    dev->tx_cksum = 0;
+    /* send API command and frame size */
+    uart_write_blocking(dev->uart, API_CMD_SND);
+    uart_write_blocking(dev->uart, (char)(size >> 8));
+    uart_write_blocking(dev->uart, (char)(size & 0xff));
+    /* write header fields and destination address to temporary buffer */
+    buffer[0] = cmd_id;
+    buffer[1] = dev->frame_id;
+    memcpy(buffer + 2, l2hdr_get_dst_addr(l2hdr), l2hdr->dst_addr_len);
+    if (dev->option & OPT_AUTOACK) {
+        buffer[2 + l2hdr->dst_addr_len] = 0x01;
+    }
+    else {
+        buffer[2 + l2hdr->dst_addr_len] = 0x00;
+    }
+    /* send out data */
+    dev->tx_limit = 3 + l2hdr->dst_addr_len;
+    dev->tx_buf = buffer;
+    uart_tx_begin(dev->uart);
+    while (&dev->tx_count > 0) {
+        mutex_lock(&dev->inner_tx_lock);
+    }
+    /* send payload */
+    while (snip) {
+        dev->tx_limit = snip->size;
+        dev->tx_buf = (uint8_t *)snip->data;
+        uart_tx_begin(dev->uart);
+        while (&dev->tx_count > 0) {
+            mutex_lock(&dev->inner_tx_lock);
+        }
+        snip = snip->next;
+    }
+    /* and finish up by sending the frames checksum */
+    uart_write_blocking(dev->uart, (char)(0xff - dev->tx_cksum));
 
+    /* wait for result */
 
-
+    /* clean-up and return */
+    mutex_unlock(&dev->tx_lock);
+    ++dev->frame_id;
     return count;
 }
 
@@ -991,7 +1052,11 @@ radio_tx_status_t xbee_do_send(ieee802154_packet_kind_t kind,
 
     /* wait for TX status response */
     mutex_lock(&mutex_wait_tx_status);
-    mutex_lock(&mutex_wait_tx_status);
+    mutex_lock(&mutex_wait_tx_status);if (wants_ack) {
+        send_xbee(0x00);
+    } else {
+        send_xbee(0x01);
+        INC_CKSUM(0x01);
     mutex_unlock(&mutex_wait_tx_status); // release lock once status is here
 
     /* ensure status received is for TXed packet */
