@@ -32,13 +32,6 @@
 #define ENABLE_DEBUG    (1)
 #include "debug.h"
 
-/**
- * @brief   maximum length of AT commands
- *
- * The largest known length for parameters is 20 byte, so this value should
- * be sufficient.
- */
-#define MAX_AT_CMD_LEN          (32U)
 
 
 #define API_MODE_START_DELIMITER    (0x7e)
@@ -52,9 +45,6 @@
 #define API_ID_TX_RESP             (0x89)
 #define API_ID_RX_LONG_ADDR        (0x80)
 #define API_ID_RX_SHORT_ADDR       (0x81)
-
-
-
 
 
 
@@ -102,23 +92,21 @@ static void _at_cmd(xbee_t *dev, const char *cmd)
 
 static void _api_at_cmd(xbee_t *dev, const char *cmd)
 {
-    uint8_t buf[MAX_AT_CMD_LEN];
     uint16_t size;
 
     /* get size of AT command */
     size = strlen(cmd) + 2;
     /* construct API frame */
-    buf[0] = API_MODE_START_DELIMITER;
-    buf[1] = size >> 8;
-    buf[2] = size & 0xff;
-    buf[3] = API_ID_AT;
-    buf[4] = dev->frame_id;
-    memcpy(buf + 5, cmd, strlen(cmd));
-    buf[3 + size] = _cksum(buf, size + 3);
+    dev->tx_buf[0] = API_MODE_START_DELIMITER;
+    dev->tx_buf[1] = size >> 8;
+    dev->tx_buf[2] = size & 0xff;
+    dev->tx_buf[3] = API_ID_AT;
+    dev->tx_buf[4] = dev->frame_id;
+    memcpy(dev->tx_buf + 5, cmd, strlen(cmd));
+    dev->tx_buf[3 + size] = _cksum(dev->tx_buf, size + 3);
     /* send UART data and for it to finish */
     dev->tx_limit = 6 + size;
     dev->tx_count = 0;
-    dev->tx_buf = buf;
     uart_tx_begin(dev->uart);
     while (dev->tx_count < dev->tx_limit) {
         mutex_lock(&dev->tx_lock);
@@ -134,26 +122,24 @@ static void _api_at_cmd(xbee_t *dev, const char *cmd)
 
 int _send_foo(xbee_t *dev, const char *foo)
 {
-    uint8_t buf[100];
     uint16_t size;
 
     /* get size of AT command */
     size = strlen(foo) + 5;
     /* construct API frame */
-    buf[0] = API_MODE_START_DELIMITER;
-    buf[1] = size >> 8;
-    buf[2] = size & 0xff;
-    buf[3] = API_ID_TX_SHORT_ADDR;
-    buf[4] = dev->frame_id;
-    buf[5] = 0x00;
-    buf[6] = 0x23;
-    buf[7] = 0x01;
-    memcpy(buf + 8, foo, strlen(foo));
-    buf[3 + size] = _cksum(buf, size + 3);
+    dev->tx_buf[0] = API_MODE_START_DELIMITER;
+    dev->tx_buf[1] = size >> 8;
+    dev->tx_buf[2] = size & 0xff;
+    dev->tx_buf[3] = API_ID_TX_SHORT_ADDR;
+    dev->tx_buf[4] = dev->frame_id;
+    dev->tx_buf[5] = 0x00;
+    dev->tx_buf[6] = 0x23;
+    dev->tx_buf[7] = 0x01;
+    memcpy(dev->tx_buf + 8, foo, strlen(foo));
+    dev->tx_buf[3 + size] = _cksum(dev->tx_buf, size + 3);
     /* send UART data and for it to finish */
     dev->tx_limit = 8 + size;
     dev->tx_count = 0;
-    dev->tx_buf = buf;
     uart_tx_begin(dev->uart);
     while (dev->tx_count < dev->tx_limit) {
         mutex_lock(&dev->tx_lock);
@@ -178,7 +164,6 @@ int _tx_cb(void *arg)
         char c = (char)dev->tx_buf[dev->tx_count++];
         DEBUG("tx: 0x%02x\n", c);
         uart_write(dev->uart, c);
-        dev->tx_cksum += (uint8_t)c;
         return 1;
     }
     DEBUG("tx: done\n");

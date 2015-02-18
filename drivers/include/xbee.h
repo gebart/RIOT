@@ -36,9 +36,14 @@
 #endif
 
 /**
- * @brief   The maximum payload length that can be send
+ * @brief   Maximum payload length that can be send
  */
-#define XBEE_MAX_PKT_DATA_LENGTH    (100U)
+#define XBEE_MAX_PAYLOAD_LENGTH     (100U)
+
+/**
+ * @brief   Maximum packet length, including XBee API frame overhead
+ */
+#define XBEE_MAX_PKT_LENGTH         (115U)
 
 
 /**
@@ -78,14 +83,13 @@ typedef struct {
     uint8_t options;                /**< options field */
     uint8_t frame_id;               /**< next ID for sent frames */
     mutex_t tx_lock;                /**< lock for writing to the device */
-    const uint8_t *tx_buf;                 /**< transmit data buffer */
+    uint8_t tx_buf[XBEE_MAX_PKT_LENGTH];   /**< transmit data buffer */
     uint16_t tx_count;              /**< counter for ongoing transmission */
     uint16_t tx_limit;              /**< number of bytes to transmit */
-    uint8_t tx_cksum;               /**< checksum for transmitted data */
     xbee_rx_state_t rx_state;       /**< current state in the RX state machine */
-    uint16_t rx_len;
+    uint16_t rx_limit;
     uint8_t rx_cksum;
-
+    uint16_t rx_len;
 } xbee_t;
 
 /**
