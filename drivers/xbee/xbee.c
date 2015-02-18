@@ -25,6 +25,7 @@
 #include "xbee.h"
 #include "mutex.h"
 #include "hwtimer.h"
+#include "net/ng_ifhdr.h"
 #include "periph/uart.h"
 #include "periph/gpio.h"
 
@@ -215,82 +216,83 @@ int xbee_init(xbee_t *dev, uart_t uart, uint32_t baudrate,
 
 int _send(ng_netdev_t *dev, ng_pktsnip_t *pkt)
 {
-    xbee_t *xbee = (xbee_t *)dev;
-    ng_pktsnip_t *snip = pkt->next;
-    ng_l2hdr_t *l2hdr;
-    uint8_t buffer[11];                     /* tmp for address and hdr field */
-    uint16_t size = 3;                      /* cmd + 2 byte size field */
-    uint8_t cmd_id;
+    // xbee_t *xbee = (xbee_t *)dev;
+    // ng_pktsnip_t *snip = pkt->next;
+    // ng_l2hdr_t *l2hdr;
+    // uint8_t buffer[11];                     /* tmp for address and hdr field */
+    // uint16_t size = 3;                      /* cmd + 2 byte size field */
+    // uint8_t cmd_id;
 
-    /* test arguments for validity */
-    if (xbee == NULL) {
-        return -ENODEV;
-    }
-    if (pkt == NULL) {
-        return -ENOMSG;
-    }
-    /* add payload size to overall frame size */
-    size += ng_pkt_len(pkt->next);          /* payload size w/o l2hdr */
-    /* account for destination address */
-    l2hdr = (l2hdr_t *)pkt->data;
-    dst_addr = l2hdr_get_dst_addr(l2hdr);
-    if (l2hdr->dst_addr_len == 2) {
-        cmd_id = 0x01;
-        size += 2;
-    }
-    else if (l2hdr->dst_addr_len == 8) {
-        cmd_id = 0x00;
-        size += 8;
+    // /* test arguments for validity */
+    // if (xbee == NULL) {
+    //     return -ENODEV;
+    // }
+    // if (pkt == NULL) {
+    //     return -ENOMSG;
+    // }
+    // /* add payload size to overall frame size */
+    // size += ng_pkt_len(pkt->next);          /* payload size w/o l2hdr */
+    // /* account for destination address */
+    // l2hdr = (l2hdr_t *)pkt->data;
+    // dst_addr = l2hdr_get_dst_addr(l2hdr);
+    // if (l2hdr->dst_addr_len == 2) {
+    //     cmd_id = 0x01;
+    //     size += 2;
+    // }
+    // else if (l2hdr->dst_addr_len == 8) {
+    //     cmd_id = 0x00;
+    //     size += 8;
 
-    }
-    else {
-        DEBUG("xbee: error: packet to send has invalid destination address\n");
-        return -ENOMSG;
-    }
+    // }
+    // else {
+    //     DEBUG("xbee: error: packet to send has invalid destination address\n");
+    //     return -ENOMSG;
+    // }
 
-    /* acquire TX lock and reset checksum */
-    mutex_lock(&dev->tx_lock);
-    dev->tx_cksum = 0;
-    /* send API command and frame size */
-    uart_write_blocking(dev->uart, API_CMD_SND);
-    uart_write_blocking(dev->uart, (char)(size >> 8));
-    uart_write_blocking(dev->uart, (char)(size & 0xff));
-    /* write header fields and destination address to temporary buffer */
-    buffer[0] = cmd_id;
-    buffer[1] = dev->frame_id;
-    memcpy(buffer + 2, l2hdr_get_dst_addr(l2hdr), l2hdr->dst_addr_len);
-    if (dev->option & OPT_AUTOACK) {
-        buffer[2 + l2hdr->dst_addr_len] = 0x01;
-    }
-    else {
-        buffer[2 + l2hdr->dst_addr_len] = 0x00;
-    }
-    /* send out data */
-    dev->tx_limit = 3 + l2hdr->dst_addr_len;
-    dev->tx_buf = buffer;
-    uart_tx_begin(dev->uart);
-    while (&dev->tx_count > 0) {
-        mutex_lock(&dev->inner_tx_lock);
-    }
-    /* send payload */
-    while (snip) {
-        dev->tx_limit = snip->size;
-        dev->tx_buf = (uint8_t *)snip->data;
-        uart_tx_begin(dev->uart);
-        while (&dev->tx_count > 0) {
-            mutex_lock(&dev->inner_tx_lock);
-        }
-        snip = snip->next;
-    }
-    /* and finish up by sending the frames checksum */
-    uart_write_blocking(dev->uart, (char)(0xff - dev->tx_cksum));
+    // /* acquire TX lock and reset checksum */
+    // mutex_lock(&dev->tx_lock);
+    // dev->tx_cksum = 0;
+    // /* send API command and frame size */
+    // uart_write_blocking(dev->uart, API_CMD_SND);
+    // uart_write_blocking(dev->uart, (char)(size >> 8));
+    // uart_write_blocking(dev->uart, (char)(size & 0xff));
+    // /* write header fields and destination address to temporary buffer */
+    // buffer[0] = cmd_id;
+    // buffer[1] = dev->frame_id;
+    // memcpy(buffer + 2, l2hdr_get_dst_addr(l2hdr), l2hdr->dst_addr_len);
+    // if (dev->option & OPT_AUTOACK) {
+    //     buffer[2 + l2hdr->dst_addr_len] = 0x01;
+    // }
+    // else {
+    //     buffer[2 + l2hdr->dst_addr_len] = 0x00;
+    // }
+    // /* send out data */
+    // dev->tx_limit = 3 + l2hdr->dst_addr_len;
+    // dev->tx_buf = buffer;
+    // uart_tx_begin(dev->uart);
+    // while (&dev->tx_count > 0) {
+    //     mutex_lock(&dev->inner_tx_lock);
+    // }
+    // /* send payload */
+    // while (snip) {
+    //     dev->tx_limit = snip->size;
+    //     dev->tx_buf = (uint8_t *)snip->data;
+    //     uart_tx_begin(dev->uart);
+    //     while (&dev->tx_count > 0) {
+    //         mutex_lock(&dev->inner_tx_lock);
+    //     }
+    //     snip = snip->next;
+    // }
+    // /* and finish up by sending the frames checksum */
+    // uart_write_blocking(dev->uart, (char)(0xff - dev->tx_cksum));
 
-    /* wait for result */
+    // /* wait for result */
 
-    /* clean-up and return */
-    mutex_unlock(&dev->tx_lock);
-    ++dev->frame_id;
-    return count;
+    // /* clean-up and return */
+    // mutex_unlock(&dev->tx_lock);
+    // ++dev->frame_id;
+    // return count;
+    return 0;
 }
 
 int _add_cb(ng_netdev_t *dev, ng_netdev_event_cb_t cb)
@@ -299,7 +301,7 @@ int _add_cb(ng_netdev_t *dev, ng_netdev_event_cb_t cb)
         return -ENODEV;
     }
     if (dev->event_cb != NULL) {
-        return -ENOBUFS;
+        return -ENOTEMPTY;
     }
     dev->event_cb = cb;
     return 0;
@@ -311,7 +313,7 @@ int _rem_cb(ng_netdev_t *dev, ng_netdev_event_cb_t cb)
         return -ENODEV;
     }
     if (dev->event_cb != cb) {
-        return -ENOPKG;
+        return -ENOENT;
     }
     dev->event_cb = NULL;
     return 0;
@@ -322,7 +324,7 @@ int _get(ng_netdev_t *dev, ng_netconf_opt_t opt, void *value, size_t *value_len)
     return -1;
 }
 
-int _set(ng_netdev_t *dev, ng_netconf_opt_t opt, void *value, size_t *value_len)
+int _set(ng_netdev_t *dev, ng_netconf_opt_t opt, void *value, size_t value_len)
 {
     return -1;
 }
@@ -340,4 +342,4 @@ const ng_netdev_driver_t xbee_driver = {
     .get = _get,
     .set = _set,
     .isr_event = _isr_event,
-}
+};
