@@ -51,7 +51,7 @@
    reconstruct the packets, extract their payload, and handle its
    processing and/or forward it to the upper layers.
    The following enum lits the states of this FSM. */
-static enum {
+typedef enum {
     XBEE_RX_STATE_IDLE,                /* no data stored for now */
     XBEE_RX_STATE_SIZE1,               /* waiting for the first byte (MSB)
                                      of the size of the packet to come */
@@ -59,9 +59,9 @@ static enum {
                                      of the size of the packet to come */
     XBEE_RX_STATE_DATA,             /* a packet (whose size we know) has begun
                                      to arrive, but isn't complete yet */
-    XBEE_RX_STATE_COMPLETE,     /* we now have a complete packet,
-                                     wait for checksum byte */
-} recv_fsm_state;
+    // XBEE_RX_STATE_DATA,     /* we now have a complete packet,
+                                     // wait for checksum byte */
+} xbee_rx_state_t;
 
 /**
  * @brief   XBee device descriptor
@@ -79,7 +79,7 @@ typedef struct {
     uint8_t frame_id;               /**< next ID for sent frames */
     mutex_t tx_lock;                /**< lock for writing to the device */
     mutex_t inner_tx_lock;          /**< lock for blocks of TX data */
-    uint8_t *tx_buf                 /**< transmit data buffer */
+    uint8_t *tx_buf;                 /**< transmit data buffer */
     uint16_t tx_count;              /**< counter for ongoing transmission */
     uint16_t tx_limit;              /**< number of bytes to transmit */
     uint8_t tx_cksum;               /**< checksum for transmitted data */
@@ -87,12 +87,6 @@ typedef struct {
     uint16_t rx_len;
     uint8_t rx_cksum;
 
-
-    mutex_t response_lock;          /**< lock for synchronizing AT command
-                                         responses */
-    xbee_at_response_t at_response; /**< last AT command response */
-    mutex_t tx_report_lock;         /**< lock for synchronizing TX reports */
-    xbee_tx_report_t tx_report;     /**< last TX report */
 } xbee_t;
 
 /**

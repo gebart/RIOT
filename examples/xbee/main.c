@@ -21,17 +21,44 @@
 
 #include <stdio.h>
 
+#include "periph/uart.h"
+#include "hwtimer.h"
 #include "xbee.h"
 
-extern const ieee802154_radio_driver_t xbee_radio_driver;
+
+void rx(void *arg, char c)
+{
+    (void)arg;
+    if (c == '\r') {
+        c = '\n';
+    }
+
+    printf("%c", c);
+}
+
 
 int main(void)
 {
-    puts("Initializing device...");
-    xbee_radio_driver.init();
+    char in;
 
-    printf("You are running RIOT on a(n) %s board.\n", RIOT_BOARD);
-    printf("This board features a(n) %s MCU.\n", RIOT_MCU);
+    uart_init(UART_1, 9600, rx, NULL, NULL);
+
+    while (1) {
+        in = getchar();
+        if (in == '+') {
+            puts("Entering Command Mode...");
+            uart_write_blocking(UART_1, '+');
+            uart_write_blocking(UART_1, '+');
+            uart_write_blocking(UART_1, '+');
+            hwtimer_wait(2000 * 1000);
+        }
+        else if (in == '\n') {
+            uart_write_blocking(UART_1, '\r');
+        }
+        else {
+            uart_write_blocking(UART_1, in);
+        }
+    }
 
     return 0;
 }
