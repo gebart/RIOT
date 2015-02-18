@@ -78,8 +78,7 @@ typedef struct {
     uint8_t options;                /**< options field */
     uint8_t frame_id;               /**< next ID for sent frames */
     mutex_t tx_lock;                /**< lock for writing to the device */
-    mutex_t inner_tx_lock;          /**< lock for blocks of TX data */
-    uint8_t *tx_buf;                 /**< transmit data buffer */
+    const uint8_t *tx_buf;                 /**< transmit data buffer */
     uint16_t tx_count;              /**< counter for ongoing transmission */
     uint16_t tx_limit;              /**< number of bytes to transmit */
     uint8_t tx_cksum;               /**< checksum for transmitted data */

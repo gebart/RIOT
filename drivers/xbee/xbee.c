@@ -40,21 +40,18 @@
  */
 #define MAX_AT_CMD_LEN          (32U)
 
-#define INC_CKSUM(x)   (sum = (sum + (x)) & 0xff)
 
-
-#define API_AT                  (0x08)
 #define API_MODE_START_DELIMITER    (0x7e)
 
-#define API_CMD_MODEM_STATUS        (0x8a)
-#define API_CMD_AT                  (0x08)
-#define API_CMD_AT_QUEUE            (0x09)
-#define API_CMD_AT_RESP             (0x88)
-#define API_CMD_TX_LONG_ADDR        (0x00)
-#define API_CMD_TX_SHORT_ADDR       (0x01)
-#define API_CMD_TX_RESP             (0x89)
-#define API_CMD_RX_LONG_ADDR        (0x80)
-#define API_CMD_RX_SHORT_ADDR       (0x81)
+#define API_ID_MODEM_STATUS        (0x8a)
+#define API_ID_AT                  (0x08)
+#define API_ID_AT_QUEUE            (0x09)
+#define API_ID_AT_RESP             (0x88)
+#define API_ID_TX_LONG_ADDR        (0x00)
+#define API_ID_TX_SHORT_ADDR       (0x01)
+#define API_ID_TX_RESP             (0x89)
+#define API_ID_RX_LONG_ADDR        (0x80)
+#define API_ID_RX_SHORT_ADDR       (0x81)
 
 
 
@@ -64,7 +61,14 @@
 /*****************************************************************************/
 /*                    Driver's internal utility functions                    */
 /*****************************************************************************/
-
+static uint8_t _cksum(uint8_t *buf, uint16_t size)
+{
+    uint8_t res = 0;
+    for (int i = 3; i < size; i++) {
+        res += buf[i];
+    }
+    return 0xff - res;
+}
 
 static void _at_cmd(xbee_t *dev, const char *cmd)
 {
@@ -76,39 +80,91 @@ static void _at_cmd(xbee_t *dev, const char *cmd)
 // static void _api_cmd(xbee_t *dev, uint8_t cmd_id, const uint8_t *data,
 //                      uint16_t length)
 // {
-//     uint8_t cksum = cmd_id;
-
-//     /* get access for writing UART data */
-//     mutex_lock(&dev->tx_lock);
-//     /* write data into the TX buffer */
-//     rinfbuffer_add_one(&rx->buf, 0x7e);     /* start condition */
-//     rinfbuffer_add_one(&rx->buf, (char)(length >> 8));
-//     rinfbuffer_add_one(&rx->buf, (char)(length & 0xff));
-//     rinfbuffer_add_one(&rx->buf, (char)cmd_id);
-//     for (int i = 0; i < length; i++) {
-//         rinfbuffer_add_one(&rx->buf, (char)data[i]);
-//         cksum += data[i];
-//     }
-//     rinfbuffer_add_one(&rx->buf, (0xff - cksum));
-//     /* trigger transmission */
+//     /* send start delimiter and frame length and command ID */
+//     DEBUG("_api_cmd: send start and length\n");
+//     uart_write_blocking(dev->uart, (char)API_MODE_START_DELIMITER);
+//     uart_write_blocking(dev->uart, (char)(length >> 8));
+//     uart_write_blocking(dev->uart, (char)(length & 0xff));
+//     uart_write_blocking(dev->uart, (char)cmd_id);
+//     /* send frame data */
+//     dev->tx_cksum = cmd_id;
+//     dev->tx_buf = data;
+//     dev->tx_limit = length;
 //     uart_tx_begin(dev->uart);
+//     DEBUG("_api_cmd: wait for TX to complete\n");
+//     while (dev->tx_count < dev->tx_limit) {
+//         mutex_lock(&dev->tx_lock);
+//     }
+//     /* send checksum */
+//     DEBUG("_api_cmd: send cksum: 0x%x\n", dev->tx_cksum);
+//     uart_write_blocking(dev->uart, (char)dev->tx_cksum);
 // }
 
-// static at_response_t _at_frame(xbee_t *dev, const char *cmd)
-// {
-//     uint8_t buf[MAX_AT_CMD_LEN];
-//     uint16_t size;
+static void _api_at_cmd(xbee_t *dev, const char *cmd)
+{
+    uint8_t buf[MAX_AT_CMD_LEN];
+    uint16_t size;
 
-//     /* construct API command */
-//     size = strlen(cmd);
-//     buf[0] = (char)dev->frame_id++;
-//     memcpy(buf + 1, cmd, size);
-//     /* send it */
-//     _api_cmd(dev, API_CMD_AT, buf, size + 1);
-//     /* wait for response */
-//     mutex_lock(&dev->response_lock);
-//     mutex_lock(&dev->response_lock);
-// }
+    /* get size of AT command */
+    size = strlen(cmd) + 2;
+    /* construct API frame */
+    buf[0] = API_MODE_START_DELIMITER;
+    buf[1] = size >> 8;
+    buf[2] = size & 0xff;
+    buf[3] = API_ID_AT;
+    buf[4] = dev->frame_id;
+    memcpy(buf + 5, cmd, strlen(cmd));
+    buf[3 + size] = _cksum(buf, size + 3);
+    /* send UART data and for it to finish */
+    dev->tx_limit = 6 + size;
+    dev->tx_count = 0;
+    dev->tx_buf = buf;
+    uart_tx_begin(dev->uart);
+    while (dev->tx_count < dev->tx_limit) {
+        mutex_lock(&dev->tx_lock);
+    }
+
+    /* TODO: wait for results */
+
+    /* increment frame id */
+    dev->frame_id = (++dev->frame_id == 0) ? 1 : dev->frame_id;
+}
+
+
+
+int _send_foo(xbee_t *dev, const char *foo)
+{
+    uint8_t buf[100];
+    uint16_t size;
+
+    /* get size of AT command */
+    size = strlen(foo) + 5;
+    /* construct API frame */
+    buf[0] = API_MODE_START_DELIMITER;
+    buf[1] = size >> 8;
+    buf[2] = size & 0xff;
+    buf[3] = API_ID_TX_SHORT_ADDR;
+    buf[4] = dev->frame_id;
+    buf[5] = 0x00;
+    buf[6] = 0x23;
+    buf[7] = 0x01;
+    memcpy(buf + 8, foo, strlen(foo));
+    buf[3 + size] = _cksum(buf, size + 3);
+    /* send UART data and for it to finish */
+    dev->tx_limit = 8 + size;
+    dev->tx_count = 0;
+    dev->tx_buf = buf;
+    uart_tx_begin(dev->uart);
+    while (dev->tx_count < dev->tx_limit) {
+        mutex_lock(&dev->tx_lock);
+    }
+
+    /* TODO: wait for results */
+
+    /* increment frame id */
+    dev->frame_id = (++dev->frame_id == 0) ? 1 : dev->frame_id;
+    return 0;
+}
 
 
 
@@ -119,20 +175,23 @@ int _tx_cb(void *arg)
 {
     xbee_t *dev = (xbee_t *)arg;
     if (dev->tx_count < dev->tx_limit) {
-        char c = dev->tx_buf[dev->tx_count++];
+        char c = (char)dev->tx_buf[dev->tx_count++];
+        DEBUG("tx: 0x%02x\n", c);
         uart_write(dev->uart, c);
         dev->tx_cksum += (uint8_t)c;
         return 1;
     }
+    DEBUG("tx: done\n");
     /* unlock TX mutex when transmission is done */
-    mutex_unlock(&dev->inner_tx_lock);
-    dev->tx_count = 0;
+    mutex_unlock(&dev->tx_lock);
     return 0;
 }
 
 void _rx_cb(void *arg, char c)
 {
     xbee_t *dev = (xbee_t *)arg;
+
+    DEBUG("rx: (0x%02x) %c\n", c, c);
 
     switch (dev->rx_state) {
         case XBEE_RX_STATE_IDLE:
@@ -177,7 +236,11 @@ int xbee_init(xbee_t *dev, uart_t uart, uint32_t baudrate,
     dev->uart = uart;
     dev->sleep_pin = sleep_pin;
     dev->status_pin = status_pin;
+    dev->frame_id = 1;
     dev->options = 0;
+    dev->tx_count = 0;
+    /* initialize mutexes */
+    mutex_init(&dev->tx_lock);
     /* initialize UART and GPIO pins */
     if (uart_init(uart, baudrate, _rx_cb, _tx_cb, dev) < 0) {
         DEBUG("xbee: error initializing UART\n");
@@ -195,21 +258,74 @@ int xbee_init(xbee_t *dev, uart_t uart, uint32_t baudrate,
             return -ENXIO;
         }
     }
-    /* initialize mutexes */
-    mutex_init(&dev->tx_lock);
-    mutex_init(&dev->inner_tx_lock);
 
      /* put the XBee device into command mode */
+    hwtimer_wait(HWTIMER_TICKS(1500 * 1000));
+    DEBUG("+++\n");
     _at_cmd(dev, "+++");
     hwtimer_wait(HWTIMER_TICKS(1500 * 1000));
-    /* reset device */
-    _at_cmd(dev, "ATFR\r");
+
+    /* test: get ID */
+    DEBUG("ATID\n");
+    _at_cmd(dev, "ATID\r");
+    hwtimer_wait(HWTIMER_TICKS(250 * 1000));
     /* disable non IEEE802.15.4 extensions */
+    DEBUG("ATMM2\n");
     _at_cmd(dev, "ATMM2\r");
+    hwtimer_wait(HWTIMER_TICKS(250 * 1000));
+    /* REMOVE */
+    DEBUG("ATAP\n");
+    _at_cmd(dev, "ATAP\r");
+    hwtimer_wait(HWTIMER_TICKS(250 * 1000));
     /* put XBee module in "API mode without escaped characters" */
+    DEBUG("ATAP1\n");
     _at_cmd(dev, "ATAP1\r");
+    hwtimer_wait(HWTIMER_TICKS(250 * 1000));
+    /* REMOVE */
+    DEBUG("ATAP\n");
+    _at_cmd(dev, "ATAP\r");
+    hwtimer_wait(HWTIMER_TICKS(250 * 1000));
     /* apply AT commands */
+    DEBUG("ATAC\n");
     _at_cmd(dev, "ATAC\r");
+    hwtimer_wait(HWTIMER_TICKS(250 * 1000));
+    /* exit command mode */
+    DEBUG("ATCN\n");
+    _at_cmd(dev, "ATCN\r");
+
+
+    hwtimer_wait(HWTIMER_TICKS(1500 * 1000));
+    DEBUG("+++\n");
+    _at_cmd(dev, "+++");
+    hwtimer_wait(HWTIMER_TICKS(1500 * 1000));
+    /* REMOVE */
+    DEBUG("ATAP\n");
+    _at_cmd(dev, "ATAP\r");
+    hwtimer_wait(HWTIMER_TICKS(250 * 1000));
+    /* exit command mode */
+    DEBUG("ATFR\n");
+    _at_cmd(dev, "ATFR\r");
+
+
+    hwtimer_wait(HWTIMER_TICKS(1500 * 1000));
+
+    /* send some data */
+    _send_foo(dev, "Hello");
+    hwtimer_wait(HWTIMER_TICKS(1000 * 1000));
+
+
+    /* test: get ID via API format */
+    DEBUG("API - ATID\n");
+    _api_at_cmd(dev, "ID");
+    hwtimer_wait(HWTIMER_TICKS(250 * 1000));
+    /* set address to 23 */
+    DEBUG("API - ATMY23\n");
+    _api_at_cmd(dev, "MY23");
+    hwtimer_wait(HWTIMER_TICKS(250 * 1000));
+    /* read address */
+    DEBUG("API - ATMY\n");
+    _api_at_cmd(dev, "MY");
+    hwtimer_wait(HWTIMER_TICKS(250 * 1000));
 
     return 0;
 }
@@ -249,8 +365,7 @@ int _send(ng_netdev_t *dev, ng_pktsnip_t *pkt)
     //     return -ENOMSG;
     // }
 
-    // /* acquire TX lock and reset checksum */
-    // mutex_lock(&dev->tx_lock);
+    // /* reset checksum */
     // dev->tx_cksum = 0;
     // /* send API command and frame size */
     // uart_write_blocking(dev->uart, API_CMD_SND);
@@ -271,7 +386,7 @@ int _send(ng_netdev_t *dev, ng_pktsnip_t *pkt)
     // dev->tx_buf = buffer;
     // uart_tx_begin(dev->uart);
     // while (&dev->tx_count > 0) {
-    //     mutex_lock(&dev->inner_tx_lock);
+    //     mutex_lock(&dev->tx_lock);
     // }
     // /* send payload */
     // while (snip) {
@@ -279,7 +394,7 @@ int _send(ng_netdev_t *dev, ng_pktsnip_t *pkt)
     //     dev->tx_buf = (uint8_t *)snip->data;
     //     uart_tx_begin(dev->uart);
     //     while (&dev->tx_count > 0) {
-    //         mutex_lock(&dev->inner_tx_lock);
+    //         mutex_lock(&dev->tx_lock);
     //     }
     //     snip = snip->next;
     // }
@@ -289,7 +404,6 @@ int _send(ng_netdev_t *dev, ng_pktsnip_t *pkt)
     // /* wait for result */
 
     // /* clean-up and return */
-    // mutex_unlock(&dev->tx_lock);
     // ++dev->frame_id;
     // return count;
     return 0;
@@ -301,7 +415,7 @@ int _add_cb(ng_netdev_t *dev, ng_netdev_event_cb_t cb)
         return -ENODEV;
     }
     if (dev->event_cb != NULL) {
-        return -ENOTEMPTY;
+        return -ENOBUFS;
     }
     dev->event_cb = cb;
     return 0;
