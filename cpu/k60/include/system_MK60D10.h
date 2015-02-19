@@ -1,22 +1,28 @@
-
-
-/**
- * \file
- * \brief Device specific configuration file for MK60D10 (header file)
+/*
+ * Copyright (C) 2015 Eistec AB
  *
- * Provides a system configuration function and a global variable that contains
- * the system frequency. It configures the device and initializes the oscillator
- * (PLL) that is part of the microcontroller device.
+ * This file is subject to the terms and conditions of the GNU Lesser General
+ * Public License v2.1. See the file LICENSE in the top level directory for more
+ * details.
  */
 
 #ifndef SYSTEM_MK60D10_H_
-#define SYSTEM_MK60D10_H_                        /**< Symbol preventing repeated inclusion */
+#define SYSTEM_MK60D10_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #include <stdint.h>
+
+/**
+ * @ingroup         cpu_k60
+ * @{
+ *
+ * @file
+ * @brief Device specific configuration file for MK60D10 (header file)
+ */
+
 
 /**
  * \brief Current core clock frequency
@@ -65,8 +71,11 @@ extern uint32_t SystemFlashClock;
  */
 void SystemCoreClockUpdate(void);
 
+/** @} */
+
 #ifdef __cplusplus
 }
 #endif
 
 #endif  /* #if !defined(SYSTEM_MK60D10_H_) */
+
