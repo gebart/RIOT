@@ -44,7 +44,7 @@ extern "C" {
 #define KERNEL_CONF_STACKSIZE_DEFAULT   (512)
 #endif
 
-#define KERNEL_CONF_STACKSIZE_IDLE      (192)
+#define KERNEL_CONF_STACKSIZE_IDLE      (1024)
 /** @} */
 
 /**

@@ -13,6 +13,7 @@ RIOTBASE ?= $(CURDIR)/../..
 CFLAGS += -DDEVELHELP
 
 USEMODULE+=xbee
+USEMODULE+=shell
 
 # Change this to 0 show compiler invocation lines by default:
 QUIET ?= 1

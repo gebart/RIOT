@@ -51,6 +51,14 @@
 #define API_ID_RX_SHORT_ADDR        (0x81)
 
 
+typedef struct {
+    uint8_t frame_id;
+    char at_cmd[2];
+    uint8_t status;
+    uint8_t data[8];
+    uint8_t data_len;
+} resp_t;
+
 
 /*****************************************************************************/
 /*                    Driver's internal utility functions                    */
@@ -63,6 +71,14 @@ static void _dump(uint8_t *buf, int size)
     puts("");
 }
 
+static void _dump_resp(resp_t *resp)
+{
+    printf("%c%c: ", resp->at_cmd[0], resp->at_cmd[1]);
+    for (int i = 0; i < resp->data_len; i++) {
+        printf("0x%02x ", resp->data[i]);
+    }
+    printf("[FRAME %u | STATUS %u]\n\n", resp->frame_id, resp->status);
+}
 
 static uint8_t _cksum(uint8_t *buf, uint16_t size)
 {
@@ -105,51 +121,48 @@ static void _at_cmd(xbee_t *dev, const char *cmd)
 //     uart_write_blocking(dev->uart, (char)dev->tx_cksum);
 // }
 
-static int _api_at_cmd(xbee_t *dev, const char *cmd)
+static void _api_at_cmd(xbee_t *dev, uint8_t *cmd, uint8_t size, resp_t *resp)
 {
-    uint16_t size;
-    int res;
-
     DEBUG("API_AT_CMD: frame %u - %s\n", dev->frame_id, cmd);
 
-    /* get size of AT command */
-    size = strlen(cmd) + 2;
     /* construct API frame */
     dev->tx_buf[0] = API_START_DELIMITER;
-    dev->tx_buf[1] = size >> 8;
-    dev->tx_buf[2] = size & 0xff;
+    dev->tx_buf[1] = (size + 2) >> 8;
+    dev->tx_buf[2] = (size + 2) & 0xff;
     dev->tx_buf[3] = API_ID_AT;
     dev->tx_buf[4] = dev->frame_id;
-    memcpy(dev->tx_buf + 5, cmd, strlen(cmd));
-    dev->tx_buf[3 + size] = _cksum(dev->tx_buf, size + 3);
+    memcpy(dev->tx_buf + 5, cmd, size);
+    dev->tx_buf[size + 5] = _cksum(dev->tx_buf, size + 5);
     /* send UART data and for it to finish */
-    dev->tx_limit = 6 + size;
+    dev->tx_limit = size + 6;
     dev->tx_count = 0;
     uart_tx_begin(dev->uart);
+    _dump(dev->tx_buf, dev->tx_limit);
 
     /* wait for results */
     while (dev->rx_state != XBEE_RX_STATE_RESP_PENDING) {
         mutex_lock(&dev->rx_lock);
     }
-    /* increment frame id */
-    dev->frame_id = (++dev->frame_id == 0) ? 1 : dev->frame_id;
-    /* return result code */
-    if (dev->rx_buf[0] != API_ID_AT_RESP) {
-        DEBUG("APPI_AT_CMD: invalid response\n");
-        res = -1;
-    }
-    else {
-        DEBUG("API_AT_CMD: frame %u - response code: %x\n", dev->rx_buf[1], dev->rx_buf[4]);
-        res = (int)dev->rx_buf[4];
-    }
 
+    /* set response */
+    _dump(dev->rx_buf, dev->rx_limit);
+    resp->frame_id = dev->rx_buf[1];
+    memcpy(resp->at_cmd, dev->rx_buf + 2, 2);
+    resp->status = dev->rx_buf[4];
+    resp->data_len = dev->rx_limit - 5;
+    if (resp->data_len > 0) {
+        memcpy(resp->data, dev->rx_buf + 5, resp->data_len);
+    }
+    _dump_resp(resp);
+
+    /* increment frame id and reset state */
+    dev->frame_id = (++dev->frame_id == 0) ? 1 : dev->frame_id;
     dev->rx_state = XBEE_RX_STATE_IDLE;
-    return res;
 }
 
 
 
-int _send_foo(xbee_t *dev, const char *foo)
+int _send_foo(xbee_t *dev, uint16_t addr, const char *foo, resp_t *resp)
 {
     uint16_t size;
 
@@ -163,33 +176,44 @@ int _send_foo(xbee_t *dev, const char *foo)
     dev->tx_buf[2] = size & 0xff;
     dev->tx_buf[3] = API_ID_TX_SHORT_ADDR;
     dev->tx_buf[4] = dev->frame_id;
-    dev->tx_buf[5] = 0x00;
-    dev->tx_buf[6] = 0x23;
+    // dev->tx_buf[5] = 0xff;
+    // dev->tx_buf[6] = 0xff;
+    dev->tx_buf[5] = (uint8_t)(addr >> 8);
+    dev->tx_buf[6] = (uint8_t)(addr & 0xff);
     dev->tx_buf[7] = 0x01;
     memcpy(dev->tx_buf + 8, foo, strlen(foo));
     dev->tx_buf[3 + size] = _cksum(dev->tx_buf, size + 3);
     /* send UART data and for it to finish */
-    dev->tx_limit = 8 + size;
+    dev->tx_limit = 4 + size;
     dev->tx_count = 0;
     uart_tx_begin(dev->uart);
+    _dump(dev->tx_buf, dev->tx_limit);
 
     /* wait for results */
     while (dev->rx_state != XBEE_RX_STATE_RESP_PENDING) {
         mutex_lock(&dev->rx_lock);
     }
-    /* increment frame id */
+
+    /* set response */
+    _dump(dev->rx_buf, dev->rx_limit);
+    resp->frame_id = dev->rx_buf[1];
+    resp->status = dev->rx_buf[2];
+    resp->data_len = 0;
+    resp->at_cmd[0] = 'T';
+    resp->at_cmd[1] = 'X';
+    _dump_resp(resp);
+
+    /* increment frame id and reset state */
     dev->frame_id = (++dev->frame_id == 0) ? 1 : dev->frame_id;
-    /* return result code */
-    if (dev->rx_buf[0] != API_ID_TX_RESP) {
-        DEBUG("API_TX: invalid response\n");
-        return -1;
-    }
-    else {
-        DEBUG("API_TX: frame %u - response code: %x\n", dev->rx_buf[1], dev->rx_buf[2]);
-        return dev->rx_buf[2];
-    }
+    dev->rx_state = XBEE_RX_STATE_IDLE;
+    return 0;
 }
 
+void _send_bar(xbee_t *dev, uint16_t addr, const char *data)
+{
+    resp_t resp;
+    _send_foo(dev, addr, data, &resp);
+}
 
 
 /*
@@ -239,7 +263,6 @@ void _rx_cb(void *arg, char c)
             dev->rx_cksum += (uint8_t)c;
             if (dev->rx_cksum == 0xff) {
                 /* checksum correct, process packet */
-                DEBUG("RX: checksum correct\n");
                 switch (dev->rx_buf[0]) {
                     case API_ID_AT_RESP:
                     case API_ID_TX_RESP:
@@ -273,6 +296,85 @@ void _rx_cb(void *arg, char c)
     }
 }
 
+uint16_t _get_channel(xbee_t *dev)
+{
+    uint8_t cmd[2];
+    resp_t resp;
+
+    cmd[0] = 'C';
+    cmd[1] = 'H';
+
+    _api_at_cmd(dev, cmd, 2, &resp);
+    if (resp.status == 0) {
+        return (uint16_t)resp.data[0];
+    }
+    return 0;
+}
+
+int _set_channel(xbee_t *dev, uint16_t channel)
+{
+    uint8_t cmd[3];
+    resp_t resp;
+
+    cmd[0] = 'C';
+    cmd[1] = 'H';
+    cmd[2] = (uint8_t)channel;
+    _api_at_cmd(dev, cmd, 3, &resp);
+    return -resp.status;
+}
+
+uint16_t _get_addr(xbee_t *dev)
+{
+    uint8_t cmd[2];
+    resp_t resp;
+    uint16_t addr;
+
+    cmd[0] = 'M';
+    cmd[1] = 'Y';
+    _api_at_cmd(dev, cmd, 2, &resp);
+    addr = (resp.data[0] << 8) | resp.data[1];
+    return addr;
+}
+
+int _set_addr(xbee_t *dev, uint16_t addr)
+{
+    uint8_t cmd[4];
+    resp_t resp;
+
+    cmd[0] = 'M';
+    cmd[1] = 'Y';
+    cmd[2] = (uint8_t)(addr >> 8);
+    cmd[3] = (uint8_t)addr;
+    _api_at_cmd(dev, cmd, 4, &resp);
+    return -resp.status;
+}
+
+uint16_t _get_panid(xbee_t *dev)
+{
+    uint8_t cmd[2];
+    resp_t resp;
+    uint16_t addr;
+
+    cmd[0] = 'I';
+    cmd[1] = 'D';
+    _api_at_cmd(dev, cmd, 2, &resp);
+    addr = (resp.data[0] << 8) | resp.data[1];
+    return addr;
+}
+
+int _set_panid(xbee_t *dev, uint16_t addr)
+{
+    uint8_t cmd[4];
+    resp_t resp;
+
+    cmd[0] = 'I';
+    cmd[1] = 'D';
+    cmd[2] = (uint8_t)(addr >> 8);
+    cmd[3] = (uint8_t)addr;
+    _api_at_cmd(dev, cmd, 4, &resp);
+    return -resp.status;
+}
+
 
 /*****************************************************************************/
 /*                        Driver's "public" functions                        */
@@ -290,6 +392,7 @@ int xbee_init(xbee_t *dev, uart_t uart, uint32_t baudrate,
         return -ENXIO;
     }
     /* initialize device descriptor */
+    dev->driver = &xbee_driver;
     dev->uart = uart;
     dev->sleep_pin = sleep_pin;
     dev->status_pin = status_pin;
@@ -334,15 +437,24 @@ int xbee_init(xbee_t *dev, uart_t uart, uint32_t baudrate,
     // hwtimer_wait(HWTIMER_TICKS(1000 * 1000));
 
 
+    // resp_t resp;
+
     /* test: get ID via API format */
-    _api_at_cmd(dev, "ID");
-    /* set address to 23 */
-    _api_at_cmd(dev, "MY23");
-    /* read address */
-    _api_at_cmd(dev, "MY");
+    // _api_at_cmd(dev, "ID", &resp);
+    // /* set address to 23 */
+    // _api_at_cmd(dev, "MY03", &resp);
+    // _api_at_cmd(dev, "CH", &resp);
+    // _api_at_cmd(dev, "CE", &resp);
+    // _api_at_cmd(dev, "A1", &resp);
+
+    // _api_at_cmd(dev, "DH00000000", &resp);
+    // _api_at_cmd(dev, "DL0000FFFF", &resp);
+
+    // _api_at_cmd(dev, "AC", &resp);
 
 
-    _send_foo(dev, "Hello World!");
+
+    //_send_foo(dev, 0x23, "Hello World!", &resp);
 
     return 0;
 }
@@ -450,14 +562,43 @@ int _rem_cb(ng_netdev_t *dev, ng_netdev_event_cb_t cb)
     return 0;
 }
 
-int _get(ng_netdev_t *dev, ng_netconf_opt_t opt, void *value, size_t *value_len)
+int _get(ng_netdev_t *netdev, ng_netconf_opt_t opt, void *value, size_t *value_len)
 {
-    return -1;
+    xbee_t *dev = (xbee_t *)netdev;
+
+    switch (opt) {
+        case NETCONF_OPT_CHANNEL:
+            *value_len = 2;
+            *((uint16_t *)value) = _get_channel(dev);
+            break;
+        case NETCONF_OPT_ADDRESS:
+            *value_len = 2;
+            *((uint16_t *)value) = _get_addr(dev);
+            break;
+        case NETCONF_OPT_NID:
+            *value_len = 2;
+            *((uint16_t *)value) = _get_panid(dev);
+            break;
+        default:
+            return -ENOTSUP;
+    }
+    return 0;
 }
 
-int _set(ng_netdev_t *dev, ng_netconf_opt_t opt, void *value, size_t value_len)
+int _set(ng_netdev_t *netdev, ng_netconf_opt_t opt, void *value, size_t value_len)
 {
-    return -1;
+    xbee_t *dev = (xbee_t *)netdev;
+
+    switch (opt) {
+        case NETCONF_OPT_CHANNEL:
+            return _set_channel(dev, *((uint16_t *)value));
+        case NETCONF_OPT_ADDRESS:
+            return _set_addr(dev, *((uint16_t *)value));
+        case NETCONF_OPT_NID:
+            return _set_panid(dev, *((uint16_t *)value));
+        default:
+            return -ENOTSUP;
+    }
 }
 
 void _isr_event(ng_netdev_t *netdev, uint16_t event_type)
@@ -465,6 +606,8 @@ void _isr_event(ng_netdev_t *netdev, uint16_t event_type)
     xbee_t *dev = (xbee_t *)netdev;
     ng_ifhdr_t *hdr = (ng_ifhdr_t *)dev->rx_data->data;
     uint8_t *data = dev->rx_data->next->data;
+
+    DEBUG("ISR EVENT, yo\n");
 
     /* test if there is actually data waiting in the RX buffer */
     if (dev->rx_state != XBEE_RX_STATE_DATA_PENDING) {
@@ -488,7 +631,13 @@ void _isr_event(ng_netdev_t *netdev, uint16_t event_type)
     /* mark data as processed */
     dev->rx_state = XBEE_RX_STATE_IDLE;
     /* forward data to MAC layer */
-    dev->event_cb(NETDEV_EVENT_RX_COMPLETE, dev->rx_data);
+    if (dev->event_cb) {
+        DEBUG("ISR EVENT: triggering event\n");
+        dev->event_cb(NETDEV_EVENT_RX_COMPLETE, dev->rx_data);
+    }
+    else {
+        DEBUG("ISR EVENT: No callback registered\n");
+    }
 }
 
 /* implementation of the netdev interface */

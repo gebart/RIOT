@@ -68,7 +68,7 @@ typedef enum {
                                      // wait for checksum byte */
     XBEE_RX_STATE_CKSUM,
     XBEE_RX_STATE_DATA_PENDING,
-    XBEE_RX_STATE_RESP_PENDING
+    XBEE_RX_STATE_RESP_PENDING,
 } xbee_rx_state_t;
 
 /**
