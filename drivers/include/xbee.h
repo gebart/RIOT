@@ -66,6 +66,9 @@ typedef enum {
                                      to arrive, but isn't complete yet */
     // XBEE_RX_STATE_DATA,     /* we now have a complete packet,
                                      // wait for checksum byte */
+    XBEE_RX_STATE_CKSUM,
+    XBEE_RX_STATE_DATA_PENDING,
+    XBEE_RX_STATE_RESP_PENDING
 } xbee_rx_state_t;
 
 /**
@@ -81,15 +84,22 @@ typedef struct {
     gpio_t sleep_pin;               /**< GPIO pin connected to SLEEP */
     gpio_t status_pin;              /**< GPIO pin for reading the status */
     uint8_t options;                /**< options field */
+    uint16_t own_addr;              /**< link layer address of the device */
+
     uint8_t frame_id;               /**< next ID for sent frames */
-    mutex_t tx_lock;                /**< lock for writing to the device */
+
     uint8_t tx_buf[XBEE_MAX_PKT_LENGTH];   /**< transmit data buffer */
     uint16_t tx_count;              /**< counter for ongoing transmission */
     uint16_t tx_limit;              /**< number of bytes to transmit */
+
     xbee_rx_state_t rx_state;       /**< current state in the RX state machine */
+    mutex_t rx_lock;
+    uint8_t rx_buf[XBEE_MAX_PKT_LENGTH];
+    uint16_t rx_count;
     uint16_t rx_limit;
     uint8_t rx_cksum;
-    uint16_t rx_len;
+    /* HACK */
+    ng_pktsnip_t *rx_data;
 } xbee_t;
 
 /**

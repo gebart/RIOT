@@ -26,6 +26,7 @@
 #include "mutex.h"
 #include "hwtimer.h"
 #include "net/ng_ifhdr.h"
+#include "net/ng_pkt.h"
 #include "periph/uart.h"
 #include "periph/gpio.h"
 
@@ -33,24 +34,36 @@
 #include "debug.h"
 
 
+#define ISR_EVENT_RX_DONE           (0x0001)
 
-#define API_MODE_START_DELIMITER    (0x7e)
+#define ENTER_CMD_MODE_DELAY        HWTIMER_TICKS(1100 * 1000)
 
-#define API_ID_MODEM_STATUS        (0x8a)
-#define API_ID_AT                  (0x08)
-#define API_ID_AT_QUEUE            (0x09)
-#define API_ID_AT_RESP             (0x88)
-#define API_ID_TX_LONG_ADDR        (0x00)
-#define API_ID_TX_SHORT_ADDR       (0x01)
-#define API_ID_TX_RESP             (0x89)
-#define API_ID_RX_LONG_ADDR        (0x80)
-#define API_ID_RX_SHORT_ADDR       (0x81)
+#define API_START_DELIMITER         (0x7e)
+
+#define API_ID_MODEM_STATUS         (0x8a)
+#define API_ID_AT                   (0x08)
+#define API_ID_AT_QUEUE             (0x09)
+#define API_ID_AT_RESP              (0x88)
+#define API_ID_TX_LONG_ADDR         (0x00)
+#define API_ID_TX_SHORT_ADDR        (0x01)
+#define API_ID_TX_RESP              (0x89)
+#define API_ID_RX_LONG_ADDR         (0x80)
+#define API_ID_RX_SHORT_ADDR        (0x81)
 
 
 
 /*****************************************************************************/
 /*                    Driver's internal utility functions                    */
 /*****************************************************************************/
+static void _dump(uint8_t *buf, int size)
+{
+    for (int i = 0; i < size; i++) {
+        printf("0x%02x ", buf[i]);
+    }
+    puts("");
+}
+
+
 static uint8_t _cksum(uint8_t *buf, uint16_t size)
 {
     uint8_t res = 0;
@@ -62,6 +75,8 @@ static uint8_t _cksum(uint8_t *buf, uint16_t size)
 
 static void _at_cmd(xbee_t *dev, const char *cmd)
 {
+    DEBUG("AT_CMD: %s\n", cmd);
+
     for (int i = 0; cmd[i] != '\0'; i++) {
         uart_write_blocking(dev->uart, cmd[i]);
     }
@@ -72,7 +87,7 @@ static void _at_cmd(xbee_t *dev, const char *cmd)
 // {
 //     /* send start delimiter and frame length and command ID */
 //     DEBUG("_api_cmd: send start and length\n");
-//     uart_write_blocking(dev->uart, (char)API_MODE_START_DELIMITER);
+//     uart_write_blocking(dev->uart, (char)API_START_DELIMITER);
 //     uart_write_blocking(dev->uart, (char)(length >> 8));
 //     uart_write_blocking(dev->uart, (char)(length & 0xff));
 //     uart_write_blocking(dev->uart, (char)cmd_id);
@@ -90,14 +105,17 @@ static void _at_cmd(xbee_t *dev, const char *cmd)
 //     uart_write_blocking(dev->uart, (char)dev->tx_cksum);
 // }
 
-static void _api_at_cmd(xbee_t *dev, const char *cmd)
+static int _api_at_cmd(xbee_t *dev, const char *cmd)
 {
     uint16_t size;
+    int res;
+
+    DEBUG("API_AT_CMD: frame %u - %s\n", dev->frame_id, cmd);
 
     /* get size of AT command */
     size = strlen(cmd) + 2;
     /* construct API frame */
-    dev->tx_buf[0] = API_MODE_START_DELIMITER;
+    dev->tx_buf[0] = API_START_DELIMITER;
     dev->tx_buf[1] = size >> 8;
     dev->tx_buf[2] = size & 0xff;
     dev->tx_buf[3] = API_ID_AT;
@@ -108,14 +126,25 @@ static void _api_at_cmd(xbee_t *dev, const char *cmd)
     dev->tx_limit = 6 + size;
     dev->tx_count = 0;
     uart_tx_begin(dev->uart);
-    while (dev->tx_count < dev->tx_limit) {
-        mutex_lock(&dev->tx_lock);
+
+    /* wait for results */
+    while (dev->rx_state != XBEE_RX_STATE_RESP_PENDING) {
+        mutex_lock(&dev->rx_lock);
     }
-
-    /* TODO: wait for results */
-
     /* increment frame id */
     dev->frame_id = (++dev->frame_id == 0) ? 1 : dev->frame_id;
+    /* return result code */
+    if (dev->rx_buf[0] != API_ID_AT_RESP) {
+        DEBUG("APPI_AT_CMD: invalid response\n");
+        res = -1;
+    }
+    else {
+        DEBUG("API_AT_CMD: frame %u - response code: %x\n", dev->rx_buf[1], dev->rx_buf[4]);
+        res = (int)dev->rx_buf[4];
+    }
+
+    dev->rx_state = XBEE_RX_STATE_IDLE;
+    return res;
 }
 
 
@@ -124,10 +153,12 @@ int _send_foo(xbee_t *dev, const char *foo)
 {
     uint16_t size;
 
+    DEBUG("API_TX: frame %u - sending out %s\n", dev->frame_id, foo);
+
     /* get size of AT command */
     size = strlen(foo) + 5;
     /* construct API frame */
-    dev->tx_buf[0] = API_MODE_START_DELIMITER;
+    dev->tx_buf[0] = API_START_DELIMITER;
     dev->tx_buf[1] = size >> 8;
     dev->tx_buf[2] = size & 0xff;
     dev->tx_buf[3] = API_ID_TX_SHORT_ADDR;
@@ -141,15 +172,22 @@ int _send_foo(xbee_t *dev, const char *foo)
     dev->tx_limit = 8 + size;
     dev->tx_count = 0;
     uart_tx_begin(dev->uart);
-    while (dev->tx_count < dev->tx_limit) {
-        mutex_lock(&dev->tx_lock);
+
+    /* wait for results */
+    while (dev->rx_state != XBEE_RX_STATE_RESP_PENDING) {
+        mutex_lock(&dev->rx_lock);
     }
-
-    /* TODO: wait for results */
-
     /* increment frame id */
     dev->frame_id = (++dev->frame_id == 0) ? 1 : dev->frame_id;
-    return 0;
+    /* return result code */
+    if (dev->rx_buf[0] != API_ID_TX_RESP) {
+        DEBUG("API_TX: invalid response\n");
+        return -1;
+    }
+    else {
+        DEBUG("API_TX: frame %u - response code: %x\n", dev->rx_buf[1], dev->rx_buf[2]);
+        return dev->rx_buf[2];
+    }
 }
 
 
@@ -162,42 +200,76 @@ int _tx_cb(void *arg)
     xbee_t *dev = (xbee_t *)arg;
     if (dev->tx_count < dev->tx_limit) {
         char c = (char)dev->tx_buf[dev->tx_count++];
-        DEBUG("tx: 0x%02x\n", c);
         uart_write(dev->uart, c);
         return 1;
     }
-    DEBUG("tx: done\n");
-    /* unlock TX mutex when transmission is done */
-    mutex_unlock(&dev->tx_lock);
     return 0;
 }
 
 void _rx_cb(void *arg, char c)
 {
     xbee_t *dev = (xbee_t *)arg;
-
-    DEBUG("rx: (0x%02x) %c\n", c, c);
+    msg_t msg;
 
     switch (dev->rx_state) {
         case XBEE_RX_STATE_IDLE:
             /* check for beginning of new data frame */
-            if (c == API_MODE_START_DELIMITER) {
+            if (c == API_START_DELIMITER) {
                 dev->rx_state = XBEE_RX_STATE_SIZE1;
             }
             break;
         case XBEE_RX_STATE_SIZE1:
-            dev->rx_len = ((uint16_t)c) << 8;
+            dev->rx_limit = ((uint16_t)c) << 8;
             dev->rx_state = XBEE_RX_STATE_SIZE2;
             break;
         case XBEE_RX_STATE_SIZE2:
-            dev->rx_len += (uint8_t)c;
+            dev->rx_limit += (uint8_t)c;
+            dev->rx_count = 0;
             dev->rx_cksum = 0;
             dev->rx_state = XBEE_RX_STATE_DATA;
             break;
         case XBEE_RX_STATE_DATA:
-
+            dev->rx_buf[dev->rx_count++] = (uint8_t)c;
+            dev->rx_cksum += (uint8_t)c;
+            if (dev->rx_count == dev->rx_limit) {
+                dev->rx_state = XBEE_RX_STATE_CKSUM;
+            }
             break;
-
+        case XBEE_RX_STATE_CKSUM:
+            dev->rx_cksum += (uint8_t)c;
+            if (dev->rx_cksum == 0xff) {
+                /* checksum correct, process packet */
+                DEBUG("RX: checksum correct\n");
+                switch (dev->rx_buf[0]) {
+                    case API_ID_AT_RESP:
+                    case API_ID_TX_RESP:
+                        DEBUG("RX: got TX or AT cmd response\n");
+                        dev->rx_state = XBEE_RX_STATE_RESP_PENDING;
+                        mutex_unlock(&dev->rx_lock);
+                        break;
+                    case API_ID_RX_SHORT_ADDR:
+                    case API_ID_RX_LONG_ADDR:
+                        DEBUG("RX: received packet\n");
+                        dev->rx_state = XBEE_RX_STATE_DATA_PENDING;
+                        msg.type = NG_NETDEV_MSG_TYPE_EVENT;
+                        msg.content.value = ISR_EVENT_RX_DONE;
+                        msg_send_int(&msg, dev->mac_pid);
+                        break;
+                    default:
+                        DEBUG("RX: got un-interesting data\n");
+                        dev->rx_state = XBEE_RX_STATE_IDLE;
+                        break;
+                }
+            }
+            else {
+                /* checksum wrong, drop packet */
+                DEBUG("RX: checksum incorrect\n");
+                dev->rx_state = XBEE_RX_STATE_IDLE;
+            }
+            break;
+        default:
+            /* nothing to do */
+            break;
     }
 }
 
@@ -225,7 +297,7 @@ int xbee_init(xbee_t *dev, uart_t uart, uint32_t baudrate,
     dev->options = 0;
     dev->tx_count = 0;
     /* initialize mutexes */
-    mutex_init(&dev->tx_lock);
+    mutex_init(&dev->rx_lock);
     /* initialize UART and GPIO pins */
     if (uart_init(uart, baudrate, _rx_cb, _tx_cb, dev) < 0) {
         DEBUG("xbee: error initializing UART\n");
@@ -245,72 +317,32 @@ int xbee_init(xbee_t *dev, uart_t uart, uint32_t baudrate,
     }
 
      /* put the XBee device into command mode */
-    hwtimer_wait(HWTIMER_TICKS(1500 * 1000));
-    DEBUG("+++\n");
+    hwtimer_wait(HWTIMER_TICKS(ENTER_CMD_MODE_DELAY));
     _at_cmd(dev, "+++");
-    hwtimer_wait(HWTIMER_TICKS(1500 * 1000));
-
-    /* test: get ID */
-    DEBUG("ATID\n");
-    _at_cmd(dev, "ATID\r");
-    hwtimer_wait(HWTIMER_TICKS(250 * 1000));
+    hwtimer_wait(HWTIMER_TICKS(ENTER_CMD_MODE_DELAY));
     /* disable non IEEE802.15.4 extensions */
-    DEBUG("ATMM2\n");
     _at_cmd(dev, "ATMM2\r");
-    hwtimer_wait(HWTIMER_TICKS(250 * 1000));
-    /* REMOVE */
-    DEBUG("ATAP\n");
-    _at_cmd(dev, "ATAP\r");
-    hwtimer_wait(HWTIMER_TICKS(250 * 1000));
     /* put XBee module in "API mode without escaped characters" */
-    DEBUG("ATAP1\n");
     _at_cmd(dev, "ATAP1\r");
-    hwtimer_wait(HWTIMER_TICKS(250 * 1000));
-    /* REMOVE */
-    DEBUG("ATAP\n");
-    _at_cmd(dev, "ATAP\r");
-    hwtimer_wait(HWTIMER_TICKS(250 * 1000));
     /* apply AT commands */
-    DEBUG("ATAC\n");
     _at_cmd(dev, "ATAC\r");
-    hwtimer_wait(HWTIMER_TICKS(250 * 1000));
     /* exit command mode */
-    DEBUG("ATCN\n");
     _at_cmd(dev, "ATCN\r");
 
-
-    hwtimer_wait(HWTIMER_TICKS(1500 * 1000));
-    DEBUG("+++\n");
-    _at_cmd(dev, "+++");
-    hwtimer_wait(HWTIMER_TICKS(1500 * 1000));
-    /* REMOVE */
-    DEBUG("ATAP\n");
-    _at_cmd(dev, "ATAP\r");
-    hwtimer_wait(HWTIMER_TICKS(250 * 1000));
-    /* exit command mode */
-    DEBUG("ATFR\n");
-    _at_cmd(dev, "ATFR\r");
-
-
-    hwtimer_wait(HWTIMER_TICKS(1500 * 1000));
-
     /* send some data */
-    _send_foo(dev, "Hello");
-    hwtimer_wait(HWTIMER_TICKS(1000 * 1000));
+    // _send_foo(dev, "Hello");
+    // hwtimer_wait(HWTIMER_TICKS(1000 * 1000));
 
 
     /* test: get ID via API format */
-    DEBUG("API - ATID\n");
     _api_at_cmd(dev, "ID");
-    hwtimer_wait(HWTIMER_TICKS(250 * 1000));
     /* set address to 23 */
-    DEBUG("API - ATMY23\n");
     _api_at_cmd(dev, "MY23");
-    hwtimer_wait(HWTIMER_TICKS(250 * 1000));
     /* read address */
-    DEBUG("API - ATMY\n");
     _api_at_cmd(dev, "MY");
-    hwtimer_wait(HWTIMER_TICKS(250 * 1000));
+
+
+    _send_foo(dev, "Hello World!");
 
     return 0;
 }
@@ -428,9 +460,35 @@ int _set(ng_netdev_t *dev, ng_netconf_opt_t opt, void *value, size_t value_len)
     return -1;
 }
 
-void _isr_event(ng_netdev_t *dev, uint16_t event_type)
+void _isr_event(ng_netdev_t *netdev, uint16_t event_type)
 {
-    /* nothing to do here, yet */
+    xbee_t *dev = (xbee_t *)netdev;
+    ng_ifhdr_t *hdr = (ng_ifhdr_t *)dev->rx_data->data;
+    uint8_t *data = dev->rx_data->next->data;
+
+    /* test if there is actually data waiting in the RX buffer */
+    if (dev->rx_state != XBEE_RX_STATE_DATA_PENDING) {
+        return;
+    }
+
+    /* copy payload and fill interface header */
+    if (dev->rx_buf[0] == API_ID_RX_SHORT_ADDR) {
+        ng_ifhdr_init(hdr, 2, 2);
+        ng_ifhdr_set_src_addr(hdr, dev->rx_buf + 1, 2);
+        hdr->rssi = dev->rx_buf[3];
+        memcpy(data, dev->rx_buf + 5, dev->rx_limit - 5);
+    }
+    else {
+        ng_ifhdr_init(hdr, 8, 2);
+        ng_ifhdr_set_src_addr(hdr, dev->rx_buf + 1, 8);
+        hdr->rssi = dev->rx_buf[9];
+        memcpy(data, dev->rx_buf + 11, dev->rx_limit - 11);
+    }
+    ng_ifhdr_set_dst_addr(hdr, (uint8_t *)&dev->own_addr, 2);
+    /* mark data as processed */
+    dev->rx_state = XBEE_RX_STATE_IDLE;
+    /* forward data to MAC layer */
+    dev->event_cb(NETDEV_EVENT_RX_COMPLETE, dev->rx_data);
 }
 
 /* implementation of the netdev interface */

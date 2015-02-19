@@ -23,9 +23,16 @@
 
 #include "periph/uart.h"
 #include "periph/gpio.h"
-// #include "hwtimer.h"
 #include "xbee.h"
+#include "net/ng_pkt.h"
 
+static xbee_t xbee;
+
+static char data_mem[100];
+static char hdr_mem[30];
+
+static ng_pktsnip_t hdr;
+static ng_pktsnip_t data;
 
 void rx(void *arg, char c)
 {
@@ -40,9 +47,19 @@ void rx(void *arg, char c)
 
 int main(void)
 {
-    xbee_t dev;
+    hdr.next = &data;
+    hdr.data = &hdr_mem;
+    hdr.size = sizeof(hdr_mem);
+    hdr.type = NG_NETTYPE_UNDEF;
 
-    xbee_init(&dev, UART_1, 9600, GPIO_NUMOF, GPIO_NUMOF);
+    data.next = NULL;
+    data.data = &data_mem;
+    data.size = sizeof(data_mem);
+    data.type = NG_NETTYPE_UNDEF;
+
+    xbee.rx_data = &hdr;
+
+    xbee_init(&xbee, UART_1, 9600, GPIO_NUMOF, GPIO_NUMOF);
 
 
     // char in;
