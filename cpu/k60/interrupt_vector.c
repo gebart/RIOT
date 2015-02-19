@@ -48,8 +48,9 @@ void isr_default_handler(void) __attribute__((naked));
 
 void isr_default_handler(void)
 {
-    __ASM volatile ("b isr_unhandled\n");
-    while(1);
+    __ASM volatile("b isr_unhandled\n");
+
+    while (1);
 }
 
 /**
@@ -87,15 +88,17 @@ void pre_reset_handler(void)
      * ensure no stack is being used until after the write loop is finished.
      */
     register uint32_t *p;
+
     /* Fill stack space with canary values */
-    for (p = (uint32_t *)_sstack; p < (uint32_t *)_estack; ++p)
-    {
+    for (p = (uint32_t *)_sstack; p < (uint32_t *)_estack; ++p) {
         *p = STACK_CANARY_WORD;
     }
+
     /* Now launch the real reset handler. */
-    __ASM volatile ("b reset_handler\n");
+    __ASM volatile("b reset_handler\n");
+
     /* reset_handler should never return */
-    while(1);
+    while (1);
 }
 
 #define ISR_VECTOR_SECTION __attribute__ ((used,section(".vector_table")))

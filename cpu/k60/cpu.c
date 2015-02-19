@@ -100,7 +100,9 @@ void SystemCoreClockUpdate(void)
                     /* RTC 32 kHz oscillator drives MCG clock */
                     MCGOUT_clock = CPU_XTAL32k_CLK_HZ;
                 }
+
 #else /* K60_CPU_REV */
+
                 /* rev.2 silicon */
                 if ((MCG->C7 & MCG_C7_OSCSEL_MASK) == 0x0u) {
                     /* System oscillator drives MCG clock */
@@ -110,6 +112,7 @@ void SystemCoreClockUpdate(void)
                     /* RTC 32 kHz oscillator drives MCG clock */
                     MCGOUT_clock = CPU_XTAL32k_CLK_HZ;
                 }
+
 #endif /* K60_CPU_REV */
                 divider = (uint8_t)(1u << ((MCG->C1 & MCG_C1_FRDIV_MASK) >> MCG_C1_FRDIV_SHIFT));
                 /* Calculate the divided FLL reference clock */
@@ -187,7 +190,7 @@ void SystemCoreClockUpdate(void)
 #else /* K60_CPU_REV */
             /* rev.2 silicon */
             MCGOUT_clock = CPU_INT_FAST_CLK_HZ /
-                (1 << ((MCG->SC & MCG_SC_FCRDIV_MASK) >> MCG_SC_FCRDIV_SHIFT));
+                           (1 << ((MCG->SC & MCG_SC_FCRDIV_MASK) >> MCG_SC_FCRDIV_SHIFT));
 #endif /* K60_CPU_REV */
         }
     }
@@ -203,7 +206,9 @@ void SystemCoreClockUpdate(void)
             /* RTC 32 kHz oscillator drives MCG clock */
             MCGOUT_clock = CPU_XTAL32k_CLK_HZ;
         }
+
 #else /* K60_CPU_REV */
+
         /* rev.2 silicon */
         if ((MCG->C7 & MCG_C7_OSCSEL_MASK) == 0x0u) {
             /* System oscillator drives MCG clock */
@@ -225,11 +230,11 @@ void SystemCoreClockUpdate(void)
     SystemCoreClock = SystemSysClock = (MCGOUT_clock / (1u + ((SIM->CLKDIV1 & SIM_CLKDIV1_OUTDIV1_MASK)
                                         >> SIM_CLKDIV1_OUTDIV1_SHIFT)));
     SystemBusClock = (MCGOUT_clock / (1u + ((SIM->CLKDIV1 & SIM_CLKDIV1_OUTDIV2_MASK) >>
-                                           SIM_CLKDIV1_OUTDIV2_SHIFT)));
+                                            SIM_CLKDIV1_OUTDIV2_SHIFT)));
     SystemFlexBusClock = (MCGOUT_clock / (1u + ((SIM->CLKDIV1 & SIM_CLKDIV1_OUTDIV3_MASK) >>
-                                         SIM_CLKDIV1_OUTDIV3_SHIFT)));
+                                          SIM_CLKDIV1_OUTDIV3_SHIFT)));
     SystemFlashClock = (MCGOUT_clock / (1u + ((SIM->CLKDIV1 & SIM_CLKDIV1_OUTDIV4_MASK) >>
-                                       SIM_CLKDIV1_OUTDIV4_SHIFT)));
+                                        SIM_CLKDIV1_OUTDIV4_SHIFT)));
 
     /* Module helper variables */
     if (SystemBusClock >= 1000000) {
