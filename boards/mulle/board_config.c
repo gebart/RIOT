@@ -24,11 +24,13 @@
 #include <string.h>
 #include "config.h"
 
-void config_load(void) {
+void config_load(void)
+{
     /* TODO: Implement */
 }
 
-uint8_t config_save(void) {
+uint8_t config_save(void)
+{
     /* TODO: Implement */
     return 0;
 }
