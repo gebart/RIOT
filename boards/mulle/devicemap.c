@@ -129,13 +129,6 @@ static const devoptab_t dotab_stdout = {
 
 /* This table maps the standard streams to device operations table entries. */
 const devoptab_t *devoptab_list[MAX_OPEN_DEVICES] = { 0 };
-//~ &dotab_com1, /* standard input */
-//~ &dotab_com1, /* standard output */
-//~ &dotab_com1, /* standard error */
-//~ 0, /* another device */
-//~ 0, /* and so on... */
-//~ 0 /* terminates the list */
-//~ };
 
 static const devoptab_name_t devoptab_names[] = {
 #if UART_0_EN
