@@ -71,10 +71,10 @@ void ondata(ng_netdev_event_t type, void *arg)
     if (type == NETDEV_EVENT_RX_COMPLETE) {
         puts("APP: got some data!!!!");
         ng_pktsnip_t *d = (ng_pktsnip_t *)arg;
-        ng_ifhdr_t *hdr = (ng_ifhdr_t *)d->data;
+        // ng_ifhdr_t *hdr = (ng_ifhdr_t *)d->data;
         uint8_t *data = (uint8_t *)d->next->data;
         int size = (int)d->next->size;
-        printf("DATA: ");
+        printf("DATA: (%i byte)\n", size);
         for (int i = 0; i < size; i++) {
             printf("%c", data[i]);
         }

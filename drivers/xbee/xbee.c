@@ -162,14 +162,18 @@ static void _api_at_cmd(xbee_t *dev, uint8_t *cmd, uint8_t size, resp_t *resp)
 
 
 
-int _send_foo(xbee_t *dev, uint16_t addr, const char *foo, resp_t *resp)
+int _send_foo(xbee_t *dev, uint16_t addr, uint8_t *data, size_t len, resp_t *resp)
 {
     uint16_t size;
 
-    DEBUG("API_TX: frame %u - sending out %s\n", dev->frame_id, foo);
+    DEBUG("API_TX: frame %u - sending out ", dev->frame_id);
+    for (int i = 0; i < len; i++) {
+        DEBUG("%c ", data[i]);
+    }
+    DEBUG("\n");
 
     /* get size of AT command */
-    size = strlen(foo) + 5;
+    size = len + 5;
     /* construct API frame */
     dev->tx_buf[0] = API_START_DELIMITER;
     dev->tx_buf[1] = size >> 8;
@@ -180,8 +184,8 @@ int _send_foo(xbee_t *dev, uint16_t addr, const char *foo, resp_t *resp)
     // dev->tx_buf[6] = 0xff;
     dev->tx_buf[5] = (uint8_t)(addr >> 8);
     dev->tx_buf[6] = (uint8_t)(addr & 0xff);
-    dev->tx_buf[7] = 0x01;
-    memcpy(dev->tx_buf + 8, foo, strlen(foo));
+    dev->tx_buf[7] = 0x00;
+    memcpy(dev->tx_buf + 8, data, len);
     dev->tx_buf[3 + size] = _cksum(dev->tx_buf, size + 3);
     /* send UART data and for it to finish */
     dev->tx_limit = 4 + size;
@@ -212,9 +216,8 @@ int _send_foo(xbee_t *dev, uint16_t addr, const char *foo, resp_t *resp)
 void _send_bar(xbee_t *dev, uint16_t addr, const char *data)
 {
     resp_t resp;
-    _send_foo(dev, addr, data, &resp);
+    _send_foo(dev, addr, (uint8_t *)data, strlen(data), &resp);
 }
-
 
 /*
  * interrupt callbacks
@@ -620,12 +623,16 @@ void _isr_event(ng_netdev_t *netdev, uint16_t event_type)
         ng_ifhdr_set_src_addr(hdr, dev->rx_buf + 1, 2);
         hdr->rssi = dev->rx_buf[3];
         memcpy(data, dev->rx_buf + 5, dev->rx_limit - 5);
+        /* HACK */
+        dev->rx_data->next->size = dev->rx_limit - 5;
     }
     else {
         ng_ifhdr_init(hdr, 8, 2);
         ng_ifhdr_set_src_addr(hdr, dev->rx_buf + 1, 8);
         hdr->rssi = dev->rx_buf[9];
         memcpy(data, dev->rx_buf + 11, dev->rx_limit - 11);
+        /* HACK */
+        dev->rx_data->next->size = dev->rx_limit - 11;
     }
     ng_ifhdr_set_dst_addr(hdr, (uint8_t *)&dev->own_addr, 2);
     /* mark data as processed */
