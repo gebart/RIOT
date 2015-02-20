@@ -65,7 +65,7 @@ void pre_reset_handler(void) __attribute__((naked));
 /** @brief Interrupt stack canary value
  *
  * @note 0xe7fe is the ARM Thumb machine code equivalent of asm('bl #-2') or
- * 'while(1);', i.e. an infinite loop.
+ * 'while (1);', i.e. an infinite loop.
  */
 #define STACK_CANARY_WORD 0xE7FEE7FEu
 
