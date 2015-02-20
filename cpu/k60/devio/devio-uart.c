@@ -83,5 +83,3 @@ long uart0_read_r(struct _reent *r, int fd, char *ptr, int len)
     return uart_read_r(UART_0, r, fd, ptr, len);
 }
 #endif
-
-

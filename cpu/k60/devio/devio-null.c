@@ -57,5 +57,3 @@ long devnull_fstat_r(struct _reent *r, int fd, char *ptr, int len)
     r->_errno = ENOSYS;
     return -1;
 }
-
-
