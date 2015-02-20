@@ -25,10 +25,11 @@ void __stack_chk_guard_setup(void)
     unsigned char *p;
     p = (unsigned char *) &__stack_chk_guard;
 
+    /* TODO: This should be replaced by a random number to use as a canary value */
     p[0] = 0;
     p[1] = 0;
     p[2] = '\n';
-    p[3] = 255;	// XXX: Random this
+    p[3] = 255;
 }
 
 /*

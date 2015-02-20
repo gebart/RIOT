@@ -78,4 +78,3 @@ void SystemCoreClockUpdate(void);
 #endif
 
 #endif  /* #if !defined(SYSTEM_MK60D10_H_) */
-
