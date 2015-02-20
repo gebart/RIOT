@@ -21,6 +21,7 @@
 #include <stdint.h>
 
 #include "crash.h"
+#include "board.h"
 
 /**
  * memory markers as defined in the linker script
@@ -100,6 +101,12 @@ void isr_debug_mon(void)
 
 void isr_hard_fault(void)
 {
+    while (1) {
+        LED_TOGGLE;
+        for (int i = 0; i < 1000000; i++) {
+            asm("nop");
+        }
+    }
     core_panic(HARD_FAULT, "HARD FAULT");
 }
 

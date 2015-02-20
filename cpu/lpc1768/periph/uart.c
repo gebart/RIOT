@@ -114,19 +114,22 @@ int uart_init_blocking(uart_t uart, uint32_t baudrate)
 #endif
 #if UART_1_EN
         case UART_1:
-            /* this implementation only supports 115200 baud */
-            if (baudrate != 115200) {
-                return -2;
-            }
-
             /* power on UART device and select peripheral clock */
             UART_1_CLKEN();
             UART_1_CLKSEL();
             /* set mode to 8N1 and enable access to divisor latch */
             UART_1_DEV->LCR = ((0x3 << 0) | (1 << 7));
             /* set baud rate registers (fixed for now) */
-            UART_1_DEV->DLM = 0;
-            UART_1_DEV->DLL = 13;
+            if (baudrate == 115200) {
+                UART_1_DEV->DLM = 0;
+                UART_1_DEV->DLL = 13;
+            } else if (baudrate == 9600) {
+                UART_1_DEV->DLM = 0;
+                UART_1_DEV->DLL = 155;
+                UART_1_DEV->FDR = ((4 << 4) | 1);
+            } else {
+                return -2;
+            }
             /* enable FIFOs */
             UART_1_DEV->FCR = 1;
             /* select and configure the pin for RX */

@@ -85,6 +85,18 @@ extern "C" {
 #define UART_1_AF           (2)
 /** @} */
 
+/**
+ * @name GPIO configuration
+ * @{
+ */
+#define GPIO_NUMOF          (1U)
+#define GPIO_0_EN           1
+
+/* GPIO channel 0 config */
+#define GPIO_0_DEV
+#define GPIO_0_PIN
+/** @} */
+
 #ifdef __cplusplus
 }
 #endif
