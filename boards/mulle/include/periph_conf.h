@@ -62,13 +62,13 @@ extern "C"
 #define TIMER_CLOCK             SystemBusClock
 #define TIMER_CLKEN()           (BITBAND_REG(SIM->SCGC6, SIM_SCGC6_PIT_SHIFT) = 1)
 
-// Timer 0 configuration
+/* Timer 0 configuration */
 #define TIMER_0_PRESCALER_CH    0
 #define TIMER_0_COUNTER_CH      1
 #define TIMER_0_ISR             isr_pit1
 #define TIMER_0_IRQ_CHAN        PIT1_IRQn
 
-// Timer 1 configuration
+/* Timer 1 configuration */
 #define TIMER_1_PRESCALER_CH    2
 #define TIMER_1_COUNTER_CH      3
 #define TIMER_1_ISR             isr_pit3
