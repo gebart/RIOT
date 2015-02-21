@@ -382,6 +382,23 @@ extern "C"
 #define I2C_0_EN                1
 #define I2C_1_EN                0
 #define I2C_IRQ_PRIO            1
+/**
+ * @name I2C baud rate configuration
+ * @{
+ */
+/* Low (10 kHz): MUL = 4, SCL divider = 2560, total: 10240 */
+#define KINETIS_I2C_F_ICR_LOW        (0x3D)
+#define KINETIS_I2C_F_MULT_LOW       (2)
+/* Normal (100 kHz): MUL = 2, SCL divider = 240, total: 480 */
+#define KINETIS_I2C_F_ICR_NORMAL     (0x1F)
+#define KINETIS_I2C_F_MULT_NORMAL    (1)
+/* Fast (400 kHz): MUL = 1, SCL divider = 128, total: 128 */
+#define KINETIS_I2C_F_ICR_FAST       (0x17)
+#define KINETIS_I2C_F_MULT_FAST      (0)
+/* Fast plus (1000 kHz): MUL = 1, SCL divider = 48, total: 48 */
+#define KINETIS_I2C_F_ICR_FAST_PLUS  (0x10)
+#define KINETIS_I2C_F_MULT_FAST_PLUS (0)
+/** @} */
 
 /* I2C 0 device configuration */
 #define I2C_0_DEV               I2C0
