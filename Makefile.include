@@ -10,8 +10,12 @@ RIOTCPU := $(abspath $(RIOTCPU))
 RIOTBOARD ?= $(RIOTBASE)/boards
 RIOTBOARD := $(abspath $(RIOTBOARD))
 
-RIOTPROJECT ?= $(CURDIR)
+# Top level git root of the project being built
+RIOTPROJECT ?= $(shell git rev-parse --show-toplevel)
 RIOTPROJECT := $(abspath $(RIOTPROJECT))
+
+# Path to the current directory relative to the git root
+BUILDRELPATH ?= $(shell git rev-parse --show-prefix)
 
 BINDIRBASE ?= $(CURDIR)/bin
 BINDIRBASE := $(abspath $(BINDIRBASE))
@@ -271,24 +275,32 @@ objdump:
 export DOCKER_IMAGE ?= gebart/riotbuild:latest
 export DOCKER_BUILD_ROOT ?= /data/riotbuild
 export DOCKER_FLAGS ?= --rm
+# Default target for building inside a Docker container
+export DOCKER_MAKECMDGOALS ?= all
+# This will execute `make $(DOCKER_MAKECMDGOALS)` inside a Docker container.
+# We do not push the regular $(MAKECMDGOALS) to the container's make command in
+# order to only perform building inside the container and defer executing any
+# extra commands such as flashing or debugging until after leaving the
+# container.
+# The `flash`, `term`, `debugserver` etc. targets usually require access to
+# hardware which may not be reachable from inside the container.
 ..in-docker-container:
 	@$(COLOR_ECHO) '${COLOR_GREEN}Launching build container using image "$(DOCKER_IMAGE)".${COLOR_RESET}'
-	docker run $(DOCKER_FLAGS) -i -t -u $$(id -u) \
-	    -v $(RIOTBASE):$(DOCKER_BUILD_ROOT)/riotbase \
-	    -v $(RIOTCPU):$(DOCKER_BUILD_ROOT)/riotcpu \
-	    -v $(RIOTBOARD):$(DOCKER_BUILD_ROOT)/riotboard \
-	    -v $(RIOTPROJECT):$(DOCKER_BUILD_ROOT)/riotproject \
-	    -v $(CURDIR):$(DOCKER_BUILD_ROOT)/build \
-	    -e RIOTBASE=$(DOCKER_BUILD_ROOT)/riotbase \
-	    -e RIOTCPU=$(DOCKER_BUILD_ROOT)/riotcpu \
-	    -e RIOTBOARD=$(DOCKER_BUILD_ROOT)/riotboard \
-	    -e RIOTPROJECT=$(DOCKER_BUILD_ROOT)/riotproject \
-	    -e BOARD='$(BOARD)' \
-	    -e RIOT_VERSION='$(RIOT_VERSION)' \
-	    -e __RIOTBUILD_FLAG=$(__RIOTBUILD_FLAG) \
-	    -e QUIET=$(QUIET) \
-	    -w $(DOCKER_BUILD_ROOT)/build \
-	    $(DOCKER_IMAGE) make $(MAKECMDGOALS)
+	docker run $(DOCKER_FLAGS) -i -t -u "$$(id -u)" \
+	    -v '$(RIOTBASE):$(DOCKER_BUILD_ROOT)/riotbase' \
+	    -v '$(RIOTCPU):$(DOCKER_BUILD_ROOT)/riotcpu' \
+	    -v '$(RIOTBOARD):$(DOCKER_BUILD_ROOT)/riotboard' \
+	    -v '$(RIOTPROJECT):$(DOCKER_BUILD_ROOT)/riotproject' \
+	    -e 'RIOTBASE=$(DOCKER_BUILD_ROOT)/riotbase' \
+	    -e 'RIOTCPU=$(DOCKER_BUILD_ROOT)/riotcpu' \
+	    -e 'RIOTBOARD=$(DOCKER_BUILD_ROOT)/riotboard' \
+	    -e 'RIOTPROJECT=$(DOCKER_BUILD_ROOT)/riotproject' \
+	    -e 'BOARD=$(BOARD)' \
+	    -e 'RIOT_VERSION=$(RIOT_VERSION)' \
+	    -e '__RIOTBUILD_FLAG=$(__RIOTBUILD_FLAG)' \
+	    -e 'QUIET=$(QUIET)' \
+	    -w '$(DOCKER_BUILD_ROOT)/riotproject/$(BUILDRELPATH)' \
+	    '$(DOCKER_IMAGE)' make $(DOCKER_MAKECMDGOALS)
 
 # Extra make goals for testing and comparing changes.
 include $(RIOTBASE)/Makefile.buildtests
