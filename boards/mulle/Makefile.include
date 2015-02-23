@@ -71,6 +71,7 @@ ifneq ($(PROGRAMMER_SERIAL),)
 endif
 
 OPENOCD_EXTRA_INIT += $(CPU_OOCD_FLAGS)
+
 ifeq ($(PORT),)
   # try to find tty name by serial number, only works on Linux currently.
   ifeq ($(OS),Linux)
@@ -122,6 +123,12 @@ export FLASHER = $(RIOTBASE)/dist/tools/openocd/openocd.sh
 export DEBUGGER = $(RIOTBASE)/dist/tools/openocd/openocd.sh
 export DEBUGSERVER = $(RIOTBASE)/dist/tools/openocd/openocd.sh
 export RESET = $(RIOTBASE)/dist/tools/openocd/openocd.sh
+export TERMFLAGS += -p "$(PORT)"
+export FFLAGS = flash $(OPENOCD_EXTRA_INIT)
+export DEBUGGER_FLAGS = debug $(OPENOCD_EXTRA_INIT)
+export DEBUGSERVER_FLAGS = debug-server $(OPENOCD_EXTRA_INIT)
+export RESET_FLAGS = reset $(OPENOCD_EXTRA_INIT)
+
 
 # define build specific options
 CPU_USAGE = -mcpu=cortex-m4
@@ -219,13 +226,6 @@ endif
 endif
 
 export INCLUDES += $(NEWLIB_INCLUDES)
-
-export FFLAGS = flash
-export DEBUGGER_FLAGS = debug
-export DEBUGSERVER_FLAGS = debug-server
-export RESET_FLAGS = reset
-
-export TERMFLAGS += -p "$(PORT)"
 
 # use newlib nano-specs if available
 ifeq ($(shell $(LINK) -specs=nano.specs -E - 2>/dev/null >/dev/null </dev/null ; echo $$?),0)
