@@ -30,25 +30,34 @@
 #include "shell.h"
 #include "thread.h"
 #include "kernel.h"
+#include "servo.h"
+#include "rgbled.h"
+#include "color.h"
 
 
 #define SHELL_BUFSIZE   (64U)
 
+#define COLOR_MIN       (0x00)
+#define COLOR_MAX       (0xff)
+
+#define SERVO_MIN       (550U)
+#define SERVO_MAX       (2350U)
+
 #define DATA_TYPE_DIS   (2U)
 #define DATA_TYPE_HUM   (1U)
 
-#define NODE_ADDR       (50U)
+#define NODE_ADDR       (70U)
 #define NODE_CHAN       (26U)
 #define NODE_PAN        (12U)
 
-#define ACT_ADDR        (70U)
-
 
 extern void _send_bar(xbee_t *dev, uint16_t addr, const char *data);
-extern void _send_blubb(xbee_t *dev, uint16_t addr, uint8_t *data, size_t len);
 
 
 static xbee_t xbee;
+static servo_t servo;
+static rgbled_t led;
+static color_rgb_t color;
 
 static char data_mem[100];
 static char hdr_mem[30];
@@ -90,10 +99,29 @@ void ondata(ng_netdev_event_t type, void *arg)
         }
         puts("");
 
-        if (size == 4 && (data[1] == DATA_TYPE_HUM || DATA_TYPE_DIS)) {
-            _send_blubb(&xbee, ACT_ADDR, data, 4);
+        if (data[1] == DATA_TYPE_HUM) {
+            puts("HUM VALUE");
+            uint16_t lala = (data[2] << 8) | data[3];
+            lala += SERVO_MIN;
+            if (lala > SERVO_MAX) {
+                lala = SERVO_MAX;
+            }
+            servo_set(&servo, lala);
         }
 
+        if (data[1] == DATA_TYPE_DIS) {
+            uint16_t lala = (data[2] << 8) | data[3];
+            uint8_t col = (uint8_t)(lala / 10);
+            printf("COL VALUE: val %u - from %u\n", col, data[0]);
+            if (data[0] == 11) {
+                color.r = col;
+            } else if (data[0] == 12) {
+                color.g = col;
+            } else if (data[0] == 13) {
+                color.b = col;
+            }
+            rgbled_set(&led, &color);
+        }
     }
     else {
         puts("APP: unknown event triggered");
@@ -177,38 +205,36 @@ static void send(int argc, char **argv)
     _send_bar(&xbee, addr, argv[2]);
 }
 
-static void hum(int argc, char **argv)
+static void setservo(int argc, char **argv)
 {
-    uint16_t val;
-    uint8_t buf[4];
+    int val;
 
     if (argc != 2) {
-        puts("that is just wrong");
+        puts("no way");
         return;
     }
     val = (uint16_t)atoi(argv[1]);
-    buf[0] = NODE_ADDR;
-    buf[1] = DATA_TYPE_HUM;
-    buf[2] = val >> 8;
-    buf[3] = val & 0xff;
-    _send_blubb(&xbee, ACT_ADDR, buf, 4);
+    if (val < SERVO_MIN) {
+        val = SERVO_MIN;
+    }
+    if (val > SERVO_MAX) {
+        val = SERVO_MAX;
+    }
+    servo_set(&servo, val);
 }
 
-static void col(int argc, char **argv)
+static void setcolor(int argc, char **argv)
 {
-    uint16_t val;
-    uint8_t buf[4];
+    color_rgb_t col;
 
-    if (argc != 3) {
-        puts("that is just wrong");
+    if (argc != 4) {
+        puts("no no no");
         return;
     }
-    val = (uint16_t)atoi(argv[2]);
-    buf[0] = (uint8_t)atoi(argv[1]);
-    buf[1] = DATA_TYPE_DIS;
-    buf[2] = val >> 8;
-    buf[3] = val & 0xff;
-    _send_blubb(&xbee, ACT_ADDR, buf, 4);
+    col.r = (uint8_t)atoi(argv[1]);
+    col.g = (uint8_t)atoi(argv[1]);
+    col.b = (uint8_t)atoi(argv[1]);
+    rgbled_set(&led, &col);
 }
 
 
@@ -227,13 +253,18 @@ static const shell_command_t shell_commands[] = {
     { "chan", "set channel", chan },
     { "pan", "set pan id", pan },
     { "send", "send data", send },
-    { "hum", "send hum data", hum },
-    { "col", "send col data", col },
+    { "servo", "set servo", setservo },
+    { "color", "set color", setcolor },
     { NULL, NULL, NULL }
 };
 
 int main(void)
 {
+    /* init servo */
+    servo_init(&servo, PWM_1, 0, 250, 2500);
+    /* led init */
+    rgbled_init(&led, PWM_0, 0, 1, 2);
+
     hdr.next = &data;
     hdr.data = &hdr_mem;
     hdr.size = sizeof(hdr_mem);
@@ -247,7 +278,6 @@ int main(void)
     xbee.rx_data = &hdr;
 
     xbee_init(&xbee, UART_1, 9600, GPIO_NUMOF, GPIO_NUMOF);
-
     xbee.driver->add_event_callback((ng_netdev_t *)&xbee, ondata);
 
     uint16_t blubb = NODE_ADDR;
