@@ -219,6 +219,13 @@ void _send_bar(xbee_t *dev, uint16_t addr, const char *data)
     _send_foo(dev, addr, (uint8_t *)data, strlen(data), &resp);
 }
 
+void _send_blubb(xbee_t *dev, uint16_t addr, uint8_t *data, size_t len)
+{
+    resp_t resp;
+    _send_foo(dev, addr, data, len, &resp);
+}
+
+
 /*
  * interrupt callbacks
  */
