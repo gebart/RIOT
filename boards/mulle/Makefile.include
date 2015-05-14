@@ -119,15 +119,33 @@ export OPENOCD ?= openocd
 export GDB ?= $(GDBPREFIX)gdb
 export DBG = $(GDB)
 export TERMPROG ?= $(RIOTBASE)/dist/tools/pyterm/pyterm
-export FLASHER = $(RIOTBASE)/dist/tools/openocd/openocd.sh
 export DEBUGGER = $(RIOTBASE)/dist/tools/openocd/openocd.sh
 export DEBUGSERVER = $(RIOTBASE)/dist/tools/openocd/openocd.sh
 export RESET = $(RIOTBASE)/dist/tools/openocd/openocd.sh
 export TERMFLAGS += -p "$(PORT)"
-export FFLAGS = flash $(OPENOCD_EXTRA_INIT)
 export DEBUGGER_FLAGS = debug $(OPENOCD_EXTRA_INIT)
 export DEBUGSERVER_FLAGS = debug-server $(OPENOCD_EXTRA_INIT)
 export RESET_FLAGS = reset $(OPENOCD_EXTRA_INIT)
+
+# We need special handling of the watchdog if we want to have the MCU compute
+# its own checksum after flashing.
+export FLASHER = $(OPENOCD)
+export FFLAGS = \
+  -f '$(OPENOCD_CONFIG)' \
+  $(OPENOCD_EXTRA_INIT) \
+  -c 'tcl_port 0' \
+  -c 'telnet_port 0' \
+  -c 'gdb_port 0' \
+  -c 'init' \
+  -c 'targets' \
+  -c 'reset halt' \
+  -c 'flash write_image erase $(HEXFILE)' \
+  -c 'reset halt' \
+  -c 'load_image $(RIOTCPU)/$(CPU)/dist/wdog-disable.bin 0x20000000 bin' \
+  -c 'resume 0x20000000' \
+  -c 'verify_image $(HEXFILE)' \
+  -c 'reset run' \
+  -c 'shutdown'
 
 
 # define build specific options
