@@ -24,6 +24,14 @@
 #               options:
 #               HEXFILE: path to the hexfile that is flashed
 #
+# flash-elf:    flash a given elffile to the target.
+#               This action will allow to perform anti brick check
+#               beside flashing procedure.
+#
+#               options:
+#               ELFFILE: path to the elffile that is flashed
+#               ANTIBRICK: path to the anti brick check file
+#
 # debug:        starts OpenOCD as GDB server in the background and
 #               connects to the server with the GDB client specified by
 #               the board (DBG environment variable)
@@ -93,6 +101,14 @@ test_elffile() {
     fi
 }
 
+test_elffile_antibrick() {
+    if [ -n "${ANTIBRICK}" ]; then
+        echo "Run ANTIBRICK check:"
+        echo "       (${ANTIBRICK})"
+        sh -c "${ANTIBRICK} '${ELFFILE}'" && exit 1
+    fi
+}
+
 test_ports() {
     if [ -z "${GDB_PORT}" ]; then
         GDB_PORT=${_GDB_PORT}
@@ -131,6 +147,29 @@ do_flash() {
             -c 'reset halt' \
             ${OPENOCD_PRE_VERIFY_CMDS} \
             -c 'verify_image \"${HEXFILE}\"' \
+            -c 'reset run' \
+            -c 'shutdown'"
+    echo 'Done flashing'
+}
+
+do_flash_elf() {
+    test_config
+    test_elffile
+    test_elffile_antibrick
+    # flash device
+    sh -c "${OPENOCD} -f '${OPENOCD_CONFIG}' \
+            ${OPENOCD_EXTRA_INIT} \
+            -c 'tcl_port 0' \
+            -c 'telnet_port 0' \
+            -c 'gdb_port 0' \
+            -c 'init' \
+            -c 'targets' \
+            -c 'reset halt' \
+            ${OPENOCD_PRE_FLASH_CMDS} \
+            -c 'flash write_image erase \"${ELFFILE}\"' \
+            -c 'reset halt' \
+            ${OPENOCD_PRE_VERIFY_CMDS} \
+            -c 'verify_image \"${ELFFILE}\"' \
             -c 'reset run' \
             -c 'shutdown'"
     echo 'Done flashing'
@@ -196,6 +235,10 @@ case "${ACTION}" in
   flash)
     echo "### Flashing Target ###"
     do_flash "$@"
+    ;;
+  flash-elf)
+    echo "### Flashing Target ###"
+    do_flash_elf "$@"
     ;;
   debug)
     echo "### Starting Debugging ###"
