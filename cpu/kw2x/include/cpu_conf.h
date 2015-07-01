@@ -72,6 +72,75 @@ extern "C"
 #define LPTIMER_CLKDIS()                 (SIM->SCGC5 &= ~SIM_SCGC5_PTMR_MASK) /**< Disable LPTMR0 clock gate */
 #define LPTIMER_CNR_NEEDS_LATCHING       1 /**< LPTMR.CNR register do not need latching */
 
+#define KINETIS_PMCTRL SMC->PMCTRL
+#define KINETIS_PMCTRL_SET_MODE(x)      (KINETIS_PMCTRL = SMC_PMCTRL_STOPM(x) | SMC_PMCTRL_LPWUI_MASK)
+#define KINETIS_PMPROT_UNLOCK()         (SMC->PMPROT |= SMC_PMPROT_ALLS_MASK | SMC_PMPROT_AVLP_MASK)
+
+/**
+ * @name STOP mode bitfield values
+ * @{
+ */
+/** @brief Normal STOP */
+#define KINETIS_POWER_MODE_NORMAL       (0b000)
+/** @brief VLPS STOP */
+#define KINETIS_POWER_MODE_VLPS         (0b010)
+/** @brief LLS STOP */
+#define KINETIS_POWER_MODE_LLS          (0b011)
+/** @} */
+
+/**
+ * @brief IRQn name to enable LLWU IRQ in NVIC
+ */
+#define KINETIS_LLWU_IRQ                LLWU_IRQn
+
+/**
+ * @brief LLWU module is always on.
+ */
+#define LLWU_UNLOCK()
+
+/**
+ * @brief Internal modules whose interrupts are mapped to LLWU wake up sources.
+ *
+ * Other modules CAN NOT be used to wake the CPU from LLS or VLLSx power modes.
+ */
+typedef enum llwu_wakeup_module {
+    KINETIS_LPM_WAKEUP_MODULE_LPTMR = 0,
+    KINETIS_LPM_WAKEUP_MODULE_CMP0 = 1,
+    KINETIS_LPM_WAKEUP_MODULE_CMP1 = 2,
+    KINETIS_LPM_WAKEUP_MODULE_CMP2 = 3,
+    KINETIS_LPM_WAKEUP_MODULE_TSI = 4,
+    KINETIS_LPM_WAKEUP_MODULE_RTC_ALARM = 5,
+    KINETIS_LPM_WAKEUP_MODULE_RESERVED = 6,
+    KINETIS_LPM_WAKEUP_MODULE_RTC_SECONDS = 7,
+    KINETIS_LPM_WAKEUP_MODULE_END,
+} llwu_wakeup_module_t;
+
+/**
+ * @brief enum that maps physical pins to wakeup pin numbers in LLWU module
+ *
+ * Other pins CAN NOT be used to wake the CPU from LLS or VLLSx power modes.
+ */
+typedef enum llwu_wakeup_pin {
+    KINETIS_LPM_WAKEUP_PIN_PTE1 = 0,
+    KINETIS_LPM_WAKEUP_PIN_PTE2 = 1,
+    KINETIS_LPM_WAKEUP_PIN_PTE4 = 2,
+    KINETIS_LPM_WAKEUP_PIN_PTA4 = 3,
+    KINETIS_LPM_WAKEUP_PIN_PTA13 = 4,
+    KINETIS_LPM_WAKEUP_PIN_PTB0 = 5,
+    KINETIS_LPM_WAKEUP_PIN_PTC1 = 6,
+    KINETIS_LPM_WAKEUP_PIN_PTC3 = 7,
+    KINETIS_LPM_WAKEUP_PIN_PTC4 = 8,
+    KINETIS_LPM_WAKEUP_PIN_PTC5 = 9,
+    KINETIS_LPM_WAKEUP_PIN_PTC6 = 10,
+    KINETIS_LPM_WAKEUP_PIN_PTC11 = 11,
+    KINETIS_LPM_WAKEUP_PIN_PTD0 = 12,
+    KINETIS_LPM_WAKEUP_PIN_PTD2 = 13,
+    KINETIS_LPM_WAKEUP_PIN_PTD4 = 14,
+    KINETIS_LPM_WAKEUP_PIN_PTD6 = 15,
+    KINETIS_LPM_WAKEUP_PIN_END
+} llwu_wakeup_pin_t;
+
+/** @} */
 /**
  * @name KW2XD SiP internal interconnects between MCU and Modem.
  *
