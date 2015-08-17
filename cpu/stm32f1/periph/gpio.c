@@ -78,7 +78,6 @@ int gpio_init(gpio_t pin, gpio_dir_t dir, gpio_pp_t pullup)
     GPIO_TypeDef *port = _port(pin);
     int pin_num = _pin_num(pin);
 
-
     /* enable the clock for the selected port */
     RCC->APB2ENR |= (RCC_APB2ENR_IOPAEN << _port_num(pin));
     /* clear configuration */
