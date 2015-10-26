@@ -303,16 +303,16 @@ int gpio_init_int(gpio_t dev, gpio_pp_t pushpull, gpio_flank_t flank, gpio_cb_t 
     uint8_t pin = _pin_num(dev);
     PORT_Type *port = _port(dev);
 
-    port->PCR[pin] &= ~(PORT_PCR_IRQC_MASK); /* Disable interrupt */
-    BITBAND_REG32(port->PCR[pin], PORT_PCR_ISF_SHIFT) = 1; /* Clear interrupt flag */
-    port->PCR[pin] |= config->irqc; /* Enable interrupt */
-
     config->cb = cb;
     config->arg = arg;
     config->irqc = irqc;
     /* Allow the callback to be found by the IRQ handler by setting the proper
      * pin number */
     config->pin = pin;
+
+    port->PCR[pin] &= ~(PORT_PCR_IRQC_MASK); /* Disable interrupt */
+    BITBAND_REG32(port->PCR[pin], PORT_PCR_ISF_SHIFT) = 1; /* Clear interrupt flag */
+    port->PCR[pin] |= config->irqc; /* Enable interrupt */
 
     return 0;
 }
@@ -390,7 +390,7 @@ void gpio_write(gpio_t dev, int value)
 static inline void irq_handler(uint8_t port_num)
 {
     gpio_int_config_entry_t *entry;
-    PORT_Type *port = _port(port_num);
+    PORT_Type *port = _port_ptrs[port_num];
     uint32_t isf = port->ISFR; /* Interrupt status flags */
     LL_FOREACH(gpio_interrupts[port_num], entry) {
         if (isf & (1 << entry->pin)) {
