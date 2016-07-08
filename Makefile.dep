@@ -565,6 +565,10 @@ ifneq (,$(filter random,$(USEMODULE)))
     endif
 endif
 
+ifneq (,$(filter constfs,$(USEMODULE)))
+  USEMODULE += vfs
+endif
+
 # include package dependencies
 -include $(USEPKG:%=$(RIOTPKG)/%/Makefile.dep)
 
