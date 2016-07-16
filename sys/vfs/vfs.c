@@ -25,6 +25,7 @@
 #include "mutex.h"
 #include "thread.h"
 #include "kernel_types.h"
+#include "clist.h"
 
 #define ENABLE_DEBUG (1)
 #include "debug.h"
@@ -49,12 +50,12 @@ static vfs_file_t _vfs_open_files[VFS_MAX_OPEN_FILES];
 
 /**
  * @internal
- * @brief Pointer to list head of list of all currently mounted file systems
+ * @brief List handle for list of all currently mounted file systems
  *
  * This singly linked list is used to dispatch vfs calls to the appropriate file
  * system driver.
  */
-static vfs_mount_t *_vfs_mount_head = NULL;
+static clist_node_t _vfs_mounts_list;
 
 /**
  * @internal
@@ -402,15 +403,12 @@ int vfs_mount(vfs_mount_t *mountp)
     mountp->mount_point_len = strlen(mountp->mount_point);
     mutex_lock(&_mount_mutex);
     /* Check for the same mount in the list of mounts to avoid loops */
-    vfs_mount_t *item = _vfs_mount_head;
-    while (item != NULL) {
-        if (item == mountp) {
-            /* Same mount is already mounted */
-            mutex_unlock(&_mount_mutex);
-            DEBUG("vfs_mount: Already mounted\n");
-            return -EBUSY;
-        }
-        item = item->next;
+    clist_node_t *found = clist_find(&_vfs_mounts_list, &mountp->list_entry);
+    if (found != NULL) {
+        /* Same mount is already mounted */
+        mutex_unlock(&_mount_mutex);
+        DEBUG("vfs_mount: Already mounted\n");
+        return -EBUSY;
     }
     if (mountp->fs->fs_op != NULL) {
         if (mountp->fs->fs_op->mount != NULL) {
@@ -422,9 +420,8 @@ int vfs_mount(vfs_mount_t *mountp)
             }
         }
     }
-    /* insert first in list */
-    mountp->next = _vfs_mount_head;
-    _vfs_mount_head = mountp;
+    /* insert last in list */
+    clist_rpush(&_vfs_mounts_list, &mountp->list_entry);
     mutex_unlock(&_mount_mutex);
     DEBUG("vfs_mount: mount done\n");
     return 0;
@@ -455,32 +452,13 @@ int vfs_umount(vfs_mount_t *mountp)
         }
     }
     /* find mountp in the list and remove it */
-    vfs_mount_t *item = _vfs_mount_head;
-    vfs_mount_t *prev = NULL;
-    while (item != NULL) {
-        if (item == mountp) {
-            break;
-        }
-        prev = item;
-        item = item->next;
-    }
-    if (mountp != item) {
+    clist_node_t *node = clist_remove(&_vfs_mounts_list, &mountp->list_entry);
+    if (node == NULL) {
         /* not found */
         DEBUG("vfs_umount: ERR not mounted!\n");
         mutex_unlock(&_mount_mutex);
         return -EINVAL;
     }
-    if (prev == NULL) {
-        /* mountp was list head */
-        DEBUG("vfs_umount: removing list head\n");
-        _vfs_mount_head = item->next;
-    }
-    else {
-        /* mountp was not list head */
-        DEBUG("vfs_umount: removing list item\n");
-        prev->next = item->next;
-    }
-    mountp->next = NULL;
     mutex_unlock(&_mount_mutex);
     return 0;
 }
@@ -793,20 +771,31 @@ inline static int _find_mount(vfs_mount_t **mountpp, const char *name, const cha
     size_t longest_match = 0;
     size_t name_len = strlen(name);
     mutex_lock(&_mount_mutex);
-    vfs_mount_t *it = _vfs_mount_head;
+
+    clist_node_t *node = _vfs_mounts_list.next;
+    if (node == NULL) {
+        /* list empty */
+        mutex_unlock(&_mount_mutex);
+        return -ENOENT;
+    }
     vfs_mount_t *mountp = NULL;
-    while(it != NULL) {
+    do {
+        node = node->next;
+        vfs_mount_t *it = container_of(node, vfs_mount_t, list_entry);
         size_t len = it->mount_point_len;
         if (len < longest_match) {
             /* Already found a longer prefix */
+            continue;
         }
-        else if (len > name_len) {
+        if (len > name_len) {
             /* path name is shorter than the mount point name */
+            continue;
         }
-        else if ((len > 1) && (name[len] != '/') && (name[len] != '\0')) {
+        if ((len > 1) && (name[len] != '/') && (name[len] != '\0')) {
             /* name does not have a directory separator where mount point name ends */
+            continue;
         }
-        else if (strncmp(name, it->mount_point, len) == 0) {
+        if (strncmp(name, it->mount_point, len) == 0) {
             /* mount_point is a prefix of name */
             /* special check for mount_point == "/" */
             if (len > 1) {
@@ -814,8 +803,7 @@ inline static int _find_mount(vfs_mount_t **mountpp, const char *name, const cha
             }
             mountp = it;
         }
-        it = it->next;
-    }
+    } while (node != _vfs_mounts_list.next);
     if (mountp == NULL) {
         /* not found */
         mutex_unlock(&_mount_mutex);

@@ -32,6 +32,7 @@
 
 #include "kernel_types.h"
 #include "atomic.h"
+#include "clist.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -129,7 +130,7 @@ typedef struct {
  * @brief A mounted file system
  */
 struct vfs_mount_struct {
-    vfs_mount_t *next;
+    clist_node_t list_entry;     /**< List entry for the _vfs_mount_list list */
     const vfs_file_system_t *fs; /**< The file system driver for the mount point */
     const char *mount_point;     /**< Mount point, e.g. "/mnt/cdrom" */
     size_t mount_point_len;      /**< Length of mount_point string (set by vfs_mount) */
