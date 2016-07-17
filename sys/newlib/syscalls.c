@@ -327,6 +327,50 @@ int _fstat_r(struct _reent *r, int fd, struct stat *buf)
     }
     return 0;
 }
+
+/**
+ * @brief Status of a file (by name)
+ *
+ * This is a wrapper around @c vfs_fstat
+ *
+ * @param[in]  r        pointer to reent structure
+ * @param[in]  name     path to file
+ * @param[out] buf      pointer to stat struct to fill
+ *
+ * @return 0 on success
+ * @return -1 on error, @c r->_errno set to a constant from errno.h to indicate the error
+ */
+int _stat_r(struct _reent *r, const char *name, struct stat *st)
+{
+    int res = vfs_stat(path, st);
+    if (res < 0) {
+        /* vfs returns negative error codes */
+        r->_errno = -res;
+        return -1;
+    }
+    return 0;
+}
+
+/**
+ * @brief  Unlink (delete) a file
+ *
+ * @param[in]  r        pointer to reent structure
+ * @param[in]  path     path to file to be deleted
+ *
+ * @return 0 on success
+ * @return -1 on error, @c r->_errno set to a constant from errno.h to indicate the error
+ */
+int _unlink_r(struct _reent *r, const char *path)
+{
+    int res = vfs_unlink(path);
+    if (res < 0) {
+        /* vfs returns negative error codes */
+        r->_errno = -res;
+        return -1;
+    }
+    return 0;
+}
+
 #else
 /* Fallback stdio_uart wrappers for when VFS is not used, does not allow any
  * other file access */
@@ -392,24 +436,22 @@ int _fstat_r(struct _reent *r, int fd, struct stat *st)
     r->_errno = ENODEV;
     return -1;
 }
-#endif
 
-/**
- * @brief Status of a file (by name)
- *
- * @param r     TODO
- * @param name  TODO
- * @param stat  TODO
- *
- * @return      TODO
- */
 int _stat_r(struct _reent *r, const char *name, struct stat *st)
 {
     (void) name;
     (void) st;
-    r->_errno = ENODEV;                     /* not implemented yet */
+    r->_errno = ENODEV;
     return -1;
 }
+
+int _unlink_r(struct _reent *r, const char *path)
+{
+    (void) path;
+    r->_errno = ENODEV;
+    return -1;
+}
+#endif
 
 /**
  * @brief Query whether output stream is a terminal
@@ -427,26 +469,6 @@ int _isatty_r(struct _reent *r, int fd)
         return 1;
     }
 
-    return 0;
-}
-
-/**
- * @brief  Unlink (delete) a file
- *
- * @param[in]  r        pointer to reent structure
- * @param[in]  path     path to file to be deleted
- *
- * @return 0 on success
- * @return -1 on error, @c r->_errno set to a constant from errno.h to indicate the error
- */
-int _unlink_r(struct _reent *r, const char *path)
-{
-    int res = vfs_unlink(path);
-    if (res < 0) {
-        /* vfs returns negative error codes */
-        r->_errno = -res;
-        return -1;
-    }
     return 0;
 }
 
