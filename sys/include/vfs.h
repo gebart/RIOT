@@ -29,6 +29,7 @@
 #include <stdint.h>
 #include <sys/stat.h> /* for struct stat */
 #include <sys/types.h> /* for off_t etc. */
+#include <sys/statvfs.h> /* for struct statvfs */
 
 #include "kernel_types.h"
 #include "atomic.h"
@@ -439,6 +440,52 @@ struct vfs_file_system_ops {
      * @return <0 on error
      */
     int (*rmdir) (vfs_mount_t *mountp, const char *name);
+
+    /**
+     * @brief Get file status
+     *
+     * @param[in]  mountp  file system mount to operate on
+     * @param[in]  path    path to file being queried
+     * @param[out] buf     pointer to stat struct to fill
+     *
+     * @return 0 on success
+     * @return <0 on error
+     */
+    int (*stat) (vfs_mount_t *mountp, const char *restrict path, struct stat *restrict buf);
+
+    /**
+     * @brief Get file system status
+     *
+     * @p path is only passed for consistency against the POSIX statvfs function.
+     * @c vfs_statvfs calls this function only when it has determined that
+     * @p path belongs to this file system. @p path is a file system relative
+     * path and does not necessarily name an existing file.
+     *
+     * @param[in]  mountp  file system mount to operate on
+     * @param[in]  path    path to a file on the file system being queried
+     * @param[out] buf     pointer to statvfs struct to fill
+     *
+     * @return 0 on success
+     * @return <0 on error
+     */
+    int (*statvfs) (vfs_mount_t *mountp, const char *restrict path, struct statvfs *restrict buf);
+
+    /**
+     * @brief Get file system status of an open file
+     *
+     * @p path is only passed for consistency against the POSIX statvfs function.
+     * @c vfs_statvfs calls this function only when it has determined that
+     * @p path belongs to this file system. @p path is a file system relative
+     * path and does not necessarily name an existing file.
+     *
+     * @param[in]  mountp  file system mount to operate on
+     * @param[in]  filp    pointer to an open file on the file system being queried
+     * @param[out] buf     pointer to statvfs struct to fill
+     *
+     * @return 0 on success
+     * @return <0 on error
+     */
+    int (*fstatvfs) (vfs_mount_t *mountp, vfs_file_t *filp, struct statvfs *buf);
 };
 
 /**
@@ -473,6 +520,17 @@ int vfs_fcntl(int fd, int cmd, int arg);
  * @return <0 on error
  */
 int vfs_fstat(int fd, struct stat *buf);
+
+/**
+ * @brief Get file system status of the file system containing an open file
+ *
+ * @param[in]  fd       fd number obtained from vfs_open
+ * @param[out] buf      pointer to statvfs struct to fill
+ *
+ * @return 0 on success
+ * @return <0 on error
+ */
+int vfs_fstatvfs(int fd, struct statvfs *buf);
 
 /**
  * @brief Seek to position in file
@@ -645,6 +703,31 @@ int vfs_mkdir(const char *name, mode_t mode);
  * @return <0 on error
  */
 int vfs_rmdir(const char *name);
+
+/**
+ * @brief Get file status
+ *
+ * @param[in]  path    path to file being queried
+ * @param[out] buf     pointer to stat struct to fill
+ *
+ * @return 0 on success
+ * @return <0 on error
+ */
+int vfs_stat(const char *restrict path, struct stat *restrict buf);
+
+/**
+ * @brief Get file system status
+ *
+ * @p path can be any path that resolves to the file system being queried, it
+ * does not have to be an existing file.
+ *
+ * @param[in]  path    path to a file on the file system being queried
+ * @param[out] buf     pointer to statvfs struct to fill
+ *
+ * @return 0 on success
+ * @return <0 on error
+ */
+int vfs_statvfs(const char *restrict path, struct statvfs *restrict buf);
 
 /**
  * @brief Allocate a new file descriptor and give it file operations

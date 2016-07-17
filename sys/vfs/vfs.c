@@ -19,6 +19,8 @@
 #include <string.h> /* for strncmp */
 #include <stddef.h> /* for NULL */
 #include <sys/types.h> /* for off_t etc */
+#include <sys/stat.h> /* for struct stat */
+#include <sys/statvfs.h> /* for struct statvfs */
 #include <fcntl.h> /* for O_ACCMODE, ..., fcntl */
 
 #include "vfs.h"
@@ -190,6 +192,27 @@ int vfs_fstat(int fd, struct stat *buf)
     return filp->f_op->fstat(filp, buf);
 }
 
+int vfs_fstatvfs(int fd, struct statvfs *buf)
+{
+    DEBUG("vfs_fstatvfs: %d, %p\n", fd, (void *)buf);
+    if (buf == NULL) {
+        return -EFAULT;
+    }
+    int res = _fd_is_valid(fd);
+    if (res < 0) {
+        return res;
+    }
+    vfs_file_t *filp = &_vfs_open_files[fd];
+    if (filp->mp->fs->fs_op->fstatvfs == NULL) {
+        /* file system driver does not implement fstatvfs() */
+        if (filp->mp->fs->fs_op->statvfs != NULL) {
+            /* Fall back to statvfs */
+            return filp->mp->fs->fs_op->statvfs(filp->mp, "/", buf);
+        }
+        return -EINVAL;
+    }
+    return filp->mp->fs->fs_op->fstatvfs(filp->mp, filp, buf);
+}
 
 off_t vfs_lseek(int fd, off_t off, int whence)
 {
@@ -627,6 +650,64 @@ int vfs_rmdir(const char *name)
     else {
         DEBUG("\n");
     }
+    /* remember to decrement the open_files count */
+    atomic_dec(&mountp->open_files);
+    return res;
+}
+
+int vfs_stat(const char *restrict path, struct stat *restrict buf)
+{
+    DEBUG("vfs_stat: \"%s\", %p\n", path, (void *)buf);
+    if (path == NULL || buf == NULL) {
+        return -EINVAL;
+    }
+    const char *rel_path;
+    vfs_mount_t *mountp;
+    int res;
+    res = _find_mount(&mountp, path, &rel_path);
+    /* _find_mount implicitly increments the open_files count on success */
+    if (res < 0) {
+        /* No mount point maps to the requested file name */
+        DEBUG("vfs_stat: no matching mount\n");
+        return res;
+    }
+    if ((mountp->fs->fs_op == NULL) || (mountp->fs->fs_op->stat == NULL)) {
+        /* stat not supported */
+        DEBUG("vfs_stat: stat not supported by fs!\n");
+        /* remember to decrement the open_files count */
+        atomic_dec(&mountp->open_files);
+        return -EPERM;
+    }
+    res = mountp->fs->fs_op->stat(mountp, rel_path, buf);
+    /* remember to decrement the open_files count */
+    atomic_dec(&mountp->open_files);
+    return res;
+}
+
+int vfs_statvfs(const char *restrict path, struct statvfs *restrict buf)
+{
+    DEBUG("vfs_statvfs: \"%s\", %p\n", path, (void *)buf);
+    if (path == NULL || buf == NULL) {
+        return -EINVAL;
+    }
+    const char *rel_path;
+    vfs_mount_t *mountp;
+    int res;
+    res = _find_mount(&mountp, path, &rel_path);
+    /* _find_mount implicitly increments the open_files count on success */
+    if (res < 0) {
+        /* No mount point maps to the requested file name */
+        DEBUG("vfs_statvfs: no matching mount\n");
+        return res;
+    }
+    if ((mountp->fs->fs_op == NULL) || (mountp->fs->fs_op->statvfs == NULL)) {
+        /* statvfs not supported */
+        DEBUG("vfs_statvfs: statvfs not supported by fs!\n");
+        /* remember to decrement the open_files count */
+        atomic_dec(&mountp->open_files);
+        return -EPERM;
+    }
+    res = mountp->fs->fs_op->statvfs(mountp, rel_path, buf);
     /* remember to decrement the open_files count */
     atomic_dec(&mountp->open_files);
     return res;
