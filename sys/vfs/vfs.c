@@ -794,6 +794,25 @@ int vfs_normalize_path(char *buf, const char *path, size_t buflen)
     return npathcomp;
 }
 
+const vfs_mount_t *vfs_iterate_mounts(const vfs_mount_t *cur)
+{
+    clist_node_t *node;
+    if (cur == NULL) {
+        node = _vfs_mounts_list.next;
+        if (node == NULL) {
+            /* empty list */
+            return NULL;
+        }
+    }
+    else {
+        node = cur->list_entry.next;
+        if (node == _vfs_mounts_list.next) {
+            return NULL;
+        }
+    }
+    return container_of(node, vfs_mount_t, list_entry);
+}
+
 inline static int _allocate_fd(int fd)
 {
     if (fd < 0) {

@@ -771,6 +771,22 @@ int vfs_bind(int fd, int flags, vfs_file_ops_t *f_op, void *private_data);
  */
 int vfs_normalize_path(char *buf, const char *path, size_t buflen);
 
+/**
+ * @brief Iterate through all mounted file systems
+ *
+ * Not thread safe!
+ *
+ * Set @p cur to @c NULL to start from the beginning
+ *
+ * @see @c sc_vfs.c (@c df command) for a usage example
+ *
+ * @param[in]  cur  current iterator value
+ *
+ * @return     Pointer to next mounted file system in list after @p cur
+ * @return     NULL if @p cur is the last element in the list
+ */
+const vfs_mount_t *vfs_iterate_mounts(const vfs_mount_t *cur);
+
 #ifdef __cplusplus
 }
 #endif
