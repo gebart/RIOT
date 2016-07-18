@@ -35,8 +35,9 @@ static mutex_t _devfs_mutex = MUTEX_INIT;
  * mount/umount. unlink is not permitted, use devfs_unregister instead */
 
 /* File operations */
-/* Only open is overloaded to allow searching for the correct device */
+/* open is overloaded to allow searching for the correct device */
 static int devfs_open(vfs_file_t *filp, const char *name, int flags, mode_t mode, const char *abs_path);
+/* A minimal fcntl is also provided to enable SETFL handling */
 static int devfs_fcntl(vfs_file_t *filp, int cmd, int arg);
 
 /* Directory operations */
