@@ -383,13 +383,12 @@ int vfs_readdir(vfs_DIR *dirp, vfs_dirent_t *entry)
     if (entry == NULL) {
         return -EINVAL;
     }
-    int res = -EINVAL;
     if (dirp->d_op != NULL) {
         if (dirp->d_op->readdir != NULL) {
-            res = dirp->d_op->readdir(dirp, entry);
+            return dirp->d_op->readdir(dirp, entry);
         }
     }
-    return res;
+    return -EINVAL;
 }
 
 int vfs_closedir(vfs_DIR *dirp)
