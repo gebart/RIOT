@@ -21,6 +21,8 @@
 static int constfs_mount(vfs_mount_t *mountp);
 static int constfs_umount(vfs_mount_t *mountp);
 static int constfs_unlink(vfs_mount_t *mountp, const char *name);
+static int constfs_stat(vfs_mount_t *mountp, const char *restrict name, struct stat *restrict buf);
+static int constfs_statvfs(vfs_mount_t *mountp, const char *restrict path, struct statvfs *restrict buf);
 
 /* File operations */
 static int constfs_close(vfs_file_t *filp);
@@ -39,6 +41,8 @@ static const vfs_file_system_ops_t constfs_fs_ops = {
     .mount = constfs_mount,
     .umount = constfs_umount,
     .unlink = constfs_unlink,
+    .statvfs = constfs_statvfs,
+    .stat = constfs_stat,
 };
 
 static const vfs_file_ops_t constfs_file_ops = {
@@ -63,6 +67,16 @@ const vfs_file_system_t constfs_file_system = {
     .d_op = &constfs_dir_ops,
 };
 
+/**
+ * @internal
+ * @brief Fill out a file information struct with information about the file
+ * pointed to by @p fp
+ *
+ * @param[in]  fp     file to query
+ * @param[out] buf    output buffer
+ */
+static void _constfs_write_stat(const constfs_file_t *fp, struct stat *restrict buf);
+
 static int constfs_mount(vfs_mount_t *mountp)
 {
     /* perform any extra initialization here */
@@ -85,6 +99,56 @@ static int constfs_unlink(vfs_mount_t *mountp, const char *name)
     return -EROFS;
 }
 
+static int constfs_stat(vfs_mount_t *mountp, const char *restrict name, struct stat *restrict buf)
+{
+    (void) name;
+    /* Fill out some information about this file */
+    if (buf == NULL) {
+        return -EFAULT;
+    }
+    constfs_t *fs = mountp->private_data;
+    /* linear search through the files array */
+    for (size_t i = 0; i < fs->nfiles; ++i) {
+        DEBUG("constfs_stat ? \"%s\"\n", fs->files[i].path);
+        if (strcmp(fs->files[i].path, name) == 0) {
+            DEBUG("constfs_stat: Found :)\n");
+            _constfs_write_stat(&fs->files[i], buf);
+            buf->st_ino = i;
+            return 0;
+        }
+    }
+    DEBUG("constfs_stat: Not found :(\n");
+    return -ENOENT;
+}
+
+static int constfs_statvfs(vfs_mount_t *mountp, const char *restrict path, struct statvfs *restrict buf)
+{
+    (void) path;
+    /* Fill out some information about this file system */
+    if (buf == NULL) {
+        return -EFAULT;
+    }
+    constfs_t *fs = mountp->private_data;
+    /* clear out the stat buffer first */
+    memset(buf, 0, sizeof(*buf));
+    buf->f_bsize = sizeof(uint8_t); /* block size */
+    buf->f_frsize = sizeof(uint8_t); /* fundamental block size */
+    fsblkcnt_t f_blocks = 0;
+    for (size_t i = 0; i < fs->nfiles; ++i) {
+        f_blocks += fs->files[i].size;
+    }
+    buf->f_blocks = f_blocks;  /* Blocks total */
+    buf->f_bfree = 0;          /* Blocks free */
+    buf->f_bavail = 0;         /* Blocks available to non-privileged processes */
+    buf->f_files = fs->nfiles; /* Total number of file serial numbers */
+    buf->f_ffree = 0;          /* Total number of free file serial numbers */
+    buf->f_favail = 0;         /* Number of file serial numbers available to non-privileged process */
+    buf->f_fsid = 0;           /* File system id */
+    buf->f_flag = (ST_RDONLY | ST_NOSUID); /* File system flags */
+    buf->f_namemax = UINT8_MAX; /* Maximum file name length */
+    return 0;
+}
+
 static int constfs_close(vfs_file_t *filp)
 {
     /* perform any necessary clean ups */
@@ -98,8 +162,7 @@ static int constfs_fstat(vfs_file_t *filp, struct stat *buf)
     if (buf == NULL) {
         return -EFAULT;
     }
-    buf->st_nlink = 1;
-    buf->st_size = fp->size;
+    _constfs_write_stat(fp, buf);
     return 0;
 }
 
@@ -226,4 +289,15 @@ static int constfs_closedir(vfs_DIR *dirp)
      * nothing to clean up */
     (void) dirp;
     return 0;
+}
+
+static void _constfs_write_stat(const constfs_file_t *fp, struct stat *restrict buf)
+{
+    /* clear out the stat buffer first */
+    memset(buf, 0, sizeof(*buf));
+    buf->st_nlink = 1;
+    buf->st_mode = S_IFREG | S_IRUSR | S_IRGRP | S_IROTH;
+    buf->st_size = fp->size;
+    buf->st_blocks = fp->size;
+    buf->st_blksize = sizeof(uint8_t);
 }
