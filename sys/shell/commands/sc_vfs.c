@@ -94,20 +94,21 @@ void _print_df(const char *path)
 {
     struct statvfs buf;
     int res = vfs_statvfs(path, &buf);
+    printf("%-16s ", path);
     if (res < 0) {
         char err[16];
         _errno_string(res, err, sizeof(err));
-        printf("statvfs \"%s\" failed: %s\n", path, err);
+        printf("statvfs failed: %s\n", err);
         return;
     }
-    printf("%-16s %12lu %12lu %12lu %7lu%%\n", path, (unsigned long)buf.f_blocks,
+    printf("%12lu %12lu %12lu %7lu%%\n", (unsigned long)buf.f_blocks,
         (unsigned long)(buf.f_blocks - buf.f_bfree), (unsigned long)buf.f_bavail,
         (unsigned long)(((buf.f_blocks - buf.f_bfree) * 100) / buf.f_blocks));
 }
 
 int _df_handler(int argc, char **argv)
 {
-    puts("Mountpoint       Total        Used         Available    Capacity");
+    puts("Mountpoint              Total         Used    Available     Capacity");
     if (argc > 1) {
         const char *path = argv[1];
         _print_df(path);
