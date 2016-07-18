@@ -39,10 +39,11 @@ static void _ls_usage(char **argv)
 
 static void _vfs_usage(char **argv)
 {
-    printf("%s <r|w|fs> <path> [bytes] [offset]\n", argv[0]);
+    printf("%s <r|w> <path> [bytes] [offset]\n", argv[0]);
+    printf("%s df [path]\n", argv[0]);
     puts("r: Read [bytes] bytes at [offset] in file <path>");
     puts("w: not implemented yet");
-    puts("df: show file system usage");
+    puts("df: show file system space utilization stats");
 }
 
 /* Macro used by _errno_string to expand errno labels to string and print it */
@@ -89,25 +90,35 @@ static int _errno_string(int err, char *buf, size_t buflen)
 }
 #undef _case_snprintf_errno_name
 
-int _df_handler(int argc, char **argv)
+void _print_df(const char *path)
 {
-    if (argc < 2) {
-        puts("vfs df: missing path");
-        return 1;
-    }
-    const char *path = argv[1];
     struct statvfs buf;
     int res = vfs_statvfs(path, &buf);
     if (res < 0) {
         char err[16];
         _errno_string(res, err, sizeof(err));
         printf("statvfs \"%s\" failed: %s\n", path, err);
-        return 2;
+        return;
     }
-    puts("Mountpoint       Total        Used         Available    Capacity");
-    printf("%-16s %12lu %12lu %12lu %7lu%%\n", argv[1], (unsigned long)buf.f_blocks,
+    printf("%-16s %12lu %12lu %12lu %7lu%%\n", path, (unsigned long)buf.f_blocks,
         (unsigned long)(buf.f_blocks - buf.f_bfree), (unsigned long)buf.f_bavail,
         (unsigned long)(((buf.f_blocks - buf.f_bfree) * 100) / buf.f_blocks));
+}
+
+int _df_handler(int argc, char **argv)
+{
+    puts("Mountpoint       Total        Used         Available    Capacity");
+    if (argc > 1) {
+        const char *path = argv[1];
+        _print_df(path);
+    }
+    else {
+        /* Iterate through all mount points */
+        const vfs_mount_t *it = NULL;
+        while ((it = vfs_iterate_mounts(it)) != NULL) {
+            _print_df(it->mount_point);
+        }
+    }
     return 0;
 }
 
