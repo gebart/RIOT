@@ -25,6 +25,7 @@
 #ifndef DEVFS_H_
 #define DEVFS_H_
 
+#include "clist.h"
 #include "vfs.h"
 
 #ifdef __cplusplus
@@ -43,10 +44,10 @@ typedef struct devfs devfs_t;
  * The file system is implemented as a linked list.
  */
 struct devfs {
-    devfs_t *next; /**< Pointer to next item in list */
-    const char *path; /**< File system relative path to this node */
+    clist_node_t list_entry;    /**< List item entry */
+    const char *path;           /**< File system relative path to this node */
     const vfs_file_ops_t *f_op; /**< Pointer to file operations table for this device */
-    void *private_data; /**< Pointer to device driver specific data */
+    void *private_data;         /**< Pointer to device driver specific data */
 };
 
 /**
