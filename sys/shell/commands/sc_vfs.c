@@ -39,8 +39,10 @@ static void _ls_usage(char **argv)
 
 static void _vfs_usage(char **argv)
 {
-    printf("%s <r|w> <path> [bytes] [offset]\n", argv[0]);
+    printf("%s <r|w|fs> <path> [bytes] [offset]\n", argv[0]);
     puts("r: Read [bytes] bytes at [offset] in file <path>");
+    puts("w: not implemented yet");
+    puts("df: show file system usage");
 }
 
 /* Macro used by _errno_string to expand errno labels to string and print it */
@@ -87,25 +89,43 @@ static int _errno_string(int err, char *buf, size_t buflen)
 }
 #undef _case_snprintf_errno_name
 
-int _vfs_handler(int argc, char **argv)
+int _df_handler(int argc, char **argv)
 {
-    if (argc < 3) {
-        _vfs_usage(argv);
+    if (argc < 2) {
+        puts("vfs df: missing path");
         return 1;
     }
-    if (strcmp(argv[1], "r") != 0) {
-        printf("Only read is currently supported");
+    const char *path = argv[1];
+    struct statvfs buf;
+    int res = vfs_statvfs(path, &buf);
+    if (res < 0) {
+        char err[16];
+        _errno_string(res, err, sizeof(err));
+        printf("statvfs \"%s\" failed: %s\n", path, err);
         return 2;
     }
+    puts("Mountpoint       Total        Used         Available    Capacity");
+    printf("%-16s %12lu %12lu %12lu %7lu%%\n", argv[1], (unsigned long)buf.f_blocks,
+        (unsigned long)(buf.f_blocks - buf.f_bfree), (unsigned long)buf.f_bavail,
+        (unsigned long)(((buf.f_blocks - buf.f_bfree) * 100) / buf.f_blocks));
+    return 0;
+}
+
+int _read_handler(int argc, char **argv)
+{
     uint8_t buf[16];
     size_t nbytes = sizeof(buf);
     off_t offset = 0;
-    char *path = argv[2];
-    if (argc > 3) {
-        nbytes = atoi(argv[3]);
+    char *path = argv[1];
+    if (argc < 2) {
+        puts("vfs read: missing file name");
+        return 1;
     }
-    if (argc > 4) {
-        offset = atoi(argv[4]);
+    if (argc > 2) {
+        nbytes = atoi(argv[2]);
+    }
+    if (argc > 3) {
+        offset = atoi(argv[3]);
     }
 
     int res;
@@ -174,6 +194,25 @@ int _vfs_handler(int argc, char **argv)
 
     vfs_close(fd);
     return 0;
+}
+
+int _vfs_handler(int argc, char **argv)
+{
+    if (argc < 2) {
+        _vfs_usage(argv);
+        return 1;
+    }
+    if (strcmp(argv[1], "r") == 0) {
+        /* pass on to read handler, shifting the arguments by one */
+        return _read_handler(argc - 1, &argv[1]);
+    }
+    else if (strcmp(argv[1], "df") == 0) {
+        return _df_handler(argc - 1, &argv[1]);
+    }
+    else {
+        printf("vfs: unsupported sub-command \"%s\"\n", argv[1]);
+        return 1;
+    }
 }
 
 int _ls_handler(int argc, char **argv)
