@@ -342,7 +342,7 @@ int _fstat_r(struct _reent *r, int fd, struct stat *buf)
  */
 int _stat_r(struct _reent *r, const char *name, struct stat *st)
 {
-    int res = vfs_stat(path, st);
+    int res = vfs_stat(name, st);
     if (res < 0) {
         /* vfs returns negative error codes */
         r->_errno = -res;
