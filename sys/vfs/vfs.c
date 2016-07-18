@@ -13,8 +13,6 @@
  * @author  Joakim Nohlgård <joakim.nohlgard@eistec.se>
  */
 
-/* TODO: Add locking/mutexes! */
-
 #include <errno.h> /* for error codes */
 #include <string.h> /* for strncmp */
 #include <stddef.h> /* for NULL */
