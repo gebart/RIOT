@@ -20,7 +20,7 @@
 #ifndef _BASE64_ENCODER_DECODER_H
 #define _BASE64_ENCODER_DECODER_H
 
-#include <stdlib.h>
+#include <stddef.h> /* for size_t */
 
 #ifdef __cplusplus
 extern "C" {
