@@ -96,25 +96,21 @@ extern "C" {
 #define VFS_ANY_FD (-1)
 
 /* Forward declarations */
-struct vfs_file_ops;
 /**
  * @brief struct @c vfs_file_ops typedef
  */
 typedef struct vfs_file_ops vfs_file_ops_t;
 
-struct vfs_dir_ops;
 /**
  * @brief struct @c vfs_dir_ops typedef
  */
 typedef struct vfs_dir_ops vfs_dir_ops_t;
 
-struct vfs_file_system_ops;
 /**
  * @brief struct @c vfs_file_system_ops typedef
  */
 typedef struct vfs_file_system_ops vfs_file_system_ops_t;
 
-struct vfs_mount_struct; /* not vfs_mount because of name collision with the function */
 /**
  * @brief struct @c vfs_mount_struct typedef
  */

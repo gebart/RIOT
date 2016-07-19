@@ -52,7 +52,7 @@ static void _vfs_usage(char **argv)
         res = snprintf(buf, buflen, #x); \
         break
 
-static int _errno_string(int err, char *buf, size_t buflen)
+static int _errno_string(int err, char *buf, ssize_t buflen)
 {
     int len = 0;
     int res;
@@ -164,7 +164,7 @@ int _read_handler(int argc, char **argv)
     }
 
     while (nbytes > 0) {
-        size_t line_len = (nbytes < sizeof(buf) ? nbytes : sizeof(buf));
+        ssize_t line_len = (nbytes < sizeof(buf) ? nbytes : sizeof(buf));
         res = vfs_read(fd, buf, line_len);
         if (res < 0) {
             _errno_string(res, (char *)buf, sizeof(buf));
@@ -183,7 +183,7 @@ int _read_handler(int argc, char **argv)
             break;
         }
         printf("%08lx:", (unsigned long)offset);
-        for (size_t k = 0; k < res; ++k) {
+        for (ssize_t k = 0; k < res; ++k) {
             if ((k % 2) == 0) {
                 putchar(' ');
             }
@@ -191,7 +191,7 @@ int _read_handler(int argc, char **argv)
         }
         putchar(' ');
         putchar(' ');
-        for (size_t k = 0; k < res; ++k) {
+        for (ssize_t k = 0; k < res; ++k) {
             if (isprint(buf[k])) {
                 putchar(buf[k]);
             }
