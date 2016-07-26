@@ -6,7 +6,7 @@
  * details.
  */
 
-#if MODULE_MTD
+#if MODULE_VFS
 
 #include <fcntl.h>
 #include <errno.h>
