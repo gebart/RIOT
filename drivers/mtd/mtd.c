@@ -59,14 +59,14 @@ int mtd_erase(mtd_dev_t *mtd, uint32_t addr, uint32_t count)
     }
 }
 
-int mtd_ioctl(mtd_dev_t *mtd, unsigned char ctrl, void *buf)
+int mtd_power(mtd_dev_t *mtd, enum mtd_power_state power)
 {
     if (!mtd || !mtd->driver) {
         return -ENODEV;
     }
 
-    if (mtd->driver->ioctl) {
-        return mtd->driver->ioctl(mtd, ctrl, buf);
+    if (mtd->driver->power) {
+        return mtd->driver->power(mtd, power);
     }
     else {
         return -ENOTSUP;

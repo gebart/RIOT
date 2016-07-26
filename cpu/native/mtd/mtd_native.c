@@ -19,7 +19,7 @@
 #define ENABLE_DEBUG (1)
 #include "debug.h"
 
-static mtd_sta_t _init(mtd_dev_t *dev)
+static int _init(mtd_dev_t *dev)
 {
     mtd_native_dev_t *_dev = (mtd_native_dev_t*) dev;
     const char *name;
@@ -39,7 +39,7 @@ static mtd_sta_t _init(mtd_dev_t *dev)
         DEBUG("mtd_native: init: creating file %s\n", name);
         f = real_fopen(name, "w+");
         if (!f) {
-            return MTD_STA_NODISK;
+            return -EAGAIN;
         }
         for (unsigned long i = 0; i < MTD_NATIVE_FLASH_SIZE; i++) {
             real_fputc(0xff, f);
@@ -48,7 +48,7 @@ static mtd_sta_t _init(mtd_dev_t *dev)
 
     real_fclose(f);
 
-    return MTD_STA_INIT;
+    return 0;
 }
 
 static int _read(mtd_dev_t *dev, void *buff, uint32_t addr, uint32_t size)
@@ -150,20 +150,18 @@ static int _erase(mtd_dev_t *dev, uint32_t addr, uint32_t size)
     return size;
 }
 
-static int _ioctl(mtd_dev_t *dev, unsigned char ctl, void *buf)
+static int _power(mtd_dev_t *dev, enum mtd_power_state power)
 {
-    int ret = -EAGAIN;
     (void) dev;
-    (void) ctl;
-    (void) buf;
+    (void) power;
 
-    return ret;
+    return -ENOTSUP;
 }
 
 
 const mtd_desc_t native_flash_driver = {
     .read = _read,
-    .ioctl = _ioctl,
+    .power = _power,
     .write = _write,
     .erase = _erase,
     .init = _init,

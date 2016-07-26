@@ -30,59 +30,21 @@
 extern "C" {
 #endif
 
-/**
- * @name Disk Status Bits
- * @{
- */
-typedef enum {
-    MTD_STA_NOINIT  = 0x00, /**< Drive not initialized */
-    MTD_STA_INIT    = 0x01, /**< Drive initialized */
-    MTD_STA_NODISK  = 0x02, /**< No medium in the drive */
-    MTD_STA_PROTECT = 0x04  /**< Write protected */
-} mtd_sta_t;
-/** @} */
-
-/**
- * @name Command code for disk_ioctrl function
- * @{
- */
-
-/**
- * @name Generic ioctl command
- * @{
- */
-#define MTD_CTRL_SYNC           0   /**< Flush disk cache (for write functions) */
-#define MTD_CTRL_ERASE_BLOCK    6   /**< Force erased a block of blocks */
-#define MTD_CTRL_POWER          7   /**< Get/Set power status */
-#define MTD_CTRL_LOCK           8   /**< Lock/Unlock media removal */
-#define MTD_CTRL_EJECT          9   /**< Eject media */
-/** @} */
-
-/**
- * @name specific ioctl command
- * @{
- */
-#define MTD_MMC_GET_TYPE        15  /**< Get memory type - NAND / NOR */
-#define MTD_MMC_GET_SDSTAT      16  /**< Get memory status */
-/** @} */
-
-/**
- * @name Memory type
- * @{
- */
-#define MEMORY_TYPE_NOR     20
-#define MEMORY_TYPE_NAND    21
-/** @} */
-
-/** @} */
+enum mtd_power_state {
+    MTD_POWER_UP,
+    MTD_POWER_DOWN,
+};
 
 typedef struct mtd_desc mtd_desc_t;
 
+/**
+ * @brief MTD device descriptor
+ */
 typedef struct {
-    const mtd_desc_t *driver;
-    uint32_t sector_count;
-    uint32_t pages_per_sector;
-    uint32_t page_size;
+    const mtd_desc_t *driver;  /**< MTD driver */
+    uint32_t sector_count;     /**< Number of sector in the MTD */
+    uint32_t pages_per_sector; /**< Number of pages by sector in the MTD */
+    uint32_t page_size;        /**< Size of the pages in the MTD */
 } mtd_dev_t;
 
 
@@ -103,21 +65,9 @@ struct mtd_desc {
      * @param[in] dev  Pointer to the selected driver
      *
      * @returns 0 on success
-     * @returns any other @ref mtd_sta_t value on error
+     * @returns < 0 value in error
      */
-    mtd_sta_t (*init)(mtd_dev_t *dev);
-
-
-    /**
-     * @brief Get the status of the Memory Technology Device (MTD)
-     *
-     * @param[in] dev  Pointer to the selected driver
-     *
-     * @returns 0 on success
-     * @returns any other @ref mtd_sta_t value on error
-     */
-    mtd_sta_t (*status)(mtd_dev_t *dev);
-
+    int (*init)(mtd_dev_t *dev);
 
     /**
      * @brief Read from the Memory Technology Device (MTD)
@@ -136,7 +86,6 @@ struct mtd_desc {
                 void *buff,
                 uint32_t addr,
                 uint32_t size);
-
 
     /**
      * @brief Write to the Memory Technology Device (MTD)
@@ -158,9 +107,9 @@ struct mtd_desc {
                  uint32_t size);
 
     /**
-     * @brief Erase sector over the Memory Technology Device (MTD)
+     * @brief Erase sector(s) over the Memory Technology Device (MTD)
      *
-     * @p addr must be aligned on a sector boundary. @p size must be a sector size.
+     * @p addr must be aligned on a sector boundary. @p size must be a multiple of a sector size.
      *
      * @param[in] dev       Pointer to the selected driver
      * @param[in] addr      Starting address
@@ -174,18 +123,15 @@ struct mtd_desc {
                  uint32_t size);
 
     /**
-     * @brief IOCTL functions for the Memory Technology Device (MTD)
+     * @brief Control power of Memory Technology Device (MTD)
      *
      * @param[in] dev       Pointer to the selected driver
-     * @param[in] ctrl      Control code
-     * @param[in,out] buff  Buffer to send/receive data block
+     * @param[in] power     Power state to apply (from @ref enum mtd_power_state)
      *
      * @return 0 on success
      * @return < 0 value on error
      */
-    int (*ioctl)(mtd_dev_t *dev,
-                 unsigned char ctrl,
-                 void *buff);
+    int (*power)(mtd_dev_t *dev, enum mtd_power_state power);
 };
 
 /**
@@ -236,16 +182,15 @@ int mtd_write(mtd_dev_t *mtd, const void *src, uint32_t addr, uint32_t count);
 int mtd_erase(mtd_dev_t *mtd, uint32_t addr, uint32_t count);
 
 /**
- * @brief mtd_ioctl IOCTL on a MTD device
+ * @brief mtd_power Set power mode on a MTD device
  *
- * @param         mtd  the device to access
- * @param[in]     ctrl the value to get/set
- * @param[in,out] buf  the buffer to get/set
+ * @param      mtd   the device to access
+ * @param[in]  power the power mode to set
  *
- * @return 0 if ioctl successful
+ * @return 0 if power mode successfully set
  * @return < 0 if an error occured
  */
-int mtd_ioctl(mtd_dev_t *mtd, unsigned char ctrl, void *buf);
+int mtd_power(mtd_dev_t *mtd, enum mtd_power_state power);
 
 
 #ifdef __cplusplus

@@ -33,7 +33,7 @@ static void test_mtd_init(void)
     mtd_dev_t *dev = (mtd_dev_t*) &_dev;
 
     int ret = mtd_init(dev);
-    TEST_ASSERT_EQUAL_INT(ret, 1);
+    TEST_ASSERT_EQUAL_INT(ret, 0);
 }
 
 static void test_mtd_erase(void)
