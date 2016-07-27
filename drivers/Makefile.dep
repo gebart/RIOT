@@ -120,3 +120,8 @@ ifneq (,$(filter xbee,$(USEMODULE)))
   USEMODULE += xtimer
   USEMODULE += netif
 endif
+
+ifneq (,$(filter mtd_spi_nor,$(USEMODULE)))
+  USEMODULE += mtd
+  FEATURES_REQUIRED += periph_spi
+endif
