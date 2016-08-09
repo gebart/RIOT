@@ -334,10 +334,7 @@ ssize_t vfs_write(int fd, const void *src, size_t count)
 int vfs_opendir(vfs_DIR *dirp, const char *dirname)
 {
     DEBUG("vfs_opendir: %p, \"%s\"\n", (void *)dirp, dirname);
-    if (dirp == NULL) {
-        return -EINVAL;
-    }
-    if (dirname == NULL) {
+    if ((dirp == NULL) || (dirname == NULL)) {
         return -EINVAL;
     }
     const char *rel_path;
@@ -377,10 +374,7 @@ int vfs_opendir(vfs_DIR *dirp, const char *dirname)
 int vfs_readdir(vfs_DIR *dirp, vfs_dirent_t *entry)
 {
     DEBUG("vfs_readdir: %p, %p\n", (void *)dirp, (void *)entry);
-    if (dirp == NULL) {
-        return -EINVAL;
-    }
-    if (entry == NULL) {
+    if ((dirp == NULL) || (entry == NULL)) {
         return -EINVAL;
     }
     if (dirp->d_op != NULL) {
@@ -397,13 +391,16 @@ int vfs_closedir(vfs_DIR *dirp)
     if (dirp == NULL) {
         return -EINVAL;
     }
+    vfs_mount_t *mountp = dirp->mp;
+    if (mountp == NULL) {
+        return -EBADF;
+    }
     int res = 0;
     if (dirp->d_op != NULL) {
         if (dirp->d_op->closedir != NULL) {
             res = dirp->d_op->closedir(dirp);
         }
     }
-    vfs_mount_t *mountp = dirp->mp;
     memset(dirp, 0, sizeof(*dirp));
     atomic_dec(&mountp->open_files);
     return res;
