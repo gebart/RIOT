@@ -16,6 +16,31 @@
  * Linux VFS layer implementation, with major reductions in the feature set, in
  * order to fit the resource constrained platforms that RIOT targets.
  *
+ * The overall design goals are:
+ * - Provide implementations for all newlib "file" syscalls
+ * - Keep it simple, do not add every possible file operation from Linux VFS.
+ * - Easy to map existing file system implementations for resource constrained systems onto the VFS layer API
+ * - Avoid keeping a central `enum` of all file system drivers that has to be kept up to date with external packages etc.
+ * - Use POSIX `<errno.h>` numbers as negative return codes for errors, avoid the global `errno` variable.
+ * - Only absolute paths to files (no per-process working directory)
+ * - No dynamic memory allocation
+ *
+ *
+ * The API should be easy to understand for users who are familiar with the
+ * POSIX file functions (open, close, read, write, fstat, lseek etc.)
+ *
+ * The VFS layer keeps track of mounted file systems and open files, the
+ * `vfs_open` function searches the array of mounted file systems and dispatches
+ * the call to the file system instance with the longest matching mount point prefix.
+ * Subsequent calls to `vfs_read`, `vfs_write`, etc will do a look up in the
+ * table of open files and dispatch the call to the correct file system driver
+ * for handling.
+ *
+ * `vfs_mount` takes a string containing the mount point, a file system driver
+ * specification (`struct file_system`), and an opaque pointer that only the FS
+ * driver knows how to use, which can be used to keep driver parameters in order
+ * to allow dynamic handling of multiple devices.
+ *
  * @todo VFS layer reference counting and locking for open files and
  *       simultaneous access.
  *
