@@ -66,7 +66,11 @@ static int _test_vfs_file_op_my_fd = -1;
 
 static void setup(void)
 {
-    vfs_mount(&_test_vfs_mount_null);
+    int res = vfs_mount(&_test_vfs_mount_null);
+    if (res < 0) {
+        _test_vfs_file_op_my_fd = -1;
+        return;
+    }
     _test_vfs_file_op_my_fd = vfs_open("/test/somefile", O_RDONLY, 0);
 }
 
@@ -120,6 +124,7 @@ static void test_vfs_null_file_ops_lseek(void)
 
 static void test_vfs_null_file_ops_fstat(void)
 {
+    TEST_ASSERT(_test_vfs_file_op_my_fd >= 0);
     struct stat buf;
     int res = vfs_fstat(_test_vfs_file_op_my_fd, &buf);
     TEST_ASSERT_EQUAL_INT(-EINVAL, res);
