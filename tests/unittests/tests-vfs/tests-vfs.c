@@ -22,6 +22,7 @@ Test *tests_vfs_open_close_tests(void);
 Test *tests_vfs_normalize_path_tests(void);
 Test *tests_vfs_null_file_ops_tests(void);
 Test *tests_vfs_null_file_system_ops_tests(void);
+Test *tests_vfs_null_dir_ops_tests(void);
 
 void tests_vfs(void)
 {
@@ -31,5 +32,6 @@ void tests_vfs(void)
     TESTS_RUN(tests_vfs_normalize_path_tests());
     TESTS_RUN(tests_vfs_null_file_ops_tests());
     TESTS_RUN(tests_vfs_null_file_system_ops_tests());
+    TESTS_RUN(tests_vfs_null_dir_ops_tests());
 }
 /** @} */
