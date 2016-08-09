@@ -126,7 +126,7 @@ static void test_vfs_constfs_open(void)
     TEST_ASSERT_EQUAL_INT(0, res);
 }
 
-static void test_vfs_constfs_read(void)
+static void test_vfs_constfs_read_lseek(void)
 {
     int res;
     res = vfs_mount(&_test_vfs_mount);
@@ -141,6 +141,23 @@ static void test_vfs_constfs_read(void)
     nbytes = vfs_read(fd, strbuf, sizeof(strbuf));
     TEST_ASSERT_EQUAL_INT(sizeof(str_data), nbytes);
     TEST_ASSERT_EQUAL_STRING((const char *)&str_data[0], (const char *)&strbuf[0]);
+
+    off_t pos;
+    /* lseek to the middle */
+    memset(strbuf, '\0', sizeof(strbuf));
+    pos = vfs_lseek(fd, sizeof(str_data) / 2, SEEK_SET);
+    TEST_ASSERT_EQUAL_INT(sizeof(str_data) / 2, pos);
+    nbytes = vfs_read(fd, strbuf, sizeof(strbuf));
+    TEST_ASSERT_EQUAL_INT((sizeof(str_data) + 1) / 2, nbytes); /* + 1 for rounding up */
+    TEST_ASSERT_EQUAL_STRING((const char *)&str_data[sizeof(str_data) / 2], (const char *)&strbuf[0]);
+
+    /* lseek to near the end */
+    memset(strbuf, '\0', sizeof(strbuf));
+    pos = vfs_lseek(fd, -1, SEEK_END);
+    TEST_ASSERT_EQUAL_INT(sizeof(str_data) - 1, pos);
+    nbytes = vfs_read(fd, strbuf, sizeof(strbuf));
+    TEST_ASSERT_EQUAL_INT(1, nbytes);
+    TEST_ASSERT_EQUAL_STRING((const char *)&str_data[sizeof(str_data) - 1], (const char *)&strbuf[0]);
 
     res = vfs_fcntl(fd, F_GETFL, 0);
     TEST_ASSERT_EQUAL_INT(O_RDONLY, res);
@@ -190,7 +207,7 @@ Test *tests_vfs_mount_constfs_tests(void)
         new_TestFixture(test_vfs_mount__invalid),
         new_TestFixture(test_vfs_umount__invalid_mount),
         new_TestFixture(test_vfs_constfs_open),
-        new_TestFixture(test_vfs_constfs_read),
+        new_TestFixture(test_vfs_constfs_read_lseek),
 #if MODULE_NEWLIB
         new_TestFixture(test_vfs_constfs__posix),
 #endif
