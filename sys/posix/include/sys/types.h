@@ -36,7 +36,7 @@ typedef     uint32_t ino_t;       /**< Used for file serial numbers */
 typedef     uint32_t key_t;       /**< Used for XSI interprocess communication */
 typedef     uint32_t mode_t;      /**< Used for some file attributes */
 typedef     uint16_t nlink_t;     /**< Used for link counts */
-typedef     uint32_t off_t;       /**< Used for file sizes */
+typedef      int32_t off_t;       /**< Used for file sizes and offsets */
 typedef          int pid_t;       /**< Used for process IDs and process group IDs */
 typedef unsigned int size_t;      /**< Used for sizes of objects */
 typedef   signed int ssize_t;     /**< Used for a count of bytes or an error indication */
