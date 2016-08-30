@@ -576,3 +576,9 @@ endif
 ifneq (,$(filter devfs,$(USEMODULE)))
   USEMODULE += vfs
 endif
+
+ifneq (,$(filter vfs,$(USEMODULE)))
+    ifeq (native, $(BOARD))
+        USEMODULE += native_vfs
+    endif
+endif
