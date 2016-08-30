@@ -22,7 +22,7 @@
 #include "vfs.h"
 #include "fs/devfs.h"
 
-#define ENABLE_DEBUG (1)
+#define ENABLE_DEBUG (0)
 #include "debug.h"
 
 static vfs_mount_t _devfs_auto_init_mount = {
