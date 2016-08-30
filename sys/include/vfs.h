@@ -772,7 +772,7 @@ int vfs_statvfs(const char *restrict path, struct statvfs *restrict buf);
  * @return fd number on success (>= 0)
  * @return <0 on error
  */
-int vfs_bind(int fd, int flags, vfs_file_ops_t *f_op, void *private_data);
+int vfs_bind(int fd, int flags, const vfs_file_ops_t *f_op, void *private_data);
 
 /**
  * @brief Normalize a path

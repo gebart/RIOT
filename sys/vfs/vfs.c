@@ -707,7 +707,7 @@ int vfs_statvfs(const char *restrict path, struct statvfs *restrict buf)
     return res;
 }
 
-int vfs_bind(int fd, int flags, vfs_file_ops_t *f_op, void *private_data)
+int vfs_bind(int fd, int flags, const vfs_file_ops_t *f_op, void *private_data)
 {
     DEBUG("vfs_bind: %d, %d, %p, %p\n", fd, flags, (void*)f_op, private_data);
     if (f_op == NULL) {
