@@ -39,7 +39,9 @@
 #include "reboot.h"
 #include "irq.h"
 #include "log.h"
+#if MODULE_VFS
 #include "vfs.h"
+#endif
 
 #include "uart_stdio.h"
 
