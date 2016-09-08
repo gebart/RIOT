@@ -175,6 +175,7 @@ static int _read_handler(int argc, char **argv)
     }
 
     while (nbytes > 0) {
+        memset(buf, 0, sizeof(buf));
         size_t line_len = (nbytes < sizeof(buf) ? nbytes : sizeof(buf));
         res = vfs_read(fd, buf, line_len);
         if (res < 0) {
@@ -200,9 +201,16 @@ static int _read_handler(int argc, char **argv)
             }
             printf("%02x", buf[k]);
         }
+        for (int k = res; k < sizeof(buf); ++k) {
+            if ((k % 2) == 0) {
+                putchar(' ');
+            }
+            putchar(' ');
+            putchar(' ');
+        }
         putchar(' ');
         putchar(' ');
-        for (int k = 0; k < res; ++k) {
+        for (int k = 0; k < sizeof(buf); ++k) {
             if (isprint(buf[k])) {
                 putchar(buf[k]);
             }
