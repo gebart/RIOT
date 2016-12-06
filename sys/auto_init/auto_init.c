@@ -172,6 +172,7 @@ void auto_init(void)
 #ifdef MODULE_GCOAP
     DEBUG("Auto init gcoap module.\n");
     gcoap_init();
+#endif
 #ifdef MODULE_DEVFS
     DEBUG("Mounting /dev\n");
     extern void auto_init_devfs(void);
