@@ -15,6 +15,7 @@
  * @brief       Driver for serial flash memory attached to SPI
  *
  * @author      Joakim Nohlgård <joakim.nohlgard@eistec.se>
+ * @author      Vincent Dupont <vincent@otakeys.com>
  *
  * @}
  */
@@ -558,7 +559,7 @@ static int mtd_spi_nor_erase(mtd_dev_t *mtd, uint32_t addr, uint32_t size)
         }
     }
     else if ((dev->flag & SPI_NOR_F_SECT_32K) && size == 32768) {
-        /* 4 KiO sectors can be erased with sector erase command */
+        /* 32 KiO sectors can be erased with sector erase command */
         res = mtd_spi_cmd_addr_write(dev, dev->opcode->block_erase_32k, addr_be, NULL, 0);
         if (res < 0) {
             DEBUG("mtd_spi_nor_erase: SPI error %d\n", res);
