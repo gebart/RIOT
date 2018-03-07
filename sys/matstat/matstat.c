@@ -65,7 +65,15 @@ uint64_t matstat_variance(const matstat_state_t *state, int32_t mean)
         return 0;
     }
     mean -= state->offset;
-    uint64_t variance = (state->sum_sq - state->count * mean * mean) / (state->count - 1);
+    uint64_t variance = 0;
+    uint64_t tmp = state->count * mean * mean;
+    /* For certain input vectors, where the variance is small (less than 1),
+     * the truncation errors will accumulate and cause this equation to return a
+     * negative variance */
+    /* Work around: return 0 if the computed variance is < 1 */
+    if (tmp < state->sum_sq) {
+        variance = (state->sum_sq - tmp) / (state->count - 1);
+    }
     DEBUG("Var: (%" PRIu64 " - %" PRId32 " * %" PRId32 " * %" PRId32 ") / (%" PRIu32 " - 1) = %" PRIu64 "\n",
         state->sum_sq, state->count, mean, mean, state->count, variance);
     return variance;
@@ -76,7 +84,29 @@ void matstat_change_offset(matstat_state_t *state, int32_t mean, int32_t new_off
     int32_t new_mean = mean - new_offset;
     mean -= state->offset;
     /* Adjust sum_sq so that the variance is the same before and after the offset change */
-    state->sum_sq += state->count * ((int64_t)new_mean * new_mean - (int64_t)mean * mean);
+    int64_t adjustment = state->count * ((int64_t)new_mean * new_mean - (int64_t)mean * mean);
+    /* The conditional block below is used to avoid a corner case where the
+     * truncation of the result of the mean computation (integer division)
+     * causes sum_sq to become negative */
+    if ((adjustment < 0) && (((uint64_t)-adjustment) > state->sum_sq)) {
+        /* Avoid negative sum_sq by picking a slightly different offset */
+        DEBUG("adj1: %" PRId64 ", sum_sq = %" PRIu64 ", "
+            "new_offset = %" PRId32 ", old_offset = %" PRId32 "\n",
+            adjustment, state->sum_sq, new_offset, state->offset);
+        if (new_offset > state->offset) {
+            ++new_mean;
+            --new_offset;
+        }
+        else {
+            --new_mean;
+            ++new_offset;
+        }
+        adjustment = state->count * ((int64_t)new_mean * new_mean - (int64_t)mean * mean);
+        DEBUG("adj2: %" PRId64 ", sum_sq = %" PRIu64 ", "
+            "new_offset = %" PRId32 ", old_offset = %" PRId32 "\n",
+            adjustment, state->sum_sq, new_offset, state->offset);
+    }
+    state->sum_sq += adjustment;
     state->offset = new_offset;
 }
 
