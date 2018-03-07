@@ -69,6 +69,37 @@ static void test_matstat_var_stability(void)
     TEST_ASSERT(var <= 1);
 }
 
+static void test_matstat_negative_variance(void)
+{
+    /* This is a regression test for two related problems where the truncation
+     * in the mean computation (integer division) during an automatic offset
+     * adaptation (matstat_add internal) causes the sum_sq value to become
+     * negative, or the variance itself to become negative */
+    matstat_state_t state = MATSTAT_STATE_INIT;
+    matstat_add(&state, -1);
+    matstat_add(&state, 0);
+    int32_t mean = matstat_mean(&state);
+    uint64_t var = matstat_variance(&state, mean);
+    TEST_ASSERT_EQUAL_INT(0, var);
+    matstat_clear(&state);
+    matstat_add(&state, 1);
+    matstat_add(&state, 0);
+    matstat_add(&state, 0);
+    matstat_add(&state, 0);
+    mean = matstat_mean(&state);
+    var = matstat_variance(&state, mean);
+    TEST_ASSERT_EQUAL_INT(0, var);
+    matstat_clear(&state);
+    matstat_add(&state, 1234567);
+    for (unsigned int k = 0; k < 9999; ++k) {
+        matstat_add(&state, 1234567);
+        matstat_add(&state, 1234566);
+    }
+    mean = matstat_mean(&state);
+    var = matstat_variance(&state, mean);
+    TEST_ASSERT_EQUAL_INT(0, var);
+}
+
 static void test_matstat_merge_basic(void)
 {
     /* This is a basic test of the merging functionality without any "special" cases */
@@ -225,6 +256,7 @@ Test *tests_matstat_tests(void)
         new_TestFixture(test_matstat_merge_empty),
         new_TestFixture(test_matstat_merge_variance),
         new_TestFixture(test_matstat_accuracy),
+        new_TestFixture(test_matstat_negative_variance),
     };
 
     EMB_UNIT_TESTCALLER(matstat_tests, NULL, NULL, fixtures);
