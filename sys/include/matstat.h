@@ -45,11 +45,11 @@ extern "C" {
  */
 typedef struct {
     int64_t sum;        /**< Sum of values added */
-    uint64_t sum_sq;    /**< Sum of squared values added */
+    uint64_t sum_sq;    /**< Sum of squared differences */
     uint32_t count;     /**< Number of values added */
+    int32_t mean;       /**< Mean value */
     int32_t min;        /**< Minimum value seen */
     int32_t max;        /**< Maximum value seen */
-    int32_t offset;     /**< offset value used to improve numerical stability */
 } matstat_state_t;
 
 /**
@@ -61,7 +61,7 @@ typedef struct {
         .count = 0, \
         .sum = 0, \
         .sum_sq = 0, \
-        .offset = 0, \
+        .mean = 0, \
     }
 
 /**
@@ -80,26 +80,25 @@ void matstat_clear(matstat_state_t *state);
 void matstat_add(matstat_state_t *state, int32_t value);
 
 /**
- * @brief   Compute the mean value of all samples so far
- *
- * The mean may be rounded to the adjacent integer greater than or lower than
- * the real mean, but the rounding direction is not defined.
+ * @brief   Return the computed mean value of all samples so far
  *
  * @param[in]   state   State struct to operate on
  *
  * @return  arithmetic mean
  */
-int32_t matstat_mean(const matstat_state_t *state);
+static inline int32_t matstat_mean(const matstat_state_t *state)
+{
+    return state->mean;
+}
 
 /**
  * @brief   Compute the sample variance of all samples so far
  *
  * @param[in]   state   State struct to operate on
- * @param[in]   mean    mean value (e.g. from @ref matstat_mean)
  *
  * @return  sample variance
  */
-uint64_t matstat_variance(const matstat_state_t *state, int32_t mean);
+uint64_t matstat_variance(const matstat_state_t *state);
 
 /**
  * @brief   Combine two states
@@ -111,23 +110,6 @@ uint64_t matstat_variance(const matstat_state_t *state, int32_t mean);
  * @param[out]      src     source state struct
  */
 void matstat_merge(matstat_state_t *dest, const matstat_state_t *src);
-
-/**
- * @brief   Change offset while preserving the variance
- *
- * This function is available for advanced users, but is normally only used
- * internally by matstat_merge. It can be used when a suitable offset is known
- * in advance.
- *
- * The offset is used to improve numerical stability in the variance computation.
- * The offset value must satisfy min < offset < max, where min and max are the
- * minimum and maximum sample values, in order to avoid cancellation problems in
- * the variance computation. Use the mean of the sampled distribution as a good
- * guess, if it is known in advance.
- *
- * @precondition    @p state->count must be > 0
- */
-void matstat_change_offset(matstat_state_t *state, int32_t mean, int32_t new_offset);
 
 #ifdef __cplusplus
 }
