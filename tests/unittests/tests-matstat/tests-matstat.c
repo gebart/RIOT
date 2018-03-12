@@ -39,7 +39,7 @@ static void test_matstat_basic(void)
     TEST_ASSERT_EQUAL_INT(4, state.count);
     int32_t mean = matstat_mean(&state);
     TEST_ASSERT_EQUAL_INT(25, mean);
-    uint64_t var = matstat_variance(&state, mean);
+    uint64_t var = matstat_variance(&state);
     TEST_ASSERT_EQUAL_INT(166, var);
     matstat_clear(&state);
     TEST_ASSERT_EQUAL_INT(0, state.count);
@@ -65,29 +65,26 @@ static void test_matstat_var_stability(void)
     int32_t mean = matstat_mean(&state);
     TEST_ASSERT(mean >=  999999);
     TEST_ASSERT(mean <= 1000000);
-    uint64_t var = matstat_variance(&state, mean);
+    uint64_t var = matstat_variance(&state);
     TEST_ASSERT(var <= 1);
 }
 
 static void test_matstat_negative_variance(void)
 {
     /* This is a regression test for two related problems where the truncation
-     * in the mean computation (integer division) during an automatic offset
-     * adaptation (matstat_add internal) causes the sum_sq value to become
+     * in the mean computation (integer division) causes the sum_sq value to become
      * negative, or the variance itself to become negative */
     matstat_state_t state = MATSTAT_STATE_INIT;
     matstat_add(&state, -1);
     matstat_add(&state, 0);
-    int32_t mean = matstat_mean(&state);
-    uint64_t var = matstat_variance(&state, mean);
+    uint64_t var = matstat_variance(&state);
     TEST_ASSERT_EQUAL_INT(0, var);
     matstat_clear(&state);
     matstat_add(&state, 1);
     matstat_add(&state, 0);
     matstat_add(&state, 0);
     matstat_add(&state, 0);
-    mean = matstat_mean(&state);
-    var = matstat_variance(&state, mean);
+    var = matstat_variance(&state);
     TEST_ASSERT_EQUAL_INT(0, var);
     matstat_clear(&state);
     matstat_add(&state, 1234567);
@@ -95,8 +92,7 @@ static void test_matstat_negative_variance(void)
         matstat_add(&state, 1234567);
         matstat_add(&state, 1234566);
     }
-    mean = matstat_mean(&state);
-    var = matstat_variance(&state, mean);
+    var = matstat_variance(&state);
     TEST_ASSERT_EQUAL_INT(0, var);
 }
 
@@ -173,9 +169,6 @@ static void test_matstat_merge_variance(void)
     matstat_state_t state_ref = MATSTAT_STATE_INIT;
     matstat_add(&state1,    2000);
     matstat_add(&state_ref, 2000);
-    /* Adjust the offset in the reference to fit the test input vector, this
-     * results in a more accurate variance value */
-    matstat_change_offset(&state_ref, 2000, 4295);
     matstat_add(&state1,    1000);
     matstat_add(&state_ref, 1000);
     matstat_add(&state1,    2000);
@@ -191,16 +184,14 @@ static void test_matstat_merge_variance(void)
     matstat_add(&state2,    9999);
     matstat_add(&state_ref, 9999);
     matstat_merge(&state1, &state2);
-    int32_t mean = matstat_mean(&state1);
-    uint64_t var = matstat_variance(&state1, mean);
-    mean = matstat_mean(&state_ref);
-    uint64_t var_ref = matstat_variance(&state_ref, mean);
+    uint64_t var = matstat_variance(&state1);
+    uint64_t var_ref = matstat_variance(&state_ref);
     int64_t var_diff = var - var_ref;
     /* There will invariably be some loss of accuracy because of the integer
      * operations involved in the variance computation. */
-    TEST_ASSERT(var_diff <  5000);
-    TEST_ASSERT(var_diff > -5000);
-    TEST_ASSERT_EQUAL_INT(state_ref.offset, state1.offset);
+    TEST_ASSERT(var_diff <  1000);
+    TEST_ASSERT(var_diff > -1000);
+    TEST_ASSERT_EQUAL_INT(state_ref.mean, state1.mean);
 }
 
 static void test_matstat_accuracy(void)
@@ -240,7 +231,7 @@ static void test_matstat_accuracy(void)
     matstat_add(&state,    18759);
     matstat_add(&state,   -11096);
     int32_t mean = matstat_mean(&state);
-    uint64_t var = matstat_variance(&state, mean);
+    uint64_t var = matstat_variance(&state);
     int64_t var_diff = var - 115969073;
     TEST_ASSERT(var_diff <  10000);
     TEST_ASSERT(var_diff > -10000);
