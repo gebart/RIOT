@@ -208,37 +208,48 @@ variance < 10
 Below is a short sample of a test of a 32768 Hz timer with a 1 MHz reference:
 
     ------------- BEGIN STATISTICS --------------
-    Target error (actual trigger time - expected trigger time)
+    Limits: mean: [-41, 41], variance: [58, 99]
+    Target error (actual trigger time - expected trigger time), in reference timer ticks
     positive: timer is late, negative: timer is early
     === timer_set running ===
        interval    count       sum       sum_sq    min   max  mean  variance
-       1 -    2:     502     28976        38942     43    74    57     77
-       3 -    4:     423     24826        31372     43    74    58     74
-       5 -    8:     887     52075        65411     43    74    58     73
-       9 -   16:    1809    105768       136714     43    74    58     75
-      17 -   32:    3671    214870       281126     42    74    58     76
-          TOTAL     7292    426515       554067     42    74    58     75
+       1 -    2:   25705    455646      2002373      2    35    17     77
+       3 -    4:   25533    457326      1973191      2    35    17     77
+       5 -    8:   25412    451046      1970014      2    35    17     77
+       9 -   16:   25699    458563      2017198      2    36    17     78
+      17 -   32:   25832    457768      2018909      1    35    17     78
+      33 -   64:   25758    440454      1978830      1    35    17     76
+      65 -  128:   25335    414320      1942196      0    34    16     76
+     129 -  256:   25254    367689      1979616     -3    32    14     78
+     257 -  512:   25677    285822      2020736     -7    31    11     78
+          TOTAL   230205   3788634     18459378     -7    36    16     80
 ...
 
 The statistics above show that the timer implementation introduces a small
-delay on all timers. Note however that it is not clear whether this delay is in
-timer_set, timer_read, or within the testing code, but the combined effect of
-all of those error sources make the timer overshoot its target by on average 58
-microseconds. There is also the expected difference of approximately 31 µs
-between the minimum and the maximum values, this is entirely expected because
-one 32768 Hz tick equals 1/32768 s = 30.51 µs.
+delay on short timers. Note however that it is not clear whether this delay is
+in timer_set, or timer_read, but the combined effect of all error sources make
+the timer overshoot its target by on average 17 microseconds. The difference
+between min and max is close to the expected difference of approximately
+1/32768 s = 30.51 µs. The lower min and mean for the longer timer intervals are
+most likely caused by a drift between the 1 MHz clock and the 32.768 kHz clocks
+inside the CPU, and is expected when using two separate clock sources for the
+timers being compared.
 
 Below is a short sample of a test where there is something wrong with the timer
 implementation, again a 32768 Hz timer tested with a 1 MHz reference:
 
-    === timer_set_absolute running ===
+    === timer_set_absolute resched ===
        interval    count       sum       sum_sq    min   max  mean  variance
-       1 -    2:     706    393603     59023835     44  1075   557  83717  <=== SIC!
-       3 -    4:     644    358001     56925795     43  1074   555  88495  <=== SIC!
-       5 -    8:    1402    783661    121240925     45  1074   558  86534  <=== SIC!
-       9 -   16:    2762   1515993    243789723     44  1073   548  88288  <=== SIC!
-      17 -   32:    5476   2981671    490016153     43  1075   544  89500  <=== SIC!
-          TOTAL    10990   6032929    971284075     43  1075   548  88386  <=== SIC!
+       1 -    2:  152217  82324291  13339518497     38  1071   540  87635  <=== SIC!
+       3 -    4:  152199  82254909  13301794832     38  1071   540  87397  <=== SIC!
+       5 -    8:  152023  82085454  13264873203     38  1071   539  87256  <=== SIC!
+       9 -   16:  152156  82236539  13265351119     38  1071   540  87183  <=== SIC!
+      17 -   32:  152639  82606815  13267666812     38  1071   541  86922  <=== SIC!
+      33 -   64:  151883  81836155  13268661551     37  1070   538  87361  <=== SIC!
+      65 -  128:  152114  82151495  13228100922     36  1070   540  86962  <=== SIC!
+     129 -  256:  152363  81806042  13278055359     34  1069   536  87148  <=== SIC!
+     257 -  512:  152360  81235185  13303811951     29  1066   533  87318  <=== SIC!
+          TOTAL  1369954 738536885 119197349719     29  1071   539  87008  <=== SIC!
 
 We can see that the variance, the maximum error, and the mean are very large.
 This particular timer implementation needs some work on its timer_set_absolute
