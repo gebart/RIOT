@@ -32,6 +32,9 @@
 #include "periph/timer.h"
 #include "cpu.h"
 
+#include "thread.h"
+#include "board.h"
+
 #ifndef TIMER_NUMOF
 #error "TIMER_NUMOF not defined!"
 #endif
@@ -157,6 +160,19 @@
 #define TIM_TEST_TO_REF(x) (((uint32_t)(x) * 15625ul) >> 9)
 #elif (TIM_TEST_FREQ == 1000000ul) && (TIM_REF_FREQ == 32768ul)
 #define TIM_TEST_TO_REF(x) (div_u32_by_15625div512(x))
+/* Defining general conversion for Timer with 2^x factor*/
+#elif ( TIM_TEST_FREQ < TIM_REF_FREQ ) && (TIM_REF_FREQ%TIM_TEST_FREQ==0)
+#ifdef TIM_TEST_FREQ_SHIFT
+#define TIM_TEST_TO_REF(x) ( (uint32_t)(x) << TIM_TEST_FREQ_SHIFT)
+#else
+#error "TIM_TEST_FREQ_SHIFT has to be defined so that TIM_TEST_FREQ = TIM_REF_FREQ << TIM_TEST_FREQ_SHIFT"
+#endif
+#elif ( TIM_TEST_FREQ > TIM_REF_FREQ ) && (TIM_REF_FREQ%TIM_TEST_FREQ==0)
+#ifdef TIM_TEST_FREQ_SHIFT
+#define TIM_TEST_TO_REF(x) ( (uint32_t)(x) >> TIM_TEST_FREQ_SHIFT)
+#else
+#error "TIM_TEST_FREQ_SHIFT has to be defined so that TIM_TEST_FREQ = TIM_REF_FREQ >> TIM_TEST_FREQ_SHIFT"
+#endif
 #endif
 #endif
 
