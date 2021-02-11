@@ -1,0 +1,46 @@
+# Adapted from https://mologie.github.io/blog/programming/2017/12/25/cross-compiling-cpp-with-cmake-llvm.html
+set(CMAKE_SYSTEM_NAME Generic)
+set(CMAKE_SYSTEM_VERSION 1)
+set(CMAKE_SYSTEM_PROCESSOR riscv)
+
+set(CROSS_TARGET riscv64-unknown-elf)
+SET(CROSS_MACHINE_FLAGS "-march=rv64gc")
+SET(CROSS_COMPILER_FLAGS "-ffreestanding -mno-relax")
+
+# Where is LLVM/clang installed on your host? These are defaults for common platforms:
+IF(APPLE)
+    # LLVM 5.0 from Homebrew with Homebrew at its default path
+    SET(CROSS_LLVM_PREFIX "/usr/local/opt/llvm" CACHE FILEPATH "" FORCE)
+ELSE()
+    MESSAGE(FATAL_ERROR "You have to edit the toolchain file and add rules for your platform.")
+ENDIF()
+
+# Here be dragons! This is boilerplate code for wrangling CMake into working with a standalone LLVM
+# installation and all of CMake's quirks. Side effect: Linker flags are no longer passed to ar (and
+# neither should they be.) When editing, use plenty of fish to keep the dragon sated.
+#SET(CROSS_LIBSTDCPP_INC_DIR "/usr/include/c++/${CROSS_GCC_BASEVER}")
+#SET(CROSS_LIBSTDCPPBITS_INC_DIR "${CROSS_LIBSTDCPP_INC_DIR}/${CROSS_TARGET}")
+#SET(CROSS_LIBGCC_DIR "/usr/lib/gcc/${CROSS_TARGET}/${CROSS_GCC_BASEVER}")
+SET(CROSS_LINKER_FLAGS "-fuse-ld=/usr/local/opt/llvm/bin/ld.lld -nostdlib")
+SET(CMAKE_CROSSCOMPILING ON)
+SET(CMAKE_AR "${CROSS_LLVM_PREFIX}/llvm-ar" CACHE FILEPATH "" FORCE)
+SET(CMAKE_NM "${CROSS_LLVM_PREFIX}/llvm-nm" CACHE FILEPATH "" FORCE)
+SET(CMAKE_RANLIB "${CROSS_LLVM_PREFIX}/llvm-ranlib" CACHE FILEPATH "" FORCE)
+SET(CMAKE_C_COMPILER clang)
+SET(CMAKE_C_COMPILER_TARGET ${CROSS_TARGET})
+SET(CMAKE_C_FLAGS "${CROSS_COMPILER_FLAGS} ${CROSS_MACHINE_FLAGS}" CACHE STRING "" FORCE)
+SET(CMAKE_C_ARCHIVE_CREATE "<CMAKE_AR> qcv <TARGET> <OBJECTS>")
+SET(CMAKE_CXX_COMPILER clang++)
+SET(CMAKE_CXX_COMPILER_TARGET ${CROSS_TARGET})
+SET(CMAKE_CXX_FLAGS "${CROSS_COMPILER_FLAGS} ${CROSS_MACHINE_FLAGS}" CACHE STRING "" FORCE)
+# SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -iwithsysroot \"${CROSS_LIBSTDCPP_INC_DIR}\"")
+# SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -iwithsysroot \"${CROSS_LIBSTDCPPBITS_INC_DIR}\"")
+SET(CMAKE_CXX_ARCHIVE_CREATE "<CMAKE_AR> qcv <TARGET> <OBJECTS>")
+SET(CMAKE_EXE_LINKER_FLAGS ${CROSS_LINKER_FLAGS} CACHE STRING "" FORCE)
+SET(CMAKE_MODULE_LINKER_FLAGS ${CROSS_LINKER_FLAGS} CACHE STRING "" FORCE)
+SET(CMAKE_SHARED_LINKER_FLAGS ${CROSS_LINKER_FLAGS} CACHE STRING "" FORCE)
+SET(CMAKE_STATIC_LINKER_FLAGS ${CROSS_LINKER_FLAGS} CACHE STRING "" FORCE)
+SET(CMAKE_FIND_ROOT_PATH ${CROSS_LLVM_PREFIX})
+SET(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
+SET(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
+SET(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
