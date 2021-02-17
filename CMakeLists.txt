@@ -22,6 +22,26 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+add_library(riot_flags INTERFACE)
+
+if (NOT BOARD STREQUAL native OR NOT CMAKE_SYSTEM_NAME STREQUAL Darwin)
+  # Xcode linker does not support --gc-sections
+  target_link_options(riot_flags INTERFACE LINKER:--gc-sections)
+endif ()
+
+#add_link_options(-nostartfiles)
+
+#add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-fno-use-cxa-atexit>)
+#add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-fno-rtti>)
+#add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-fno-exceptions>)
+target_compile_options(riot_flags INTERFACE -fno-common)
+target_compile_options(riot_flags INTERFACE -fdata-sections -ffunction-sections)
+#if (CMAKE_C_COMPILER_ID STREQUAL GNU)
+#  add_compile_options(-fstack-usage)
+#  add_compile_options(-findirect-inlining)
+#  add_compile_options(-finline-small-functions)
+#endif ()
+
 if (MSVC)
   add_compile_options(/W4)
   if (RIOT_WERROR)
@@ -30,28 +50,28 @@ if (MSVC)
 else ()
   # lots of warnings and all warnings as errors
   #-Wshadow -Wundef
-  add_compile_options(-Wall -Wextra -pedantic)
+  target_compile_options(riot_flags INTERFACE -Wall -Wextra -pedantic)
   if (RIOT_WERROR)
-    add_compile_options(-Werror)
+    target_compile_options(riot_flags INTERFACE -Werror)
   endif ()
-  add_compile_options(-Wdouble-promotion -Wconversion)
-  add_compile_options(-Wswitch-enum)
-  add_compile_options(-Wuninitialized -Winit-self)
-  add_compile_options(-Wformat=2)
+  target_compile_options(riot_flags INTERFACE -Wdouble-promotion -Wconversion)
+  target_compile_options(riot_flags INTERFACE -Wswitch-enum)
+  target_compile_options(riot_flags INTERFACE -Wuninitialized -Winit-self)
+  target_compile_options(riot_flags INTERFACE -Wformat=2)
   if (CMAKE_C_COMPILER_ID STREQUAL GNU)
-    add_compile_options(-Wformat-truncation -Wformat-signedness)
+    target_compile_options(riot_flags INTERFACE -Wformat-truncation -Wformat-signedness)
   endif ()
-  add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-Woverloaded-virtual>)
-  add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-Weffc++>)
+  #add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-Woverloaded-virtual>)
+  #add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-Weffc++>)
 endif ()
 
-add_subdirectory(cpu)
 add_library(RIOT INTERFACE)
-add_subdirectory(board)
+add_subdirectory(cpu)
+add_subdirectory(boards)
 add_subdirectory(core)
 target_link_libraries(RIOT INTERFACE
-  riot_cpu_${CPU}
-  riot_board_${BOARD}
+  riot_cpu
+  riot_board
   riot_core
   )
 
