@@ -1,6 +1,7 @@
 add_library(riot_board STATIC
   board.c
   )
+add_library(RIOT::board ALIAS riot_board)
 target_link_libraries(riot_board PUBLIC riot_flags)
 target_include_directories(riot_board PUBLIC include)
 target_link_libraries(riot_board PUBLIC

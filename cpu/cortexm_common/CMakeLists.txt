@@ -5,5 +5,5 @@ add_library(riot_cortexm_common STATIC
   thread_arch.c
   vectors_cortexm.c
   )
-target_include_directories(riot_cortexm_common PUBLIC include)
+target_include_directories(riot_cortexm_common PUBLIC include include/vendor)
 add_library(RIOT::cortexm_common ALIAS riot_cortexm_common)
