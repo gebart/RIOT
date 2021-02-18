@@ -46,3 +46,8 @@ add_library(riot_core STATIC
   include/thread_flags.h
   )
 target_include_directories(riot_core PUBLIC include)
+target_link_libraries(riot_core PUBLIC
+  RIOT::flags
+  RIOT::cpu
+)
+add_library(RIOT::core ALIAS riot_core)

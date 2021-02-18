@@ -23,6 +23,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_library(riot_flags INTERFACE)
+add_library(RIOT::flags ALIAS riot_flags)
 
 if (NOT BOARD STREQUAL native OR NOT CMAKE_SYSTEM_NAME STREQUAL Darwin)
   # Xcode linker does not support --gc-sections
