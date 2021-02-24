@@ -1,23 +1,17 @@
-add_library(riot_core STATIC
+add_library(riot_core OBJECT
   assert.c
   atomic_c11.c
   atomic_sync.c
   bitarithm.c
   clist.c
   cond.c
-  init.c
   lifo.c
-  mbox.c
-  msg.c
-  msg_bus.c
   mutex.c
-  panic.c
   priority_queue.c
   ringbuffer.c
   rmutex.c
   sched.c
   thread.c
-  thread_flags.c
   include/assert.h
   include/bitarithm.h
   include/cib.h
@@ -45,9 +39,21 @@ add_library(riot_core STATIC
   include/thread.h
   include/thread_flags.h
   )
-target_include_directories(riot_core PUBLIC include)
 target_link_libraries(riot_core PUBLIC
   RIOT::flags
-  RIOT::cpu
+  RIOT::cpu::config
+  RIOT::modules::flags
 )
+add_library(riot_core_flags INTERFACE)
+target_include_directories(riot_core_flags INTERFACE include)
+target_link_libraries(riot_flags INTERFACE riot_core_flags)
+target_link_libraries(riot_core PUBLIC riot_core_flags)
 add_library(RIOT::core ALIAS riot_core)
+
+set(submodules init mbox msg msg_bus panic thread_flags)
+foreach(submodule IN LISTS submodules)
+  add_riot_module(core_${submodule} RIOT::core::${submodule} OBJECT ${submodule}.c)
+  target_link_libraries(riot_core_${submodule} PUBLIC RIOT::core)
+endforeach()
+riot_use_module(RIOT::core::init RIOT::core::msg RIOT::core::panic)
+target_sources(RIOT INTERFACE $<TARGET_OBJECTS:RIOT::core>)
