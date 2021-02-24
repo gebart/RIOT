@@ -1,0 +1,5 @@
+add_riot_module(periph_gpio RIOT::periph::gpio OBJECT gpio.c)
+target_link_libraries(riot_periph_gpio PUBLIC RIOT::cpu::config RIOT::board::config)
+add_riot_module(periph_mcg RIOT::periph::mcg OBJECT mcg.c)
+target_link_libraries(riot_periph_mcg PUBLIC RIOT::cpu::config RIOT::board::config)
+riot_use_module(RIOT::periph::gpio)

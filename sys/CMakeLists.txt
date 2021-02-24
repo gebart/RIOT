@@ -1,3 +1,3 @@
-add_library(riot_sys INTERFACE)
-add_library(RIOT::sys ALIAS riot_sys)
-target_include_directories(riot_sys INTERFACE include)
+add_library(riot_sys_flags INTERFACE)
+target_include_directories(riot_sys_flags INTERFACE include)
+target_link_libraries(riot_flags INTERFACE riot_sys_flags)

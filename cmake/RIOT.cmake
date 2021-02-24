@@ -1,6 +1,3 @@
-# This internal cache variable is required to pass the list of object library files to the top level CMakeLists
-set(RIOT_STARTFILES "" CACHE INTERNAL "Linker dependencies that must be explicitly linked with any executable")
-
 ## Path configuration
 set(RIOT_BASEDIR ${CMAKE_CURRENT_LIST_DIR}/.. CACHE PATH "Path to the RIOT source tree root")
 set(RIOT_CPU_BASEDIR ${RIOT_BASEDIR}/cpu CACHE PATH "Path to cpu component of the RIOT tree")
@@ -16,7 +13,7 @@ macro(riot_configure_target name)
   if (LINKER_SCRIPT)
     set_target_properties(${name} PROPERTIES LINK_DEPENDS ${LINKER_SCRIPT})
   endif ()
-  if (NOT BOARD STREQUAL native OR NOT CMAKE_SYSTEM_NAME STREQUAL Darwin)
+  if (NOT BOARD STREQUAL "native" OR NOT CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     # Xcode ld64 does not support -Map
     target_link_options(${name} PRIVATE LINKER:-Map=$<TARGET_FILE_BASE_NAME:${name}>.map)
   endif ()
@@ -25,7 +22,6 @@ endmacro()
 if (NOT BOARD STREQUAL native)
   set(CMAKE_EXECUTABLE_SUFFIX .elf)
 endif ()
-
 
 # Load board specific CMake settings
 list(APPEND CMAKE_MODULE_PATH "${RIOT_BOARD_DIR}/cmake")
