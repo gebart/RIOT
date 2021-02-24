@@ -57,6 +57,7 @@ add_library(RIOT::modules::flags ALIAS riot_modules_flags)
 # RIOT::flags depends on the enabled module flags too for consistency.
 target_link_libraries(riot_flags INTERFACE riot_modules_flags)
 target_compile_definitions(riot_flags INTERFACE RIOT_VERSION="2021.04-devel-cmake")
+target_link_libraries(riot_flags INTERFACE RIOT::cpu::config RIOT::board::config)
 
 # Create a RIOT module library target and set up the expected MODULE_x compiler defintion
 function(add_riot_module internal_name exported_name library_kind)
@@ -85,6 +86,7 @@ function(riot_use_module exported_name) # , exported_name2, exported_name3, ... 
   foreach (module IN LISTS ARGV)
     message("target_source(RIOT INTERFACE ${module})")
     target_sources(RIOT INTERFACE $<$<STREQUAL:$<TARGET_PROPERTY:${module},TYPE>,OBJECT_LIBRARY>:$<TARGET_OBJECTS:${module}>>)
+    set_property(TARGET RIOT APPEND PROPERTY INTERFACE_USEMODULE ${module})
   endforeach()
 endfunction()
 
@@ -139,3 +141,6 @@ add_subdirectory(sys)
 if (CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING)
   add_subdirectory(tests)
 endif ()
+
+get_target_property(usemodule RIOT INTERFACE_USEMODULE)
+message("Enabled modules: ${usemodule}")

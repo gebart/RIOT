@@ -37,9 +37,6 @@ target_compile_definitions(riot_cpu_config INTERFACE
   "KINETIS_SUBFAMILY=${KINETIS_SUBFAMILY}"
   "KINETIS_ROMSIZE=${KINETIS_ROMSIZE}")
 
-add_subdirectory(${PARENT_DIR}/cortexm_common cortexm_common)
-add_subdirectory(periph)
-
 add_library(riot_cpu_kinetis_clock INTERFACE)
 if (KINETIS_FAMILY STREQUAL "ea")
   riot_use_module(RIOT::periph::ics)
@@ -49,3 +46,8 @@ else()
   riot_use_module(RIOT::periph::mcg)
 endif()
 target_link_libraries(riot_cpu_config INTERFACE riot_cpu_kinetis_clock)
+
+add_subdirectory(${PARENT_DIR}/cortexm_common cortexm_common)
+add_subdirectory(periph)
+# CPU init requires watchdog disable functionality
+riot_use_module(RIOT::periph::wdog)
