@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.18)
 project(RIOT
   VERSION 2021.01
   HOMEPAGE_URL https://github.com/RIOT-OS/RIOT
@@ -60,34 +60,59 @@ target_compile_definitions(riot_flags INTERFACE RIOT_VERSION="2021.04-devel-cmak
 target_link_libraries(riot_flags INTERFACE RIOT::cpu::config RIOT::board::config)
 
 # Create a RIOT module library target and set up the expected MODULE_x compiler defintion
-function(add_riot_module internal_name exported_name library_kind)
-  string(TOUPPER "${internal_name}" internal_name_uc)
-  set(prefixed_name "riot_${internal_name}")
-  add_library(${prefixed_name} ${library_kind} EXCLUDE_FROM_ALL ${ARGN})
-  add_library(${prefixed_name}_module_flags INTERFACE)
-  add_library(${exported_name} ALIAS ${prefixed_name})
-  add_library(${exported_name}::module_flags ALIAS ${prefixed_name}_module_flags)
-  target_compile_definitions(${prefixed_name}_module_flags INTERFACE MODULE_${internal_name_uc})
+function(add_riot_module module_name library_kind)
+  string(TOUPPER "${module_name}" module_name_uc)
+  set(prefixed_name "riot_module_${module_name}")
+  message(DEBUG "Creating RIOT module ${prefixed_name}")
   if (library_kind STREQUAL "INTERFACE")
+    add_library(${prefixed_name} ${library_kind} ${ARGN})
     target_link_libraries(${prefixed_name} INTERFACE RIOT::flags)
   else()
+    add_library(${prefixed_name} ${library_kind} EXCLUDE_FROM_ALL ${ARGN})
     target_link_libraries(${prefixed_name} PUBLIC RIOT::flags)
   endif()
+  add_library(${prefixed_name}_module_flags INTERFACE)
+  target_compile_definitions(${prefixed_name}_module_flags INTERFACE MODULE_${module_name_uc})
+  set_property(TARGET ${prefixed_name} APPEND PROPERTY INTERFACE_RIOT_USEMODULE ${module_name})
 endfunction()
 
 # This replaces the USEMODULE += module pattern found in the old Makefile based build system
-function(riot_use_module exported_name) # , exported_name2, exported_name3, ... (variadic)
-  message(VERBOSE "Adding ${ARGV} to riot_modules")
-  target_link_libraries(riot_modules INTERFACE ${ARGV})
-  set(module_flags_targets ${ARGV})
-  list(TRANSFORM module_flags_targets APPEND "::module_flags")
-  target_link_libraries(riot_modules_flags INTERFACE ${module_flags_targets})
-  foreach (module IN LISTS ARGV)
-    message(DEBUG "target_source(RIOT INTERFACE ${module})")
-    target_sources(RIOT INTERFACE $<$<STREQUAL:$<TARGET_PROPERTY:${module},TYPE>,OBJECT_LIBRARY>:$<TARGET_OBJECTS:${module}>>)
-    set_property(TARGET RIOT APPEND PROPERTY INTERFACE_USEMODULE ${module})
-  endforeach()
+function(riot_use_module module_name) # , module_name2, module_name3, ... (variadic)
+  message(VERBOSE "Adding RIOT modules: ${ARGV}")
+  riot_internal_module_target_depends(RIOT riot_modules_flags ${ARGV})
 endfunction()
+
+# Create dependencies between modules
+function(riot_module_depends module) # , [dependencies]
+  message(DEBUG "Adding dependencies to ${module}")
+  riot_internal_module_target_depends(riot_module_${module} riot_module_${module}_module_flags ${ARGN})
+endfunction()
+
+# Internal helper method to avoid duplicating the configuration steps
+function(riot_internal_module_target_depends module_target module_flags_target) # , [dependencies] 
+  set(dependencies_targets ${ARGN})
+  list(TRANSFORM dependencies_targets PREPEND "riot_module_")
+  target_link_libraries(${module_target} INTERFACE ${dependencies_targets})
+  set(dependencies_module_flags_targets ${dependencies_targets})
+  list(TRANSFORM dependencies_module_flags_targets APPEND "_module_flags")
+  target_link_libraries(${module_flags_target} INTERFACE ${dependencies_module_flags_targets})
+  list(APPEND CMAKE_MESSAGE_INDENT "  ")
+  foreach (dependency IN LISTS ARGN)
+    message(DEBUG "${module_target} -> ${dependency}")
+    target_sources(${module_target} INTERFACE $<$<STREQUAL:$<TARGET_PROPERTY:riot_module_${dependency},TYPE>,OBJECT_LIBRARY>:$<TARGET_OBJECTS:riot_module_${dependency}>>)
+    set_property(TARGET ${module_target} APPEND PROPERTY INTERFACE_RIOT_USEMODULE ${dependency})
+  endforeach()
+  list(POP_BACK CMAKE_MESSAGE_INDENT)
+endfunction()
+
+# Enter all immediate subdirectories which have a CMakeLists.txt file
+macro(add_all_subdirectories)
+  file(GLOB cmakelists */CMakeLists.txt)
+  foreach (cmakelist IN LISTS cmakelists)
+    get_filename_component(subdir "${cmakelist}" DIRECTORY)
+    add_subdirectory(${subdir})
+  endforeach()
+endmacro()
 
 if (NOT BOARD STREQUAL "native" OR NOT CMAKE_SYSTEM_NAME STREQUAL "Darwin")
   # Xcode linker does not support --gc-sections
@@ -141,5 +166,16 @@ if (CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING)
   add_subdirectory(tests)
 endif ()
 
-get_target_property(usemodule RIOT INTERFACE_USEMODULE)
-message(VERBOSE "Enabled modules: ${usemodule}")
+set(RIOT_USEMODULE_EXTRA "" CACHE STRING "Additional modules to enable in this build")
+
+riot_use_module(${RIOT_USEMODULE_EXTRA})
+
+get_target_property(usemodule RIOT INTERFACE_RIOT_USEMODULE)
+message(VERBOSE "Used RIOT modules: ${usemodule}")
+if (NOT "newlib" IN_LIST usemodule)
+  riot_use_module(newlib)
+endif()
+get_target_property(usemodule RIOT INTERFACE_RIOT_USEMODULE)
+if ("newlib" IN_LIST usemodule)
+  riot_use_module(newlib_syscalls_default)
+endif()

@@ -1,0 +1,1 @@
+add_riot_module(newlib_syscalls_default OBJECT syscalls.c)

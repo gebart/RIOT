@@ -1,4 +1,3 @@
-
 set(LINKER_SCRIPT "kinetis.ld")
 add_library(riot_cpu_flags INTERFACE)
 target_link_libraries(riot_flags INTERFACE riot_cpu_flags)
@@ -19,7 +18,7 @@ target_link_libraries(riot_cpu PUBLIC
   RIOT::cpu::config
   RIOT::flags
   RIOT::board::config
-  RIOT::cortexm_common
+  riot_module_cortexm_common
 )
 target_sources(RIOT INTERFACE $<TARGET_OBJECTS:RIOT::cpu>)
 set(ROM_START_ADDR 0x00000000)
@@ -37,17 +36,15 @@ target_compile_definitions(riot_cpu_config INTERFACE
   "KINETIS_SUBFAMILY=${KINETIS_SUBFAMILY}"
   "KINETIS_ROMSIZE=${KINETIS_ROMSIZE}")
 
-add_library(riot_cpu_kinetis_clock INTERFACE)
 if (KINETIS_FAMILY STREQUAL "ea")
-  riot_use_module(RIOT::periph::ics)
+  riot_use_module(periph_ics)
 elseif (KINETIS_FAMILY STREQUAL "l")
-  riot_use_module(RIOT::periph::mcg_lite)
+  riot_use_module(periph_mcg_lite)
 else()
-  riot_use_module(RIOT::periph::mcg)
+  riot_use_module(periph_mcg)
 endif()
-target_link_libraries(riot_cpu_config INTERFACE riot_cpu_kinetis_clock)
 
 add_subdirectory(${PARENT_DIR}/cortexm_common cortexm_common)
 add_subdirectory(periph)
 # CPU init requires watchdog disable functionality
-riot_use_module(RIOT::periph::wdog)
+riot_use_module(periph_wdog)

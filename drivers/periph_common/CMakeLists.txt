@@ -1,0 +1,13 @@
+add_riot_module(periph_common STATIC
+  cpuid.c
+  eeprom.c
+  flashpage.c
+  gpio_util.c
+  i2c.c
+  init.c
+  pm.c
+  ptp.c
+  rtc.c
+  spi.c
+  timer.c
+)
