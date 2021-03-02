@@ -39,6 +39,19 @@ if (KINETIS_ROMSIZE MATCHES "^([0-9]+)M([0-9])$")
   math(EXPR KINETIS_ROMSIZE "${CMAKE_MATCH_1} * 1024 + ${CMAKE_MATCH_2} * 128")
 endif()
 
+if (KINETIS_CORE STREQUAL "Z")
+  # Cortex-M0+
+  set(CPU_CORE "cortex-m0plus")
+elseif (KINETIS_CORE STREQUAL "D")
+  # Cortex-M4
+  set(CPU_CORE "cortex-m4")
+elseif (KINETIS_CORE STREQUAL "F")
+  # Cortex-M4F or Cortex-M7
+  set(CPU_CORE "cortex-m4f")
+endif()
+
+include(cortexm)
+
 message(VERBOSE "Kinetis CPU info from CPU_MODEL:")
 list(APPEND CMAKE_MESSAGE_INDENT "  ")
 message(VERBOSE "Qualification: ${KINETIS_QUALIFICATION}")
@@ -52,6 +65,8 @@ message(VERBOSE "Mask rev: ${KINETIS_MASKREV}")
 message(VERBOSE "Temp range: ${KINETIS_TEMPRANGE}")
 message(VERBOSE "Package: ${KINETIS_PACKAGE}")
 message(VERBOSE "Speed: ${KINETIS_SPEED}")
+message(VERBOSE "CPU core: ${CPU_CORE}")
+message(VERBOSE "CPU arch: ${CPU_ARCH}")
 list(POP_BACK CMAKE_MESSAGE_INDENT)
 
 # RAM sizes are a bit arbitrary, but are usually dependent on ROM size and core speed.
@@ -168,3 +183,4 @@ if (NOT KINETIS_SRAM_L_SIZE)
   message(FATAL_ERROR "Missing KINETIS_SRAM_L_SIZE case")
 endif()
 message(CHECK_PASS "done")
+

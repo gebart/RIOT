@@ -1,11 +1,7 @@
 ## Path configuration
-set(RIOT_BASEDIR ${CMAKE_CURRENT_LIST_DIR}/.. CACHE PATH "Path to the RIOT source tree root")
-set(RIOT_CPU_BASEDIR ${RIOT_BASEDIR}/cpu CACHE PATH "Path to cpu component of the RIOT tree")
-set(RIOT_BOARD_BASEDIR ${RIOT_BASEDIR}/boards CACHE PATH "Path to board component of the RIOT tree")
-set(RIOT_BOARD_DIR ${RIOT_BOARD_BASEDIR}/${BOARD} CACHE PATH "Path to board specific code")
+get_filename_component(RIOT_BASEDIR "${CMAKE_CURRENT_LIST_DIR}" DIRECTORY CACHE)
+set(RIOT_BASEDIR "${RIOT_BASEDIR}" CACHE PATH "Path to the RIOT source tree root")
 list(APPEND CMAKE_MODULE_PATH "${RIOT_BASEDIR}/cmake")
-
-option(RIOT_WERROR "Build with all warnings as errors" ON)
 
 # Use riot_configure_target to set all required linker options and libraries for building an executable
 macro(riot_configure_target name)
@@ -24,12 +20,14 @@ if (NOT BOARD STREQUAL native)
 endif ()
 
 # Load board specific CMake settings
+set(RIOT_BOARD_DIR "${RIOT_BASEDIR}/boards/${BOARD}" CACHE PATH "Path to the board-specific code")
 list(APPEND CMAKE_MODULE_PATH "${RIOT_BOARD_DIR}/cmake")
 include(riot_board)
 
-set(RIOT_CPU_DIR ${RIOT_CPU_BASEDIR}/${CPU} CACHE PATH "Path to CPU specific code")
+# riot_board.cmake above should set ${CPU}
+set(RIOT_CPU_DIR "${RIOT_BASEDIR}/cpu/${CPU}" CACHE PATH "Path to the CPU-specific code")
 list(APPEND CMAKE_MODULE_PATH "${RIOT_CPU_DIR}/cmake")
 include(riot_cpu)
 
-add_subdirectory(${RIOT_BASEDIR} ${CMAKE_CURRENT_BINARY_DIR}/RIOT)
+add_subdirectory("${RIOT_BASEDIR}" "${CMAKE_CURRENT_BINARY_DIR}/RIOT")
 

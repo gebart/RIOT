@@ -10,13 +10,35 @@ target_link_libraries(riot_module_cortexm_common PUBLIC RIOT::core RIOT::board::
 target_link_options(riot_module_cortexm_common PUBLIC -L "${CMAKE_CURRENT_SOURCE_DIR}/ldscripts")
 target_include_directories(riot_module_cortexm_common PUBLIC include include/vendor)
 target_include_directories(riot_cpu_config INTERFACE include include/vendor)
+set(cortexm_cpu_flags 
+  -mcpu=${CPU_CORE}
+  -mthumb
+)
+if (CPU_ARCH STREQUAL "armv6m")
+  # work around https://gcc.gnu.org/bugzilla/show_bug.cgi?id=85606
+  list(APPEND cortexm_cpu_flags -march=armv6s-m)
+else()
+  list(APPEND cortexm_cpu_flags -march=${CPU_ARCH})
+endif()
+
+target_compile_options(riot_cpu_flags INTERFACE
+  ${cortexm_cpu_flags}
+  $<$<COMPILE_LANG_AND_ID:C,GNU>:-mno-thumb-interwork>
+  $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-mno-thumb-interwork>
+)
+target_link_options(riot_cpu_flags INTERFACE
+  ${cortexm_cpu_flags}
+  $<$<LINK_LANG_AND_ID:C,GNU>:-mno-thumb-interwork>
+  $<$<LINK_LANG_AND_ID:CXX,GNU>:-mno-thumb-interwork>
+)
 
 target_link_options(riot_module_cortexm_common PUBLIC -nostartfiles)
 
 # All variables must be defined in the CPU configuration when using the common
 # `ldscripts/cortexm.ld`
 if (NOT "${ROM_START_ADDR}${RAM_START_ADDR}${ROM_LEN}${RAM_LEN}" STREQUAL "")
-  message ("ROM_START_ADDR: ${ROM_START_ADDR}")
+  message (DEBUG "ROM_START_ADDR: ${ROM_START_ADDR}")
+  message (DEBUG "RAM_START_ADDR: ${RAM_START_ADDR}")
   if (NOT ROM_START_ADDR)
     message(FATAL_ERROR "ROM_START_ADDR is not defined")
   endif()
