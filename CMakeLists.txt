@@ -9,6 +9,8 @@ if (NOT BOARD)
   message(FATAL_ERROR "Define BOARD to select platform: cmake -DBOARD=foo")
 endif ()
 
+set(BOARD "${BOARD}" CACHE STRING "Which board type the application should run on")
+
 # Skip configuration of unit tests when RIOT is included as a subproject of another project
 if (CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
   include(CTest)
@@ -58,6 +60,38 @@ add_library(RIOT::modules::flags ALIAS riot_modules_flags)
 target_link_libraries(riot_flags INTERFACE riot_modules_flags)
 target_compile_definitions(riot_flags INTERFACE RIOT_VERSION="2021.04-devel-cmake")
 target_link_libraries(riot_flags INTERFACE RIOT::cpu::config RIOT::board::config)
+
+# Convert the given string to an uppercase C symbol
+function(uppercase_c_symbol out_var in_var)
+  string(TOUPPER "${in_var}" upper)
+  string(MAKE_C_IDENTIFIER "${upper}" sym)
+  set(${out_var} "${sym}" PARENT_SCOPE)
+endfunction()
+
+if (BOARD)
+  uppercase_c_symbol(BOARDDEF ${BOARD})
+  target_compile_definitions(riot_flags INTERFACE "BOARD_${BOARDDEF}=\"${BOARD}\"" "RIOT_BOARD=BOARD_${BOARDDEF}")
+endif()
+if (CPU)
+  uppercase_c_symbol(CPUDEF ${CPU})
+  target_compile_definitions(riot_flags INTERFACE "CPU_${CPUDEF}=\"${CPU}\"" "RIOT_CPU=CPU_${CPUDEF}")
+endif()
+if (MCU)
+  uppercase_c_symbol(MCUDEF ${MCU})
+  target_compile_definitions(riot_flags INTERFACE "MCU_${MCUDEF}=\"${MCU}\"" "RIOT_MCU=MCU_${MCUDEF}")
+endif()
+target_compile_definitions(riot_flags INTERFACE "RIOT_APPLICATION=\"${CMAKE_PROJECT_NAME}\"") #TODO allow multiple application names in one project
+if (CPU_CORE)
+  uppercase_c_symbol(CPU_COREDEF ${CPU_CORE})
+  target_compile_definitions(riot_flags INTERFACE "CPU_CORE_${CPU_COREDEF}")
+endif()
+if (CPU_MODEL)
+  uppercase_c_symbol(CPU_MODELDEF ${CPU_MODEL})
+  target_compile_definitions(riot_flags INTERFACE "CPU_MODEL_${CPU_MODELDEF}")
+endif()
+
+
+option(RIOT_WERROR "Build with all warnings as errors" ON)
 
 # Create a RIOT module library target and set up the expected MODULE_x compiler defintion
 function(add_riot_module module_name library_kind)
@@ -168,14 +202,43 @@ endif ()
 
 set(RIOT_USEMODULE_EXTRA "" CACHE STRING "Additional modules to enable in this build")
 
-riot_use_module(${RIOT_USEMODULE_EXTRA})
+if (RIOT_USEMODULE_EXTRA)
+  riot_use_module(${RIOT_USEMODULE_EXTRA})
+endif()
 
 get_target_property(usemodule RIOT INTERFACE_RIOT_USEMODULE)
 message(VERBOSE "Used RIOT modules: ${usemodule}")
-if (NOT "newlib" IN_LIST usemodule)
-  riot_use_module(newlib)
+
+add_riot_module(libc INTERFACE)
+riot_use_module(libc)
+set(RIOT_LIBC "newlib" CACHE STRING "Specifies which libc implementation to use. If unsure, say \"newlib\"")
+if (NOT RIOT_LIBC)
+  message(FATAL_ERROR "No libc implementation specified")
 endif()
-get_target_property(usemodule RIOT INTERFACE_RIOT_USEMODULE)
-if ("newlib" IN_LIST usemodule)
-  riot_use_module(newlib_syscalls_default)
+riot_module_depends(libc ${RIOT_LIBC})
+
+set(RIOT_SYSCALLS "${RIOT_LIBC}_syscalls_default" CACHE STRING "Select which syscall implementation to use. If unsure, say \"${RIOT_LIBC}_syscalls_default\"")
+if (NOT RIOT_SYSCALLS)
+  message(FATAL_ERROR "No syscalls implementation specified")
 endif()
+riot_module_depends(${RIOT_LIBC} ${RIOT_SYSCALLS})
+
+set(RIOT_STDIO "stdio_uart" CACHE STRING "Selects which standard input/output module will be used for the default console output (printf etc.) If unsure, say \"stdio_uart\"")
+set_property(CACHE RIOT_STDIO PROPERTY STRINGS
+  stdio_uart
+  stdio_null
+  stdio_native
+  stdio_semihosting
+  stdio_cdc_acm
+  stdio_ethos
+  stdio_rtt
+  slipdev_stdio
+)
+if (NOT RIOT_STDIO)
+  message(FATAL_ERROR "No stdio implementation specified")
+endif()
+# Abstract interface module to allow the user to select the stdio implementation
+add_riot_module(stdio INTERFACE)
+riot_use_module(stdio)
+# Add dependency on the selected stdio implementation.
+riot_module_depends(stdio ${RIOT_STDIO})
