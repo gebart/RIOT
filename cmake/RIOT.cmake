@@ -29,5 +29,8 @@ set(RIOT_CPU_DIR "${RIOT_BASEDIR}/cpu/${CPU}" CACHE PATH "Path to the CPU-specif
 list(APPEND CMAKE_MODULE_PATH "${RIOT_CPU_DIR}/cmake")
 include(riot_cpu)
 
+if (NOT MCU)
+  set(MCU "${CPU}")
+endif()
 add_subdirectory("${RIOT_BASEDIR}" "${CMAKE_CURRENT_BINARY_DIR}/RIOT")
 
