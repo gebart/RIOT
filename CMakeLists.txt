@@ -190,11 +190,20 @@ else ()
   #add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-Weffc++>)
 endif ()
 
-add_subdirectory(core)
-add_subdirectory(cpu)
-add_subdirectory(boards)
-add_subdirectory(drivers)
-add_subdirectory(sys)
+set(RIOT_LIBC "newlib" CACHE STRING "Specifies which libc implementation to use. If unsure, say \"newlib\"")
+set(RIOT_SYSCALLS "${RIOT_LIBC}_syscalls_default" CACHE STRING "Select which syscall implementation to use. If unsure, say \"${RIOT_LIBC}_syscalls_default\"")
+set(RIOT_STDIO "stdio_uart" CACHE STRING "Selects which standard input/output module will be used for the default console output (printf etc.) If unsure, say \"stdio_uart\"")
+set_property(CACHE RIOT_STDIO PROPERTY STRINGS
+  stdio_uart
+  stdio_null
+  stdio_native
+  stdio_semihosting
+  stdio_cdc_acm
+  stdio_ethos
+  stdio_rtt
+  slipdev_stdio
+)
+
 
 if (CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING)
   add_subdirectory(tests)
@@ -211,29 +220,16 @@ message(VERBOSE "Used RIOT modules: ${usemodule}")
 
 add_riot_module(libc INTERFACE)
 riot_use_module(libc)
-set(RIOT_LIBC "newlib" CACHE STRING "Specifies which libc implementation to use. If unsure, say \"newlib\"")
 if (NOT RIOT_LIBC)
   message(FATAL_ERROR "No libc implementation specified")
 endif()
 riot_module_depends(libc ${RIOT_LIBC})
 
-set(RIOT_SYSCALLS "${RIOT_LIBC}_syscalls_default" CACHE STRING "Select which syscall implementation to use. If unsure, say \"${RIOT_LIBC}_syscalls_default\"")
 if (NOT RIOT_SYSCALLS)
   message(FATAL_ERROR "No syscalls implementation specified")
 endif()
-riot_module_depends(${RIOT_LIBC} ${RIOT_SYSCALLS})
+riot_module_depends(libc ${RIOT_SYSCALLS})
 
-set(RIOT_STDIO "stdio_uart" CACHE STRING "Selects which standard input/output module will be used for the default console output (printf etc.) If unsure, say \"stdio_uart\"")
-set_property(CACHE RIOT_STDIO PROPERTY STRINGS
-  stdio_uart
-  stdio_null
-  stdio_native
-  stdio_semihosting
-  stdio_cdc_acm
-  stdio_ethos
-  stdio_rtt
-  slipdev_stdio
-)
 if (NOT RIOT_STDIO)
   message(FATAL_ERROR "No stdio implementation specified")
 endif()
@@ -242,3 +238,14 @@ add_riot_module(stdio INTERFACE)
 riot_use_module(stdio)
 # Add dependency on the selected stdio implementation.
 riot_module_depends(stdio ${RIOT_STDIO})
+
+add_riot_module(stdin INTERFACE)
+if (RIOT_STDIO STREQUAL "stdio_uart")
+  riot_module_depends(stdin stdio_uart_rx)
+endif()
+
+add_subdirectory(core)
+add_subdirectory(cpu)
+add_subdirectory(boards)
+add_subdirectory(drivers)
+add_subdirectory(sys)
