@@ -5,7 +5,6 @@ add_library(riot_core OBJECT
   bitarithm.c
   clist.c
   cond.c
-  lifo.c
   mutex.c
   priority_queue.c
   ringbuffer.c
@@ -21,7 +20,6 @@ add_library(riot_core OBJECT
   include/irq.h
   include/kernel_defines.h
   include/kernel_init.h
-  include/lifo.h
   include/list.h
   include/log.h
   include/macros/units.h
