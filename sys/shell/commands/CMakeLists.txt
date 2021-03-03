@@ -39,7 +39,7 @@ add_riot_module(shell_cmd_vfs OBJECT cmd_vfs.c)
 add_riot_module(shell_cmd_whitelist OBJECT cmd_whitelist.c)
 
 function(riot_is_module_used_genex genex usemodule)
-  set(${genex} "$<BOOL:$<FILTER:$<TARGET_PROPERTY:RIOT,INTERFACE_RIOT_USEMODULE>,INCLUDE,^${usemodule}$>>" PARENT_SCOPE)
+  set(${genex} "$<BOOL:$<TARGET_PROPERTY:riot_modules,INTERFACE_RIOT_MODULE_${usemodule}>>" PARENT_SCOPE)
 endfunction()
 
 function(riot_enable_shell_command_if_usemodule shell_command usemodule)
@@ -48,7 +48,9 @@ function(riot_enable_shell_command_if_usemodule shell_command usemodule)
   target_link_libraries(riot_module_${shell_command} INTERFACE riot_module_${usemodule})
 endfunction()
 
+# sys shell commands are enabled by default
+riot_module_depends(shell_commands shell_cmd_sys)
+
+# Conditionally add the shell commands depending on the enabled modules
 riot_enable_shell_command_if_usemodule(shell_cmd_app_metadata app_metadata)
-#target_link_libraries(riot_module_app_metadata PUBLIC riot_module_shell_cmd_app_metadata)
-#target_compile_options(riot_flags INTERFACE --riot-flags=$<$<BOOL:$<FILTER:$<TARGET_PROPERTY:RIOT,INTERFACE_RIOT_USEMODULE>,INCLUDE,^app_metadata$>>:shell_cmd_app_metadata>)
-#target_link_libraries(riot_module_shell_commands PRIVATE $<$<FILTER:$<TARGET_PROPERTY:RIOT,INTERFACE_RIOT_USEMODULE>,INCLUDE,"^app_metadata$">:shell_cmd_app_metadata>)
+riot_enable_shell_command_if_usemodule(shell_cmd_ps ps)
