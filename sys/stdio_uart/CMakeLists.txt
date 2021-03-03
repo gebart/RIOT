@@ -1,2 +1,4 @@
 add_riot_module(stdio_uart STATIC stdio_uart.c)
-riot_use_module(periph_uart)
+add_riot_module(stdio_uart_rx INTERFACE)
+riot_module_depends(stdio_uart periph_uart)
+riot_module_depends(stdio_uart_rx isrpipe stdio_uart)
