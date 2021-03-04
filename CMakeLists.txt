@@ -92,6 +92,7 @@ if (CPU_MODEL)
   target_compile_definitions(riot_flags INTERFACE "CPU_MODEL_${CPU_MODELDEF}")
 endif()
 
+option(RIOT_DEVELHELP "Enable helpful developer settings. This will add some extra checks which indicate programmer mistakes and add some extra debug output in various places." ${RIOT_DEVELHELP})
 
 option(RIOT_WERROR "Build with all warnings as errors" ON)
 
@@ -223,6 +224,9 @@ else ()
   #add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-Woverloaded-virtual>)
   #add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-Weffc++>)
 endif ()
+if (RIOT_DEVELHELP)
+  target_compile_definitions(riot_flags INTERFACE DEVELHELP)
+endif()
 
 set(RIOT_LIBC "newlib" CACHE STRING "Specifies which libc implementation to use. If unsure, say \"newlib\"")
 set(RIOT_SYSCALLS "${RIOT_LIBC}_syscalls_default" CACHE STRING "Select which syscall implementation to use. If unsure, say \"${RIOT_LIBC}_syscalls_default\"")
