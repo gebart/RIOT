@@ -11,11 +11,6 @@ endif ()
 
 set(BOARD "${BOARD}" CACHE STRING "Which board type the application should run on")
 
-# Skip configuration of unit tests when RIOT is included as a subproject of another project
-if (CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
-  include(CTest)
-endif ()
-
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS ON)
@@ -24,17 +19,12 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+include(riot_functions)
+
 # RIOT::RIOT is the top level target which is meant to be used from the
 # application to add a dependency on RIOT
 add_library(RIOT INTERFACE)
 add_library(RIOT::RIOT ALIAS RIOT)
-target_link_libraries(RIOT INTERFACE
-  RIOT::cpu
-  RIOT::board
-  RIOT::core
-  RIOT::modules
-  RIOT::flags
-  )
 
 # RIOT::flags contains all compiler flags that are necessary in all RIOT
 # related code. There are many occurrences of conditional compilation in RIOT,
@@ -44,6 +34,7 @@ target_link_libraries(RIOT INTERFACE
 # -mcpu, -march etc.
 add_library(riot_flags INTERFACE)
 add_library(RIOT::flags ALIAS riot_flags)
+
 # RIOT::modules is a target which depends on all _enabled_ modules of the
 # build. This is similar to the purpose of USEMODULE in the old Makefile based
 # build system.
@@ -51,6 +42,7 @@ add_library(riot_modules INTERFACE)
 add_library(RIOT::modules ALIAS riot_modules)
 # propagate any object modules to the consumers of this target
 target_sources(RIOT INTERFACE $<TARGET_PROPERTY:riot_modules,INTERFACE_SOURCES>)
+
 # RIOT::modules::flags contain the compiler flags of all _enabled_ modules of
 # the build. This is used to avoid circular dependencies because every enabled
 # module needs to be able to see all preprocessor definitions for all other
@@ -58,17 +50,18 @@ target_sources(RIOT INTERFACE $<TARGET_PROPERTY:riot_modules,INTERFACE_SOURCES>)
 # modules.
 add_library(riot_modules_flags INTERFACE)
 add_library(RIOT::modules::flags ALIAS riot_modules_flags)
+
 # RIOT::flags depends on the enabled module flags too for consistency.
 target_link_libraries(riot_flags INTERFACE riot_modules_flags)
 target_compile_definitions(riot_flags INTERFACE RIOT_VERSION="2021.04-devel-cmake")
-target_link_libraries(riot_flags INTERFACE RIOT::cpu::config RIOT::board::config)
 
-# Convert the given string to an uppercase C symbol
-function(uppercase_c_symbol out_var in_var)
-  string(TOUPPER "${in_var}" upper)
-  string(MAKE_C_IDENTIFIER "${upper}" sym)
-  set(${out_var} "${sym}" PARENT_SCOPE)
-endfunction()
+target_link_libraries(RIOT INTERFACE
+  RIOT::core
+  RIOT::modules
+  RIOT::flags
+  )
+
+riot_use_module(cpu board)
 
 if (BOARD)
   uppercase_c_symbol(BOARDDEF ${BOARD})
@@ -96,92 +89,7 @@ option(RIOT_DEVELHELP "Enable helpful developer settings. This will add some ext
 
 option(RIOT_WERROR "Build with all warnings as errors" ON)
 
-# Create a RIOT module library target and set up the expected MODULE_x compiler defintion
-function(add_riot_module module_name library_kind)
-  string(TOUPPER "${module_name}" module_name_uc)
-  set(prefixed_name "riot_module_${module_name}")
-  message(VERBOSE "Creating RIOT module target ${prefixed_name}")
-  if (library_kind STREQUAL "INTERFACE")
-    add_library(${prefixed_name} ${library_kind} ${ARGN})
-    target_link_libraries(${prefixed_name} INTERFACE RIOT::flags)
-  else()
-    add_library(${prefixed_name} ${library_kind} EXCLUDE_FROM_ALL ${ARGN})
-    target_link_libraries(${prefixed_name} PUBLIC RIOT::flags)
-  endif()
-  add_library(${prefixed_name}_module_flags INTERFACE)
-  target_compile_definitions(${prefixed_name}_module_flags INTERFACE MODULE_${module_name_uc})
-  set_property(TARGET ${prefixed_name} APPEND PROPERTY INTERFACE_RIOT_USEMODULE ${module_name})
-  string(MAKE_C_IDENTIFIER "${module_name}" module_name_id)
-  get_target_property(revdeps riot_modules INTERFACE_RIOT_REVDEPS_${module_name_id})
-  if (revdeps)
-    foreach (dependent IN LISTS revdeps)
-      message(VERBOSE "post-adding dependency ${module_name} of ${dependent}")
-    endforeach()
-  endif()
-endfunction()
 
-# This replaces the USEMODULE += module pattern found in the old Makefile based build system
-function(riot_use_module module_name) # , module_name2, module_name3, ... (variadic)
-  message(VERBOSE "Using RIOT modules: ${ARGV}")
-  riot_internal_module_target_depends(riot_modules riot_modules riot_modules_flags ${ARGV})
-endfunction()
-
-# Create dependencies between modules
-function(riot_module_depends module) # , [dependencies]
-  message(DEBUG "Adding dependencies to ${module}")
-  riot_internal_module_target_depends(${module} riot_module_${module} riot_module_${module}_module_flags ${ARGN})
-endfunction()
-
-# Internal helper method to avoid duplicating the configuration steps
-function(riot_internal_module_target_depends module_name module_target module_flags_target) # , [dependencies] 
-  set(dependencies_targets ${ARGN})
-  list(TRANSFORM dependencies_targets PREPEND "riot_module_")
-  target_link_libraries(${module_target} INTERFACE ${dependencies_targets})
-  set(dependencies_module_flags_targets ${dependencies_targets})
-  list(TRANSFORM dependencies_module_flags_targets APPEND "_module_flags")
-  target_link_libraries(${module_flags_target} INTERFACE ${dependencies_module_flags_targets})
-  list(APPEND CMAKE_MESSAGE_INDENT "  ")
-  string(MAKE_C_IDENTIFIER "${module_name}" module_name_id)
-  get_target_property(revdeps riot_modules INTERFACE_RIOT_REVDEPS_${module_name_id})
-  if (NOT revdeps)
-    # avoid revdeps-NOT_FOUND
-    set(revdeps "")
-  endif()
-  list(REMOVE_DUPLICATES revdeps)
-  foreach (dependency IN LISTS ARGN)
-    message(DEBUG "${module_target} -> ${dependency}")
-    string(MAKE_C_IDENTIFIER "${dependency}" dependency_id)
-    target_sources(${module_target} INTERFACE $<$<STREQUAL:$<TARGET_PROPERTY:riot_module_${dependency},TYPE>,OBJECT_LIBRARY>:$<TARGET_OBJECTS:riot_module_${dependency}>>)
-    set_property(TARGET ${module_target} ${revdeps} APPEND PROPERTY INTERFACE_RIOT_USEMODULE ${dependency})
-    set_property(TARGET ${module_target} ${revdeps} PROPERTY INTERFACE_RIOT_MODULE_${dependency_id} 1)
-    set_property(TARGET riot_modules APPEND PROPERTY INTERFACE_RIOT_REVDEPS_${dependency_id} ${module_target} ${revdeps})
-    if (TARGET riot_module_${dependency})
-      message(VERBOSE "propagating transitive dependencies of ${dependency} to ${module_name} ${revdeps}")
-      get_target_property(deps riot_module_${dependency} INTERFACE_RIOT_USEMODULE)
-      if (deps)
-        list(REMOVE_DUPLICATES deps)
-        set_property(TARGET ${module_target} ${revdeps} APPEND PROPERTY INTERFACE_RIOT_USEMODULE ${dependency})
-        foreach (transdep IN LISTS deps)
-          string(MAKE_C_IDENTIFIER "${transdep}" transdep_id)
-          set_property(TARGET ${module_target} ${revdeps} PROPERTY INTERFACE_RIOT_MODULE_${transdep_id} 1)
-        endforeach()
-      endif()
-    endif()
-    foreach (dependent IN LISTS revdeps)
-      message(VERBOSE "propagating transitive dependency ${dependency} of ${module_name} to ${dependent}")
-    endforeach()
-  endforeach()
-  list(POP_BACK CMAKE_MESSAGE_INDENT)
-endfunction()
-
-# Enter all immediate subdirectories which have a CMakeLists.txt file
-macro(add_all_subdirectories)
-  file(GLOB cmakelists */CMakeLists.txt)
-  foreach (cmakelist IN LISTS cmakelists)
-    get_filename_component(subdir "${cmakelist}" DIRECTORY)
-    add_subdirectory(${subdir})
-  endforeach()
-endmacro()
 
 if (NOT BOARD STREQUAL "native" OR NOT CMAKE_SYSTEM_NAME STREQUAL "Darwin")
   # Xcode linker does not support --gc-sections
