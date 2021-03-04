@@ -16,3 +16,6 @@ riot_module_depends(periph_uart periph_gpio)
 # cpuid is provided by periph_common via the CPUID_ADDR define in periph_cpu.h
 add_riot_module(periph_cpuid INTERFACE)
 riot_module_depends(periph_cpuid periph_common)
+# periph_gpio_irq is provided by periph_gpio
+add_riot_module(periph_gpio_irq INTERFACE)
+riot_module_depends(periph_gpio_irq periph_gpio)
