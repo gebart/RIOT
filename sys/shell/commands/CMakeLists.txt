@@ -39,7 +39,8 @@ add_riot_module(shell_cmd_vfs OBJECT cmd_vfs.c)
 add_riot_module(shell_cmd_whitelist OBJECT cmd_whitelist.c)
 
 function(riot_is_module_used_genex genex usemodule)
-  set(${genex} "$<BOOL:$<TARGET_PROPERTY:riot_modules,INTERFACE_RIOT_MODULE_${usemodule}>>" PARENT_SCOPE)
+  string(MAKE_C_IDENTIFIER "${usemodule}" usemodule_id)
+  set(${genex} "$<BOOL:$<TARGET_PROPERTY:riot_modules,INTERFACE_RIOT_MODULE_${usemodule_id}>>" PARENT_SCOPE)
 endfunction()
 
 function(riot_enable_shell_command_if_usemodule shell_command usemodule)
