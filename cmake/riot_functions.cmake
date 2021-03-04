@@ -50,6 +50,24 @@ function(riot_module_depends module) # , [dependencies]
   riot_internal_module_target_depends(${module} riot_module_${module} riot_module_${module}_module_flags ${ARGN})
 endfunction()
 
+# Enable a module if it exists at generation time
+function(riot_use_optional_module module)
+  message(VERBOSE "Adding optional dependency on ${module}")
+  if (TARGET riot_module_${module})
+    # if the module has already been defined then we can add it normally
+    message(VERBOSE "Module ${module} exists, call riot_use_module")
+    riot_use_module(${module})
+  else()
+    # otherwise we try to find the library at generation time
+    message(VERBOSE "Module ${module} not found, using generator expression")
+    target_sources(riot_modules INTERFACE $<GENEX_EVAL:$<$<TARGET_EXISTS:riot_module_${module}>:\$<\$<STREQUAL:\$<TARGET_PROPERTY:riot_module_${module},TYPE>,OBJECT_LIBRARY>:\$<TARGET_OBJECTS:riot_module_${module}>>>>)
+    target_link_libraries(riot_modules INTERFACE $<TARGET_NAME_IF_EXISTS:riot_module_${module}>)
+    set_property(TARGET riot_modules APPEND PROPERTY INTERFACE_RIOT_USEMODULE $<$<TARGET_EXISTS:riot_module_${module}>:${module}>)
+    string(MAKE_C_IDENTIFIER "${module}" module_id)
+    set_property(TARGET riot_modules PROPERTY INTERFACE_RIOT_MODULE_${module_id} $<TARGET_EXISTS:riot_module_${module}>)
+  endif()
+endfunction()
+
 # Internal helper method to avoid duplicating the configuration steps
 function(riot_internal_module_target_depends module_name module_target module_flags_target) # , [dependencies] 
   set(dependencies_targets ${ARGN})
