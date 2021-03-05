@@ -1,3 +1,4 @@
+include_guard(GLOBAL)
 # Enter all immediate subdirectories which have a CMakeLists.txt file
 macro(add_all_subdirectories)
   file(GLOB cmakelists */CMakeLists.txt)
