@@ -1,0 +1,2 @@
+add_riot_module(stdio_semihosting OBJECT stdio_semihosting.c)
+riot_module_depends(stdio_semihosting xtimer)

@@ -1,0 +1,8 @@
+add_riot_module(dummy_thread OBJECT dummy_thread/dummy_thread.c)
+
+add_riot_module(test_utils_interactive_sync OBJECT interactive_sync/interactive_sync.c)
+riot_module_depends(test_utils_interactive_sync stdin)
+
+add_riot_module(test_utils_interactive_sync_shell INTERFACE)
+riot_module_depends(test_utils_interactive_sync_shell test_utils_interactive_sync)
+# TODO Conditionally activate when shell is enabled

@@ -1,0 +1,6 @@
+add_riot_module(devfs OBJECT devfs.c auto_init_devfs.c)
+riot_module_depends(devfs vfs)
+add_riot_module(devfs_random OBJECT random.c)
+riot_module_depends(devfs_random devfs random)
+add_riot_module(devfs_hwrng OBJECT hwrng.c)
+riot_module_depends(devfs_hwrng devfs periph_hwrng)

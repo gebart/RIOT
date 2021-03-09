@@ -1,0 +1,2 @@
+add_riot_module(schedstatistics OBJECT schedstatistics.c)
+riot_module_depends(schedstatistics sched_cb xtimer)
