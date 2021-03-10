@@ -1,5 +1,5 @@
-add_library(riot_drivers_flags INTERFACE)
-target_include_directories(riot_drivers_flags INTERFACE include)
-target_link_libraries(riot_flags INTERFACE riot_drivers_flags)
+add_riot_module(drivers)
+target_include_directories(riot_module_drivers INTERFACE include)
+riot_module_depends(RIOT drivers)
 
 add_all_subdirectories()

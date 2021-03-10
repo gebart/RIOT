@@ -1,10 +1,9 @@
-add_library(riot_sys_flags INTERFACE)
-target_include_directories(riot_sys_flags INTERFACE include)
-target_link_libraries(riot_flags INTERFACE riot_sys_flags)
+add_riot_module(sys)
+target_include_directories(riot_module_sys INTERFACE include)
 
 add_all_subdirectories()
 
-add_riot_module(newlib INTERFACE)
+add_riot_module(newlib)
 target_link_libraries(riot_module_newlib INTERFACE c)
 
 add_riot_module(newlib_nano INTERFACE)
@@ -24,6 +23,5 @@ else()
   message(CHECK_FAIL "not found")
 endif()
 
-add_riot_module(newlib_gnu_source INTERFACE)
+add_riot_module(newlib_gnu_source)
 target_compile_definitions(riot_module_newlib_gnu_source INTERFACE _GNU_SOURCE)
-

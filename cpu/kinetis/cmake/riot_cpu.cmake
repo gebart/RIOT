@@ -1,7 +1,3 @@
-if(NOT CPU)
-  message(FATAL_ERROR "CPU is not defined")
-endif()
-
 if(NOT CPU_MODEL)
   message(FATAL_ERROR "CPU_MODEL is not set")
 endif()
@@ -183,4 +179,3 @@ if (NOT KINETIS_SRAM_L_SIZE)
   message(FATAL_ERROR "Missing KINETIS_SRAM_L_SIZE case")
 endif()
 message(CHECK_PASS "done")
-

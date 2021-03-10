@@ -1,4 +1,4 @@
-add_riot_module(periph_common STATIC
+add_riot_module(periph_common
   cpuid.c
   eeprom.c
   flashpage.c

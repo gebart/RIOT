@@ -1,19 +1,13 @@
-set(LINKER_SCRIPT "kinetis.ld")
-add_library(riot_cpu_flags INTERFACE)
-target_link_libraries(riot_flags INTERFACE riot_cpu_flags)
-target_link_options(riot_cpu_flags INTERFACE -T "${LINKER_SCRIPT}" "-L${CMAKE_CURRENT_SOURCE_DIR}/ldscripts")
-add_riot_module(cpu OBJECT
-  cpu.c
-  fcfield.c
-  isr_kinetis.c
-  vectors.c
-  )
-add_library(RIOT::cpu ALIAS riot_module_cpu)
-add_library(riot_cpu_config INTERFACE)
-add_library(RIOT::cpu::config ALIAS riot_cpu_config)
-target_include_directories(riot_cpu_config INTERFACE include)
-target_link_libraries(riot_cpu_flags INTERFACE riot_cpu_config)
-get_filename_component(PARENT_DIR ${CMAKE_CURRENT_SOURCE_DIR} DIRECTORY)
+add_riot_module(cpu
+    cpu.c
+    fcfield.c
+    isr_kinetis.c
+    vectors.c
+)
+target_link_options(riot_module_cpu INTERFACE -T "kinetis.ld")
+target_link_directories(riot_module_cpu INTERFACE "ldscripts")
+set_target_properties(riot_module_cpu PROPERTIES INTERFACE_LINK_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/ldscripts/kinetis.ld")
+target_include_directories(riot_module_cpu INTERFACE "include")
 riot_module_depends(cpu cortexm_common)
 
 set(ROM_START_ADDR 0x00000000)
@@ -24,7 +18,7 @@ math(EXPR RAM_START_ADDR "${RAM_BASE_ADDR} - (${KINETIS_SRAM_L_SIZE} * 1024)" OU
 set(ROM_LEN "${KINETIS_ROMSIZE}K")
 math(EXPR RAM_LEN "${KINETIS_RAMSIZE} * 1024")
 
-target_compile_definitions(riot_cpu_config INTERFACE
+target_compile_definitions(riot_module_cpu INTERFACE
   "KINETIS_CORE_${KINETIS_CORE}"
   "KINETIS_SERIES_${KINETIS_SERIES}"
   "KINETIS_FAMILY=${KINETIS_FAMILY}"
@@ -39,6 +33,7 @@ else()
   riot_module_depends(cpu periph_mcg)
 endif()
 
+get_filename_component(PARENT_DIR ${CMAKE_CURRENT_SOURCE_DIR} DIRECTORY)
 add_subdirectory(${PARENT_DIR}/cortexm_common cortexm_common)
 add_subdirectory(periph)
 # CPU init requires watchdog disable functionality
