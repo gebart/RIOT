@@ -1,0 +1,2 @@
+add_executable(test_thread_msg_block_wo_queue main.c)
+target_link_libraries(test_thread_msg_block_wo_queue PUBLIC RIOT::RIOT)

@@ -1,0 +1,3 @@
+add_executable(test_thread_msg_bus main.c)
+target_link_libraries(test_thread_msg_bus PUBLIC RIOT::RIOT)
+riot_target_depends(test_thread_msg_bus PUBLIC core_msg_bus)

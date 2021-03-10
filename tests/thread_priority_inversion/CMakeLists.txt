@@ -1,0 +1,3 @@
+add_executable(test_thread_priority_inversion main.c)
+target_link_libraries(test_thread_priority_inversion PUBLIC RIOT::RIOT)
+riot_target_depends(test_thread_priority_inversion PUBLIC xtimer)

@@ -1,0 +1,3 @@
+add_executable(test_xtimer_msg_timeout main.c)
+target_link_libraries(test_xtimer_msg_timeout PUBLIC RIOT::RIOT)
+riot_target_depends(test_xtimer_msg_timeout PUBLIC xtimer)

@@ -1,0 +1,6 @@
+add_executable(test_xtimer_mutex_lock_timeout main.c)
+target_link_libraries(test_xtimer_mutex_lock_timeout PUBLIC RIOT::RIOT)
+riot_target_depends(test_xtimer_mutex_lock_timeout PUBLIC xtimer shell)
+
+#for testing
+#riot_target_depends(test_xtimer_mutex_lock_timeout PUBLIC ps shell_commands)
