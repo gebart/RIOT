@@ -1,4 +1,4 @@
-add_library(riot_core OBJECT
+add_riot_module(core
   assert.c
   atomic_c11.c
   atomic_sync.c
@@ -11,37 +11,7 @@ add_library(riot_core OBJECT
   rmutex.c
   sched.c
   thread.c
-  include/assert.h
-  include/bitarithm.h
-  include/cib.h
-  include/clist.h
-  include/cond.h
-  include/debug.h
-  include/irq.h
-  include/kernel_defines.h
-  include/kernel_init.h
-  include/list.h
-  include/log.h
-  include/macros/units.h
-  include/macros/xtstr.h
-  include/mbox.h
-  include/msg.h
-  include/msg_bus.h
-  include/mutex.h
-  include/native_sched.h
-  include/panic.h
-  include/priority_queue.h
-  include/ringbuffer.h
-  include/rmutex.h
-  include/sched.h
-  include/thread.h
-  include/thread_flags.h
   )
-target_link_libraries(riot_core PUBLIC
-  RIOT::flags
-  RIOT::cpu::config
-  RIOT::modules::flags
-)
 add_library(riot_core_flags INTERFACE)
 target_include_directories(riot_core_flags INTERFACE include)
 target_link_libraries(riot_flags INTERFACE riot_core_flags)
