@@ -1,1 +1,1 @@
-add_riot_module(bloom OBJECT bloom.c)
+add_riot_module(bloom bloom.c)

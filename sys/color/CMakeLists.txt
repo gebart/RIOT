@@ -1,1 +1,1 @@
-add_riot_module(color OBJECT color.c)
+add_riot_module(color color.c)

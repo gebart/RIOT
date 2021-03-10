@@ -1,1 +1,1 @@
-add_riot_module(pm_layered OBJECT pm.c)
+add_riot_module(pm_layered pm.c)

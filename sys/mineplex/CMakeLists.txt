@@ -1,1 +1,1 @@
-add_riot_module(mineplex OBJECT mineplex.c)
+add_riot_module(mineplex mineplex.c)

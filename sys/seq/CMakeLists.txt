@@ -1,1 +1,1 @@
-add_riot_module(seq OBJECT seq.c)
+add_riot_module(seq seq.c)

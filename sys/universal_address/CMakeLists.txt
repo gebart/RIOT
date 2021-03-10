@@ -1,1 +1,1 @@
-add_riot_module(universal_address OBJECT universal_address.c)
+add_riot_module(universal_address universal_address.c)

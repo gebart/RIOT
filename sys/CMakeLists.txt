@@ -6,7 +6,7 @@ add_all_subdirectories()
 add_riot_module(newlib)
 target_link_libraries(riot_module_newlib INTERFACE c)
 
-add_riot_module(newlib_nano INTERFACE)
+add_riot_module(newlib_nano)
 target_compile_options(riot_module_newlib_nano INTERFACE -specs=nano.specs)
 target_link_options(riot_module_newlib_nano INTERFACE -specs=nano.specs)
 

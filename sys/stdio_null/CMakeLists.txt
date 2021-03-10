@@ -1,1 +1,1 @@
-add_riot_module(stdio_null OBJECT stdio_null.c)
+add_riot_module(stdio_null stdio_null.c)

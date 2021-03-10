@@ -1,4 +1,4 @@
-add_riot_module(shell STATIC shell.c)
+add_riot_module(shell shell.c)
 riot_module_depends(shell stdin)
 
 if (BOARD STREQUAL "native")

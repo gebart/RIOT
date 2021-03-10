@@ -1,5 +1,5 @@
-add_riot_module(stdio_uart STATIC stdio_uart.c)
-add_riot_module(stdio_uart_rx INTERFACE)
+add_riot_module(stdio_uart stdio_uart.c)
+add_riot_module(stdio_uart_rx)
 riot_module_depends(stdio_uart periph_uart)
 riot_module_depends(stdio_uart_rx isrpipe stdio_uart)
 if (RIOT_STDIO STREQUAL "stdio_uart")

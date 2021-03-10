@@ -1,1 +1,1 @@
-add_riot_module(clif OBJECT clif.c)
+add_riot_module(clif clif.c)

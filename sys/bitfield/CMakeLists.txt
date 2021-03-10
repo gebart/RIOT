@@ -1,1 +1,1 @@
-add_riot_module(bitfield OBJECT bitfield.c)
+add_riot_module(bitfield bitfield.c)

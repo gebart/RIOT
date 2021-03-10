@@ -1,1 +1,1 @@
-add_riot_module(iolist OBJECT iolist.c)
+add_riot_module(iolist iolist.c)

@@ -1,1 +1,1 @@
-add_riot_module(app_metadata STATIC app_metadata.c)
+add_riot_module(app_metadata app_metadata.c)

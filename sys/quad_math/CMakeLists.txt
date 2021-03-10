@@ -1,4 +1,4 @@
-add_riot_module(quad_math STATIC
+add_riot_module(quad_math
   adddi3.c
   anddi3.c
   ashldi3.c

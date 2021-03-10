@@ -1,2 +1,2 @@
-add_riot_module(ps OBJECT ps.c)
+add_riot_module(ps ps.c)
 riot_module_depends(ps stdio)

@@ -1,4 +1,4 @@
-add_riot_module(vfs STATIC vfs.c vfs_stdio.c)
+add_riot_module(vfs vfs.c vfs_stdio.c)
 riot_module_depends(vfs posix_headers)
 if (BOARD STREQUAL "native")
   riot_module_depends(vfs native_vfs)

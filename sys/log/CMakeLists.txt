@@ -1,4 +1,4 @@
-add_riot_module(log_color INTERFACE)
+add_riot_module(log_color)
 target_include_directories(riot_module_log_color INTERFACE log_color)
-add_riot_module(log_printfnoformat INTERFACE)
+add_riot_module(log_printfnoformat)
 target_include_directories(riot_module_log_printfnoformat INTERFACE log_printfnoformat)

@@ -1,1 +1,1 @@
-add_riot_module(cb_mux OBJECT cb_mux.c)
+add_riot_module(cb_mux cb_mux.c)

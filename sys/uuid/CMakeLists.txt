@@ -1,2 +1,2 @@
-add_riot_module(uuid OBJECT uuid.c)
+add_riot_module(uuid uuid.c)
 riot_module_depends(uuid hashes random fmt)

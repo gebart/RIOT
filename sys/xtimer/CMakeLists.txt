@@ -1,4 +1,4 @@
-add_riot_module(xtimer STATIC xtimer.c xtimer_core.c)
+add_riot_module(xtimer xtimer.c xtimer_core.c)
 set (RIOT_XTIMER_BACKEND "periph_timer" CACHE STRING "Select xtimer backend")
 set_property(CACHE RIOT_XTIMER_BACKEND PROPERTY STRINGS
   "periph_timer"

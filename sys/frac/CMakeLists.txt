@@ -1,1 +1,1 @@
-add_riot_module(frac OBJECT frac.c)
+add_riot_module(frac frac.c)

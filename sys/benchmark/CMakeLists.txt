@@ -1,2 +1,2 @@
-add_riot_module(benchmark OBJECT benchmark.c)
+add_riot_module(benchmark benchmark.c)
 riot_module_depends(benchmark xtimer)

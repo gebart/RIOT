@@ -1,1 +1,1 @@
-add_riot_module(newlib_syscalls_default OBJECT syscalls.c)
+add_riot_module(newlib_syscalls_default syscalls.c)

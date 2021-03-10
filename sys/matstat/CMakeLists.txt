@@ -1,1 +1,1 @@
-add_riot_module(matstat OBJECT matstat.c)
+add_riot_module(matstat matstat.c)

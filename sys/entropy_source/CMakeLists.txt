@@ -1,6 +1,6 @@
-add_riot_module(entropy_source OBJECT entropy_source.c)
-add_riot_module(entropy_source_adc_noise OBJECT adc_noise/adc_noise.c)
-add_riot_module(entropy_source_zero_entropy OBJECT zero_entropy/zero_entropy.c)
+add_riot_module(entropy_source entropy_source.c)
+add_riot_module(entropy_source_adc_noise adc_noise/adc_noise.c)
+add_riot_module(entropy_source_zero_entropy zero_entropy/zero_entropy.c)
 
 set(ENTROPY_SOURCE_ZERO_HMIN 58982 CACHE STRING "Estimated entropy per sample (byte)")
 mark_as_advanced(ENTROPY_SOURCE_ZERO_HMIN)
