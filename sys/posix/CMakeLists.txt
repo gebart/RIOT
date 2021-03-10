@@ -1,5 +1,5 @@
 add_riot_module(posix_headers)
-target_include_directories(riot_module_posix_headers_module_flags INTERFACE include)
+target_include_directories(riot_module_posix_headers INTERFACE include)
 
 add_riot_module(posix_inet inet/inet.c)
 riot_module_depends(posix_inet posix_headers)

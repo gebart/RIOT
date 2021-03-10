@@ -27,28 +27,37 @@ endfunction()
 #  riot_internal_module_target_depends(riot_modules riot_modules riot_modules_flags ${ARGV})
 #endfunction()
 
-# Create dependencies between modules
-function(riot_module_depends module_name) # , [dependencies]
-  message(DEBUG "Adding dependency: ${module_name} -> ${ARGN}")
+# Specifying dependencies on RIOT modules for any CMake target
+function(riot_target_depends target_name link_kind) # , [dependencies]
+  message(DEBUG "Adding dependency: ${target_name} -> ${ARGN}")
   list(TRANSFORM ARGN PREPEND "riot_module_")
-  target_link_libraries(riot_module_${module_name} INTERFACE ${ARGN})
-#  riot_internal_module_target_depends(${module} riot_module_${module} riot_module_${module}_module_flags ${ARGN})
+  target_link_libraries(${target_name} ${link_kind} ${ARGN})
+endfunction()
+
+# Specifying dependencies between modules
+function(riot_module_depends module_name) # , [dependencies]
+  riot_target_depends(riot_module_${module_name} INTERFACE ${ARGN})
 endfunction()
 
 # Depend on a module only if it exists at generation time
-function(riot_module_depends_optional module_name) # , [dependencies]
-  message(VERBOSE "Adding optional dependency: ${module_name} -> ${ARGN}")
+function(riot_target_depends_optional target_name link_kind) # , [dependencies]
+  message(VERBOSE "Adding optional dependency: ${target_name} -> ${ARGN}")
   foreach (dependency IN LISTS ARGN)
-    target_link_libraries(riot_module_${module_name} INTERFACE $<TARGET_NAME_IF_EXISTS:riot_module_${dependency}>)
+    target_link_libraries(${target_name} ${link_kind} $<TARGET_NAME_IF_EXISTS:riot_module_${dependency}>)
   endforeach()
 endfunction()
 
-# Depend on a module if a generator expression condition is satisfied
-function(riot_module_depends_if module_name genex_condition) # , [dependencies]
-  message(VERBOSE "Adding conditional dependency: ${module_name} -> ${ARGN}")
-  target_link_libraries(riot_module_${module_name} INTERFACE $<$<BOOL:${genex_condition}>:${ARGN}>)
+# Specifying optional dependencies between modules
+function(riot_module_depends_optional module_name)
+  riot_target_depends_optional(riot_module_${module_name} INTERFACE ${ARGN})
 endfunction()
-#
+
+# Depend on a module if a generator expression condition is satisfied
+#function(riot_module_depends_if module_name genex_condition) # , [dependencies]
+#  message(VERBOSE "Adding conditional dependency: ${module_name} -> ${ARGN}")
+#  target_link_libraries(riot_module_${module_name} INTERFACE $<$<BOOL:${genex_condition}>:${ARGN}>)
+#endfunction()
+
 ## Internal helper method to avoid duplicating the configuration steps
 #function(riot_internal_module_target_depends module_name module_target module_flags_target) # , [dependencies]
 #  set(dependencies_targets ${ARGN})

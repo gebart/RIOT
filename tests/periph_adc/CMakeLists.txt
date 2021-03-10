@@ -1,10 +1,3 @@
-cmake_minimum_required(VERSION 3.18)
-project(test_periph_adc)
-
-set(RIOT_BASEDIR "${CMAKE_CURRENT_LIST_DIR}/../../")
-list(APPEND CMAKE_MODULE_PATH "${RIOT_BASEDIR}/cmake" "${CMAKE_MODULE_PATH}")
-include(RIOT)
-add_executable(${PROJECT_NAME} main.c)
-riot_configure_target(${PROJECT_NAME})
-riot_use_module(periph_adc)
-riot_use_module(xtimer)
+add_executable(test_periph_adc main.c)
+target_link_libraries(test_periph_adc PUBLIC RIOT::RIOT)
+riot_target_depends(test_periph_adc PUBLIC periph_adc xtimer)

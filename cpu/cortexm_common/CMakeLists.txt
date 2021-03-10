@@ -8,7 +8,7 @@ add_riot_module(cortexm_common
 riot_module_depends(cpu cortexm_common)
 target_link_directories(riot_module_cortexm_common INTERFACE "ldscripts")
 file(GLOB ldscript_files LIST_DIRECTORIES false "ldscripts/*")
-set_target_properties(riot_module_cortexm_common PROPERTIES INTERFACE_LINK_DEPENDS ${ldscript_files})
+set_target_properties(riot_module_cortexm_common PROPERTIES INTERFACE_LINK_DEPENDS "${ldscript_files}")
 target_include_directories(riot_module_cortexm_common INTERFACE "include" "include/vendor")
 set(cortexm_cpu_flags
     "-mcpu=${CPU_CORE}"

@@ -1,5 +1,6 @@
 add_riot_module(sys)
 target_include_directories(riot_module_sys INTERFACE include)
+riot_module_depends(RIOT sys)
 
 add_all_subdirectories()
 
