@@ -26,3 +26,6 @@ endif()
 
 add_riot_module(newlib_gnu_source)
 target_compile_definitions(riot_module_newlib_gnu_source INTERFACE _GNU_SOURCE)
+
+add_riot_module(printf_float)
+target_link_options(riot_module_printf_float INTERFACE $<$<BOOL:$<TARGET_PROPERTY:INTERFACE_RIOT_MODULE_newlib_nano>>:-u _printf_float>)
