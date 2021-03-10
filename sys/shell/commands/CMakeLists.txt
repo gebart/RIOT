@@ -1,43 +1,49 @@
 add_riot_module(shell_commands shell_commands.c)
 
-add_riot_module(shell_cmd_app_metadata cmd_app_metadata.c)
-add_riot_module(shell_cmd_at30tse75x cmd_at30tse75x.c)
-add_riot_module(shell_cmd_blacklist cmd_blacklist.c)
-add_riot_module(shell_cmd_can cmd_can.c)
-add_riot_module(shell_cmd_ccnl cmd_ccnl.c)
-add_riot_module(shell_cmd_cord_ep cmd_cord_ep.c)
-add_riot_module(shell_cmd_cryptoauthlib cmd_cryptoauthlib.c)
-add_riot_module(shell_cmd_dfplayer cmd_dfplayer.c)
-add_riot_module(shell_cmd_disk cmd_disk.c)
-add_riot_module(shell_cmd_fib cmd_fib.c)
-add_riot_module(shell_cmd_gnrc_6ctx cmd_gnrc_6ctx.c)
-add_riot_module(shell_cmd_gnrc_6lo_frag_stats cmd_gnrc_6lo_frag_stats.c)
-add_riot_module(shell_cmd_gnrc_icmpv6_echo cmd_gnrc_icmpv6_echo.c)
-add_riot_module(shell_cmd_gnrc_ipv6_frag_stats cmd_gnrc_ipv6_frag_stats.c)
-add_riot_module(shell_cmd_gnrc_ipv6_nib cmd_gnrc_ipv6_nib.c)
-add_riot_module(shell_cmd_gnrc_netif cmd_gnrc_netif.c)
-add_riot_module(shell_cmd_gnrc_pktbuf cmd_gnrc_pktbuf.c)
-add_riot_module(shell_cmd_gnrc_rpl cmd_gnrc_rpl.c)
-add_riot_module(shell_cmd_heap cmd_heap.c)
-add_riot_module(shell_cmd_i2c_scan cmd_i2c_scan.c)
-add_riot_module(shell_cmd_loramac cmd_loramac.c)
-add_riot_module(shell_cmd_lwip_netif cmd_lwip_netif.c)
-add_riot_module(shell_cmd_netstats_nb cmd_netstats_nb.c)
-add_riot_module(shell_cmd_nimble_netif cmd_nimble_netif.c)
-add_riot_module(shell_cmd_nimble_statconn cmd_nimble_statconn.c)
-add_riot_module(shell_cmd_openwsn cmd_openwsn.c)
-add_riot_module(shell_cmd_pm cmd_pm.c)
-add_riot_module(shell_cmd_ps cmd_ps.c)
-add_riot_module(shell_cmd_random cmd_random.c)
-add_riot_module(shell_cmd_rtc cmd_rtc.c)
-add_riot_module(shell_cmd_rtt cmd_rtt.c)
-add_riot_module(shell_cmd_saul_reg cmd_saul_reg.c)
-add_riot_module(shell_cmd_sht1x cmd_sht1x.c)
-add_riot_module(shell_cmd_sntp cmd_sntp.c)
-add_riot_module(shell_cmd_suit cmd_suit.c)
-add_riot_module(shell_cmd_sys cmd_sys.c)
-add_riot_module(shell_cmd_vfs cmd_vfs.c)
-add_riot_module(shell_cmd_whitelist cmd_whitelist.c)
+set(submodules
+    cmd_app_metadata
+    cmd_at30tse75x
+    cmd_blacklist
+    cmd_can
+    cmd_ccnl
+    cmd_cord_ep
+    cmd_cryptoauthlib
+    cmd_dfplayer
+    cmd_disk
+    cmd_fib
+    cmd_gnrc_6ctx
+    cmd_gnrc_6lo_frag_stats
+    cmd_gnrc_icmpv6_echo
+    cmd_gnrc_ipv6_frag_stats
+    cmd_gnrc_ipv6_nib
+    cmd_gnrc_netif
+    cmd_gnrc_pktbuf
+    cmd_gnrc_rpl
+    cmd_heap
+    cmd_i2c_scan
+    cmd_loramac
+    cmd_lwip_netif
+    cmd_netstats_nb
+    cmd_nimble_netif
+    cmd_nimble_statconn
+    cmd_openwsn
+    cmd_pm
+    cmd_ps
+    cmd_random
+    cmd_rtc
+    cmd_rtt
+    cmd_saul_reg
+    cmd_sht1x
+    cmd_sntp
+    cmd_suit
+    cmd_sys
+    cmd_vfs
+    cmd_whitelist
+)
+foreach(shell_command IN LISTS submodules)
+  add_riot_module(shell_${shell_command} ${shell_command}.c)
+  riot_module_depends(shell_${shell_command} shell)
+endforeach()
 
 function(riot_is_module_used_genex genex usemodule)
   string(MAKE_C_IDENTIFIER "${usemodule}" usemodule_id)
@@ -47,7 +53,7 @@ endfunction()
 function(riot_enable_shell_command_if_usemodule shell_command usemodule)
   riot_is_module_used_genex(genex ${usemodule})
   target_link_libraries(riot_module_shell_commands INTERFACE $<${genex}:riot_module_${shell_command}>)
-  target_link_libraries(riot_module_${shell_command} INTERFACE riot_module_${usemodule})
+  riot_module_depends(${shell_command} ${usemodule})
 endfunction()
 
 # sys shell commands are enabled by default

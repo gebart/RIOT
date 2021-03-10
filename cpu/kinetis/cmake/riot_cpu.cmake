@@ -46,7 +46,7 @@ elseif (KINETIS_CORE STREQUAL "F")
   set(CPU_CORE "cortex-m4f")
 endif()
 
-include(cortexm)
+include(riot_arch_cortexm)
 
 message(VERBOSE "Kinetis CPU info from CPU_MODEL:")
 list(APPEND CMAKE_MESSAGE_INDENT "  ")

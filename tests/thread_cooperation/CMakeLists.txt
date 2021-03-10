@@ -1,11 +1,5 @@
-cmake_minimum_required(VERSION 3.18)
-project(test_thread_cooperation)
-
-set(RIOT_BASEDIR ${CMAKE_CURRENT_LIST_DIR}/../../)
-list(APPEND CMAKE_MODULE_PATH "${RIOT_BASEDIR}/cmake" "${CMAKE_MODULE_PATH}")
-include(RIOT)
-add_executable(thread_cooperation main.c)
-riot_configure_target(thread_cooperation)
+add_executable(test_thread_cooperation main.c)
+target_link_libraries(test_thread_cooperation PUBLIC RIOT::RIOT)
 
 # some boards have too little memory for this test
 set(small_boards nucleo-f030r8 nucleo-l031k6 nucleo-l053r8 stm32f0discovery stm32l0538-disco)
@@ -19,6 +13,5 @@ elseif (BOARD STREQUAL "nucleo-f334r8")
   set(PROBLEM 9)
 endif()
 if (PROBLEM)
-  target_compile_definitions(thread_cooperation PRIVATE "PROBLEM=${PROBLEM}")
+  target_compile_definitions(test_thread_cooperation PRIVATE "PROBLEM=${PROBLEM}")
 endif()
-
