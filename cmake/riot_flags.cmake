@@ -98,6 +98,12 @@ else() # Assume anything else is GCC/Clang compatible
     list(APPEND cflags_to_try -fno-diagnostics-color)
   endif()
 
+  if(BOARD STREQUAL "native" AND CMAKE_SIZEOF_VOID_P EQUAL 8)
+    # We should really be using a toolchain file for native too
+    target_compile_options(riot_module_RIOT INTERFACE -m32)
+    target_link_options(riot_module_RIOT INTERFACE -m32)
+  endif()
+
   foreach(flag IN LISTS cflags_to_try)
     string(TOUPPER "${flag}" flag_u)
     string(MAKE_C_IDENTIFIER "${flag_u}" flag_c)

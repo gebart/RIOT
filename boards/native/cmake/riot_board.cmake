@@ -1,0 +1,1 @@
+set(CPU native)
