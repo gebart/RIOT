@@ -24,6 +24,14 @@ option(RIOT_DEVELHELP "Enable helpful developer settings. This will add some ext
 
 option(RIOT_WERROR "Build with all warnings as errors" OFF)
 
+# Compress debug info. This saves approximately 50% of disk usage.
+# It has no effect if debugging information is not emitted, so it can be left
+# on unconditionally.
+option(RIOT_COMPRESS_DEBUG "Compress debug info" ON)
+mark_as_advanced(RIOT_COMPRESS_DEBUG)
+
+option(RIOT_CC_COLOR "Provide colored compiler output" ON)
+
 set(RIOT_USEMODULE_EXTRA "" CACHE STRING "Additional modules to enable globally for all targets in this build")
 
 set(RIOT_LIBC "newlib" CACHE STRING
