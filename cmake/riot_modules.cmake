@@ -20,12 +20,12 @@ if (NOT RIOT_STDIO)
 endif()
 riot_module_depends(stdio ${RIOT_STDIO})
 
-if (NOT BOARD STREQUAL "native")
-  # The libc module is an abstract interface that allows us to select C library
-  # implementation in the build configuration
-  add_riot_module(libc)
-  riot_module_depends(RIOT libc)
+# The libc module is an abstract interface that allows us to select C library
+# implementation in the build configuration
+add_riot_module(libc)
+riot_module_depends(RIOT libc)
 
+if (NOT BOARD STREQUAL "native")
   if (NOT RIOT_LIBC)
     message(FATAL_ERROR "No libc implementation specified")
   endif()
