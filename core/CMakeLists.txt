@@ -20,3 +20,9 @@ foreach(submodule IN LISTS submodules)
   riot_module_depends(core_${submodule} core)
 endforeach()
 riot_module_depends(RIOT core core_init core_msg core_panic)
+
+add_riot_module(core_idle_thread)
+add_riot_module(no_idle_thread)
+
+# TODO Make this conditional
+riot_module_depends(core core_idle_thread)
