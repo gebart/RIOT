@@ -3,3 +3,4 @@ target_link_libraries(test_thread_zombie PUBLIC RIOT::RIOT)
 
 # For better testing use ps
 #riot_target_depends(test_thread_zombie PUBLIC ps)
+riot_check_missing_modules(test_thread_zombie)

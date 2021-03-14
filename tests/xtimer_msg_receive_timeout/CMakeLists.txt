@@ -1,3 +1,4 @@
-add_executable(test_xtimer_msg_timeout main.c)
-target_link_libraries(test_xtimer_msg_timeout PUBLIC RIOT::RIOT)
-riot_target_depends(test_xtimer_msg_timeout PUBLIC xtimer)
+add_executable(test_xtimer_msg_receive_timeout main.c)
+target_link_libraries(test_xtimer_msg_receive_timeout PUBLIC RIOT::RIOT)
+riot_target_depends(test_xtimer_msg_receive_timeout PUBLIC xtimer)
+riot_check_missing_modules(test_xtimer_msg_receive_timeout)

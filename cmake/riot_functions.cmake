@@ -19,6 +19,27 @@ function(add_riot_module module_name)
     target_sources(${prefixed_name} INTERFACE ${ARGN})
   endif()
   target_compile_definitions(${prefixed_name} INTERFACE MODULE_${module_name_c})
+  if (TARGET riot_revdeps_${module_name})
+    get_target_property(revdeps riot_revdeps_${module_name} INTERFACE_RIOT_REVDEPS)
+    if (revdeps)
+      foreach (revdep IN LISTS revdeps)
+        get_target_property(missing_mods ${revdep} INTERFACE_RIOT_MISSING_MODULES)
+        list(REMOVE_ITEM missing_mods ${module_name})
+        set_property(TARGET ${revdep} PROPERTY INTERFACE_RIOT_MISSING_MODULES ${missing_mods})
+      endforeach()
+    endif()
+  endif()
+endfunction()
+
+# Check if any RIOT modules have not been resolved.
+# This function is a convenience helper to exclude test cases which depend on features that are not implemented for the chosen BOARD.
+function(riot_check_missing_modules target_name)
+  get_target_property(missing_mods ${target_name} INTERFACE_RIOT_MISSING_MODULES)
+  if (missing_mods)
+    message(VERBOSE "Excluding ${target_name} because of missing dependencies: ${missing_mods}")
+    set_property(TARGET ${target_name} PROPERTY EXCLUDE_FROM_ALL ON)
+    set_property(GLOBAL APPEND PROPERTY RIOT_MISSING_MODULE_TARGETS ${target_name})
+  endif()
 endfunction()
 
 # This replaces the USEMODULE += module pattern found in the old Makefile based build system
@@ -30,7 +51,7 @@ endfunction()
 # Specifying dependencies on RIOT modules for any CMake target
 function(riot_target_depends target_name link_kind) # , [dependencies]
   message(DEBUG "Adding dependency: ${target_name} -> ${ARGN}")
-  riot_internal_target_depends_populate_usemodules(${target_name} ${ARGN})
+  riot_internal_propagate_target_properties(${target_name} ${ARGN})
   list(TRANSFORM ARGN PREPEND "riot_module_")
   target_link_libraries(${target_name} ${link_kind} ${ARGN})
 endfunction()
@@ -60,7 +81,7 @@ endfunction()
 #endfunction()
 
 # Internal helper method to avoid duplicating the configuration steps
-function(riot_internal_target_depends_populate_usemodules target_name) # , [dependencies]
+function(riot_internal_propagate_target_properties target_name) # , [dependencies]
   set(dependencies ${ARGN})
   set(revdeps "")
   list(APPEND CMAKE_MESSAGE_INDENT "  ")
@@ -98,6 +119,10 @@ function(riot_internal_target_depends_populate_usemodules target_name) # , [depe
     set_property(TARGET riot_revdeps_${dependency} APPEND PROPERTY INTERFACE_RIOT_REVDEPS ${target_name} ${revdeps})
     if (TARGET riot_module_${dependency})
       message(VERBOSE "propagating transitive dependencies of ${dependency} to ${target_name} ${revdeps}")
+      get_target_property(missing_mods riot_module_${dependency} INTERFACE_RIOT_MISSING_MODULES)
+      if (missing_mods)
+        set_property(TARGET ${target_name} ${revdeps} APPEND PROPERTY INTERFACE_RIOT_MISSING_MODULES ${missing_mods})
+      endif()
       get_target_property(usemodules riot_module_${dependency} INTERFACE_RIOT_USEMODULE)
       message(DEBUG "usemodules: ${usemodules}")
       if (usemodules)
@@ -113,6 +138,9 @@ function(riot_internal_target_depends_populate_usemodules target_name) # , [depe
           set_property(TARGET ${target_name} ${revdeps} PROPERTY INTERFACE_RIOT_MODULE_${transdep_id} 1)
         endforeach()
       endif()
+    else()
+      message(VERBOSE "Module ${dependency} not yet defined")
+      set_property(TARGET ${target_name} ${revdeps} APPEND PROPERTY INTERFACE_RIOT_MISSING_MODULES ${dependency})
     endif()
   endforeach()
   list(POP_BACK CMAKE_MESSAGE_INDENT)

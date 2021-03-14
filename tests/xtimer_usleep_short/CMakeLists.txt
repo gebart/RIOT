@@ -1,3 +1,4 @@
 add_executable(test_xtimer_usleep_short main.c)
 target_link_libraries(test_xtimer_usleep_short PUBLIC RIOT::RIOT)
 riot_target_depends(test_xtimer_usleep_short PUBLIC xtimer)
+riot_check_missing_modules(test_xtimer_usleep_short)

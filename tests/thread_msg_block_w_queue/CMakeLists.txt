@@ -1,2 +1,3 @@
 add_executable(test_thread_msg_block_w_queue main.c)
 target_link_libraries(test_thread_msg_block_w_queue PUBLIC RIOT::RIOT)
+riot_check_missing_modules(test_thread_msg_block_w_queue)

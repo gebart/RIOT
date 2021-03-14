@@ -2,3 +2,4 @@ add_executable(test_thread_msg_block_race main.c)
 target_link_libraries(test_thread_msg_block_race PUBLIC RIOT::RIOT)
 riot_target_depends(test_thread_msg_block_race PUBLIC random periph_timer)
 # TODO Disable module auto_init_xtimer auto_init_random
+riot_check_missing_modules(test_thread_msg_block_race)

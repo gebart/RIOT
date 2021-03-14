@@ -45,3 +45,8 @@ endif ()
 #add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-fno-use-cxa-atexit>)
 #add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-fno-rtti>)
 #add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-fno-exceptions>)
+
+get_property(missing_mod_targets GLOBAL PROPERTY RIOT_MISSING_MODULE_TARGETS)
+if (missing_mod_targets)
+  message(NOTICE "The following targets have been excluded from all because of missing modules: ${missing_mod_targets}")
+endif()

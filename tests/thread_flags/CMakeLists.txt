@@ -1,3 +1,4 @@
 add_executable(test_thread_flags main.c)
 target_link_libraries(test_thread_flags PUBLIC RIOT::RIOT)
 riot_target_depends(test_thread_flags PUBLIC core_thread_flags xtimer)
+riot_check_missing_modules(test_thread_flags)

@@ -4,3 +4,4 @@ riot_target_depends(test_xtimer_mutex_lock_timeout PUBLIC xtimer shell)
 
 #for testing
 #riot_target_depends(test_xtimer_mutex_lock_timeout PUBLIC ps shell_commands)
+riot_check_missing_modules(test_xtimer_mutex_lock_timeout)
