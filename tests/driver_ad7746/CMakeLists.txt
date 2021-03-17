@@ -1,0 +1,4 @@
+add_executable(test_driver_ad7746 main.c)
+target_link_libraries(test_driver_ad7746 PUBLIC RIOT::RIOT)
+riot_target_depends(test_driver_ad7746 PUBLIC ad7746 xtimer)
+riot_check_missing_modules(test_driver_ad7746)

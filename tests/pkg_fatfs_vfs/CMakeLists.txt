@@ -1,0 +1,4 @@
+add_executable(test_pkg_fatfs_vfs main.c)
+target_link_libraries(test_pkg_fatfs_vfs PUBLIC RIOT::RIOT)
+riot_target_depends(test_pkg_fatfs_vfs PUBLIC fatfs_vfs mtd_native mtd_sdcard)
+riot_check_missing_modules(test_pkg_fatfs_vfs)

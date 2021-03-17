@@ -1,0 +1,4 @@
+add_executable(test_driver_mhz19 main.c)
+target_link_libraries(test_driver_mhz19 PUBLIC RIOT::RIOT)
+riot_target_depends(test_driver_mhz19 PUBLIC xtimer mhz19_uart mhz19_pwm)
+riot_check_missing_modules(test_driver_mhz19)

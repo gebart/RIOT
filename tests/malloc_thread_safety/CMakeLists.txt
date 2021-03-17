@@ -1,0 +1,4 @@
+add_executable(test_malloc_thread_safety main.c)
+target_link_libraries(test_malloc_thread_safety PUBLIC RIOT::RIOT)
+riot_target_depends(test_malloc_thread_safety PUBLIC xtimer)
+riot_check_missing_modules(test_malloc_thread_safety)

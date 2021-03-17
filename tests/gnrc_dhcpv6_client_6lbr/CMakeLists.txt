@@ -1,0 +1,4 @@
+add_executable(test_gnrc_dhcpv6_client_6lbr main.c)
+target_link_libraries(test_gnrc_dhcpv6_client_6lbr PUBLIC RIOT::RIOT)
+riot_target_depends(test_gnrc_dhcpv6_client_6lbr PUBLIC auto_init_gnrc_netif gnrc_dhcpv6_client_6lbr gnrc_dhcpv6_client_mud_url gnrc_netdev_default gnrc_pktdump gnrc_sixlowpan_border_router_default ps shell shell_commands)
+riot_check_missing_modules(test_gnrc_dhcpv6_client_6lbr)

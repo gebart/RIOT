@@ -1,0 +1,4 @@
+add_executable(test_driver_adcxx1c main.c)
+target_link_libraries(test_driver_adcxx1c PUBLIC RIOT::RIOT)
+riot_target_depends(test_driver_adcxx1c PUBLIC adc081c xtimer)
+riot_check_missing_modules(test_driver_adcxx1c)

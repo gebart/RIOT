@@ -1,0 +1,4 @@
+add_executable(test_driver_at30tse75x main.c)
+target_link_libraries(test_driver_at30tse75x PUBLIC RIOT::RIOT)
+riot_target_depends(test_driver_at30tse75x PUBLIC at30tse75x shell shell_commands)
+riot_check_missing_modules(test_driver_at30tse75x)

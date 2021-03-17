@@ -1,0 +1,4 @@
+add_executable(test_xtimer_now32_overflow main.c)
+target_link_libraries(test_xtimer_now32_overflow PUBLIC RIOT::RIOT)
+riot_target_depends(test_xtimer_now32_overflow PUBLIC xtimer)
+riot_check_missing_modules(test_xtimer_now32_overflow)

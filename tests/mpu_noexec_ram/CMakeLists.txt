@@ -1,0 +1,4 @@
+add_executable(test_mpu_noexec_ram main.c)
+target_link_libraries(test_mpu_noexec_ram PUBLIC RIOT::RIOT)
+riot_target_depends(test_mpu_noexec_ram PUBLIC mpu_noexec_ram)
+riot_check_missing_modules(test_mpu_noexec_ram)

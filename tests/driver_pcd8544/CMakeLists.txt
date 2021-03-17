@@ -1,0 +1,4 @@
+add_executable(test_driver_pcd8544 main.c)
+target_link_libraries(test_driver_pcd8544 PUBLIC RIOT::RIOT)
+riot_target_depends(test_driver_pcd8544 PUBLIC shell pcd8544)
+riot_check_missing_modules(test_driver_pcd8544)

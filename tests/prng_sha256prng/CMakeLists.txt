@@ -1,0 +1,4 @@
+add_executable(test_prng_sha256prng main.c)
+target_link_libraries(test_prng_sha256prng PUBLIC RIOT::RIOT)
+riot_target_depends(test_prng_sha256prng PUBLIC random prng_sha256prng)
+riot_check_missing_modules(test_prng_sha256prng)

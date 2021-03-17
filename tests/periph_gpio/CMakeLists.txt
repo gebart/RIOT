@@ -1,0 +1,4 @@
+add_executable(test_periph_gpio main.c)
+target_link_libraries(test_periph_gpio PUBLIC RIOT::RIOT)
+riot_target_depends(test_periph_gpio PUBLIC shell shell_commands benchmark periph_gpio_mock)
+riot_check_missing_modules(test_periph_gpio)

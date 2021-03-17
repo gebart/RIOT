@@ -1,0 +1,4 @@
+add_executable(test_nimble_l2cap_server main.c)
+target_link_libraries(test_nimble_l2cap_server PUBLIC RIOT::RIOT)
+riot_target_depends(test_nimble_l2cap_server PUBLIC xtimer bluetil_ad)
+riot_check_missing_modules(test_nimble_l2cap_server)

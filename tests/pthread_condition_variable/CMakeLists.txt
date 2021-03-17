@@ -1,0 +1,4 @@
+add_executable(test_pthread_condition_variable main.c)
+target_link_libraries(test_pthread_condition_variable PUBLIC RIOT::RIOT)
+riot_target_depends(test_pthread_condition_variable PUBLIC posix_headers pthread xtimer)
+riot_check_missing_modules(test_pthread_condition_variable)

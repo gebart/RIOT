@@ -1,0 +1,4 @@
+add_executable(test_pthread_rwlock main.c)
+target_link_libraries(test_pthread_rwlock PUBLIC RIOT::RIOT)
+riot_target_depends(test_pthread_rwlock PUBLIC pthread xtimer random)
+riot_check_missing_modules(test_pthread_rwlock)

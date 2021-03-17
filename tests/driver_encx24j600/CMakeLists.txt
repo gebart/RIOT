@@ -1,0 +1,4 @@
+add_executable(test_driver_encx24j600 main.c)
+target_link_libraries(test_driver_encx24j600 PUBLIC RIOT::RIOT)
+riot_target_depends(test_driver_encx24j600 PUBLIC auto_init_gnrc_netif encx24j600 gnrc_ipv6_router_default gnrc_icmpv6_echo shell shell_commands ps)
+riot_check_missing_modules(test_driver_encx24j600)

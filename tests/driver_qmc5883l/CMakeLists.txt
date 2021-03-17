@@ -1,0 +1,4 @@
+add_executable(test_driver_qmc5883l main.c)
+target_link_libraries(test_driver_qmc5883l PUBLIC RIOT::RIOT)
+riot_target_depends(test_driver_qmc5883l PUBLIC qmc5883l_int core_thread_flags xtimer)
+riot_check_missing_modules(test_driver_qmc5883l)

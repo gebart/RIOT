@@ -1,0 +1,4 @@
+add_executable(test_sys_arduino arduino-test.sketch)
+target_link_libraries(test_sys_arduino PUBLIC RIOT::RIOT)
+riot_target_depends(test_sys_arduino PUBLIC arduino)
+riot_check_missing_modules(test_sys_arduino)

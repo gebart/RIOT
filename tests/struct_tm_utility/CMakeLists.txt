@@ -1,0 +1,4 @@
+add_executable(test_struct_tm_utility main.c)
+target_link_libraries(test_struct_tm_utility PUBLIC RIOT::RIOT)
+riot_target_depends(test_struct_tm_utility PUBLIC shell timex)
+riot_check_missing_modules(test_struct_tm_utility)

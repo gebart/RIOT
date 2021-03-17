@@ -1,0 +1,6 @@
+add_executable(test_driver_bmx280 main.c)
+target_link_libraries(test_driver_bmx280 PUBLIC RIOT::RIOT)
+set(RIOT_TEST_DRIVER_BMX280_MODEL "bmx280_i2c" CACHE STRING "The specific device to build test_driver_bmx280 for")
+mark_as_advanced(RIOT_TEST_DRIVER_BMX280_MODEL)
+riot_target_depends(test_driver_bmx280 PUBLIC fmt ${RIOT_TEST_DRIVER_BMX280_MODEL})
+riot_check_missing_modules(test_driver_bmx280)

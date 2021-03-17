@@ -1,0 +1,6 @@
+foreach (example IN ITEMS mnist hello_world)
+  add_executable(test_pkg_tensorflow-lite-${example} main.cpp)
+  target_link_libraries(test_pkg_tensorflow-lite-${example} PUBLIC RIOT::RIOT)
+  riot_target_depends(test_pkg_tensorflow-lite-${example} PUBLIC ${example} tensorflow-lite-${example})
+  riot_check_missing_modules(test_pkg_tensorflow-lite-${example})
+endforeach()

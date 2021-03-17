@@ -1,0 +1,4 @@
+add_executable(test_bench_sys_atomic_utils main.c)
+target_link_libraries(test_bench_sys_atomic_utils PUBLIC RIOT::RIOT)
+riot_target_depends(test_bench_sys_atomic_utils PUBLIC xtimer atomic_utils test_utils_interactive_sync)
+riot_check_missing_modules(test_bench_sys_atomic_utils)

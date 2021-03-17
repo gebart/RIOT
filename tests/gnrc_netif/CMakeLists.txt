@@ -1,0 +1,4 @@
+add_executable(test_gnrc_netif main.c)
+target_link_libraries(test_gnrc_netif PUBLIC RIOT::RIOT)
+riot_target_depends(test_gnrc_netif PUBLIC embunit gnrc_netif gnrc_pktdump gnrc_sixlowpan gnrc_sixlowpan_iphc gnrc_ipv6 netdev_eth netdev_ieee802154 netdev_test od)
+riot_check_missing_modules(test_gnrc_netif)

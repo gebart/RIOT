@@ -1,0 +1,4 @@
+add_executable(test_gnrc_sixlowpan main.c)
+target_link_libraries(test_gnrc_sixlowpan PUBLIC RIOT::RIOT)
+riot_target_depends(test_gnrc_sixlowpan PUBLIC netdev_ieee802154 netdev_test gnrc_sixlowpan_default gnrc_ipv6_default gnrc_udp gnrc_pktdump)
+riot_check_missing_modules(test_gnrc_sixlowpan)

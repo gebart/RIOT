@@ -1,0 +1,4 @@
+add_executable(test_cond_order main.c)
+target_link_libraries(test_cond_order PUBLIC RIOT::RIOT)
+riot_target_depends(test_cond_order PUBLIC test_utils_interactive_sync)
+riot_check_missing_modules(test_cond_order)

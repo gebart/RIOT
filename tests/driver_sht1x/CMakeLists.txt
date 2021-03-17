@@ -1,0 +1,6 @@
+add_executable(test_driver_sht1x main.c)
+target_link_libraries(test_driver_sht1x PUBLIC RIOT::RIOT)
+set(RIOT_TEST_DRIVER_SHT1X_MODEL "sht11" CACHE STRING "The specific device to build test_driver_sht1x for")
+mark_as_advanced(RIOT_TEST_DRIVER_SHT1X_MODEL)
+riot_target_depends(test_driver_sht1x PUBLIC ${RIOT_TEST_DRIVER_SHT1X_MODEL} shell saul_default shell_commands ps)
+riot_check_missing_modules(test_driver_sht1x)

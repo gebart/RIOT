@@ -1,0 +1,4 @@
+add_executable(test_bench_sys_base64 main.c)
+target_link_libraries(test_bench_sys_base64 PUBLIC RIOT::RIOT)
+riot_target_depends(test_bench_sys_base64 PUBLIC base64 fmt xtimer)
+riot_check_missing_modules(test_bench_sys_base64)

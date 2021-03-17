@@ -1,0 +1,4 @@
+add_executable(test_driver_bq2429x main.c)
+target_link_libraries(test_driver_bq2429x PUBLIC RIOT::RIOT)
+riot_target_depends(test_driver_bq2429x PUBLIC bq2429x shell shell_commands)
+riot_check_missing_modules(test_driver_bq2429x)

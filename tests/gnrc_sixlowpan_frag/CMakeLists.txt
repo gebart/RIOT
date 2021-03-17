@@ -1,0 +1,4 @@
+add_executable(test_gnrc_sixlowpan_frag main.c)
+target_link_libraries(test_gnrc_sixlowpan_frag PUBLIC RIOT::RIOT)
+riot_target_depends(test_gnrc_sixlowpan_frag PUBLIC gnrc_sixlowpan_frag embunit)
+riot_check_missing_modules(test_gnrc_sixlowpan_frag)

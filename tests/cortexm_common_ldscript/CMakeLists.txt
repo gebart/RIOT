@@ -1,0 +1,4 @@
+add_executable(test_cortexm_common_ldscript main.c)
+target_link_libraries(test_cortexm_common_ldscript PUBLIC RIOT::RIOT)
+riot_target_depends(test_cortexm_common_ldscript PUBLIC )
+riot_check_missing_modules(test_cortexm_common_ldscript)

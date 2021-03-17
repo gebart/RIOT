@@ -1,0 +1,4 @@
+add_executable(test_driver_grove_ledbar main.c)
+target_link_libraries(test_driver_grove_ledbar PUBLIC RIOT::RIOT)
+riot_target_depends(test_driver_grove_ledbar PUBLIC grove_ledbar periph_gpio_mock)
+riot_check_missing_modules(test_driver_grove_ledbar)

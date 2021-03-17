@@ -1,0 +1,4 @@
+add_executable(test_mtd_flashpage main.c)
+target_link_libraries(test_mtd_flashpage PUBLIC RIOT::RIOT)
+riot_target_depends(test_mtd_flashpage PUBLIC mtd_flashpage embunit)
+riot_check_missing_modules(test_mtd_flashpage)

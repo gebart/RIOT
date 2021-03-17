@@ -1,0 +1,4 @@
+add_executable(test_ztimer_underflow main.c)
+target_link_libraries(test_ztimer_underflow PUBLIC RIOT::RIOT)
+riot_target_depends(test_ztimer_underflow PUBLIC ztimer ztimer_usec ztimer_msec ztimer_periph_rtt)
+riot_check_missing_modules(test_ztimer_underflow)

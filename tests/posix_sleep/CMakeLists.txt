@@ -1,0 +1,4 @@
+add_executable(test_posix_sleep main.c)
+target_link_libraries(test_posix_sleep PUBLIC RIOT::RIOT)
+riot_target_depends(test_posix_sleep PUBLIC posix_sleep)
+riot_check_missing_modules(test_posix_sleep)

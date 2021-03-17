@@ -1,0 +1,4 @@
+add_executable(test_nimble_statconn_gnrc main.c)
+target_link_libraries(test_nimble_statconn_gnrc PUBLIC RIOT::RIOT)
+riot_target_depends(test_nimble_statconn_gnrc PUBLIC shell shell_commands ps gnrc_netdev_default auto_init_gnrc_netif gnrc_ipv6_router_default auto_init_gnrc_rpl gnrc_rpl gnrc_icmpv6_echo nimble_statconn)
+riot_check_missing_modules(test_nimble_statconn_gnrc)

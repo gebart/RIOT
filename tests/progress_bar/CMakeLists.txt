@@ -1,0 +1,4 @@
+add_executable(test_progress_bar main.c)
+target_link_libraries(test_progress_bar PUBLIC RIOT::RIOT)
+riot_target_depends(test_progress_bar PUBLIC xtimer progress_bar)
+riot_check_missing_modules(test_progress_bar)

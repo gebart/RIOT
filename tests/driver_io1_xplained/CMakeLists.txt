@@ -1,0 +1,4 @@
+add_executable(test_driver_io1_xplained main.c)
+target_link_libraries(test_driver_io1_xplained PUBLIC RIOT::RIOT)
+riot_target_depends(test_driver_io1_xplained PUBLIC io1_xplained xtimer)
+riot_check_missing_modules(test_driver_io1_xplained)

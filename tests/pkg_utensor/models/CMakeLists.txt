@@ -1,0 +1,1 @@
+add_riot_module(test_pkg_utensor_models deep_mlp.cpp)

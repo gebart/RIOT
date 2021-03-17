@@ -1,0 +1,4 @@
+add_executable(test_driver_hdc1000 main.c)
+target_link_libraries(test_driver_hdc1000 PUBLIC RIOT::RIOT)
+riot_target_depends(test_driver_hdc1000 PUBLIC hdc1000 xtimer fmt)
+riot_check_missing_modules(test_driver_hdc1000)

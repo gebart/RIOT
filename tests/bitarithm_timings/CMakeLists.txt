@@ -1,0 +1,4 @@
+add_executable(test_bitarithm_timings main.c)
+target_link_libraries(test_bitarithm_timings PUBLIC RIOT::RIOT)
+riot_target_depends(test_bitarithm_timings PUBLIC xtimer)
+riot_check_missing_modules(test_bitarithm_timings)

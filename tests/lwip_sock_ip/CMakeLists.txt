@@ -1,0 +1,4 @@
+add_executable(test_lwip_sock_ip main.c)
+target_link_libraries(test_lwip_sock_ip PUBLIC RIOT::RIOT)
+riot_target_depends(test_lwip_sock_ip PUBLIC ipv4_addr lwip_arp lwip_ipv4 ipv6_addr lwip_ipv6_autoconfig sock_aux_local inet_csum l2util lwip_netdev netdev_eth netdev_test ps sock_ip)
+riot_check_missing_modules(test_lwip_sock_ip)

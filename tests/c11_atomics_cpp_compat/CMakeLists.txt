@@ -1,0 +1,4 @@
+add_executable(test_c11_atomics_cpp_compat main.c)
+target_link_libraries(test_c11_atomics_cpp_compat PUBLIC RIOT::RIOT)
+riot_target_depends(test_c11_atomics_cpp_compat PUBLIC )
+riot_check_missing_modules(test_c11_atomics_cpp_compat)

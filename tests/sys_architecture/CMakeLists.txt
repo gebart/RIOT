@@ -1,0 +1,4 @@
+add_executable(test_sys_architecture main.c)
+target_link_libraries(test_sys_architecture PUBLIC RIOT::RIOT)
+riot_target_depends(test_sys_architecture PUBLIC )
+riot_check_missing_modules(test_sys_architecture)

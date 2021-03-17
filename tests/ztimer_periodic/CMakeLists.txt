@@ -1,0 +1,4 @@
+add_executable(test_ztimer_periodic main.c)
+target_link_libraries(test_ztimer_periodic PUBLIC RIOT::RIOT)
+riot_target_depends(test_ztimer_periodic PUBLIC fmt ztimer_usec ztimer_msec)
+riot_check_missing_modules(test_ztimer_periodic)

@@ -1,0 +1,4 @@
+add_executable(test_driver_lc709203f main.c)
+target_link_libraries(test_driver_lc709203f PUBLIC RIOT::RIOT)
+riot_target_depends(test_driver_lc709203f PUBLIC lc709203f xtimer)
+riot_check_missing_modules(test_driver_lc709203f)

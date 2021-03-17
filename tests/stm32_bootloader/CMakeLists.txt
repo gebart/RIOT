@@ -1,0 +1,4 @@
+add_executable(test_stm32_bootloader main.c)
+target_link_libraries(test_stm32_bootloader PUBLIC RIOT::RIOT)
+riot_target_depends(test_stm32_bootloader PUBLIC shell shell_commands usb_board_reset)
+riot_check_missing_modules(test_stm32_bootloader)

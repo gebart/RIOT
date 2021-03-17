@@ -1,0 +1,4 @@
+add_executable(test_periph_flashpage_unittest main.c)
+target_link_libraries(test_periph_flashpage_unittest PUBLIC RIOT::RIOT)
+riot_target_depends(test_periph_flashpage_unittest PUBLIC embunit)
+riot_check_missing_modules(test_periph_flashpage_unittest)

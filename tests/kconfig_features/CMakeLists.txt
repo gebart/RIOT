@@ -1,0 +1,4 @@
+add_executable(test_kconfig_features main.c)
+target_link_libraries(test_kconfig_features PUBLIC RIOT::RIOT)
+riot_target_depends(test_kconfig_features PUBLIC )
+riot_check_missing_modules(test_kconfig_features)

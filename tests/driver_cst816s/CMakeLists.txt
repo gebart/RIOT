@@ -1,0 +1,4 @@
+add_executable(test_driver_cst816s main.c)
+target_link_libraries(test_driver_cst816s PUBLIC RIOT::RIOT)
+riot_target_depends(test_driver_cst816s PUBLIC cst816s core_thread_flags)
+riot_check_missing_modules(test_driver_cst816s)

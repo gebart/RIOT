@@ -1,0 +1,4 @@
+add_executable(test_mutex_cancel main.c)
+target_link_libraries(test_mutex_cancel PUBLIC RIOT::RIOT)
+riot_target_depends(test_mutex_cancel PUBLIC xtimer)
+riot_check_missing_modules(test_mutex_cancel)

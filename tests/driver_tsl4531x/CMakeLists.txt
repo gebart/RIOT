@@ -1,0 +1,4 @@
+add_executable(test_driver_tsl4531x main.c)
+target_link_libraries(test_driver_tsl4531x PUBLIC RIOT::RIOT)
+riot_target_depends(test_driver_tsl4531x PUBLIC tsl4531x xtimer)
+riot_check_missing_modules(test_driver_tsl4531x)

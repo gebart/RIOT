@@ -1,0 +1,4 @@
+add_executable(test_entropy_source main.c)
+target_link_libraries(test_entropy_source PUBLIC RIOT::RIOT)
+riot_target_depends(test_entropy_source PUBLIC fmt entropy_source_zero_entropy xtimer)
+riot_check_missing_modules(test_entropy_source)

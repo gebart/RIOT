@@ -1,0 +1,6 @@
+add_executable(test_driver_shtc1 main.c)
+target_link_libraries(test_driver_shtc1 PUBLIC RIOT::RIOT)
+set(RIOT_TEST_DRIVER_SHTC1_MODEL "shtc1" CACHE STRING "The specific device to build test_driver_shtc1 for")
+mark_as_advanced(RIOT_TEST_DRIVER_SHTC1_MODEL)
+riot_target_depends(test_driver_shtc1 PUBLIC fmt ${RIOT_TEST_DRIVER_SHTC1_MODEL})
+riot_check_missing_modules(test_driver_shtc1)

@@ -1,0 +1,4 @@
+add_executable(test_pkg_tinycrypt main.c)
+target_link_libraries(test_pkg_tinycrypt PUBLIC RIOT::RIOT)
+riot_target_depends(test_pkg_tinycrypt PUBLIC fmt)
+riot_check_missing_modules(test_pkg_tinycrypt)

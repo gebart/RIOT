@@ -1,0 +1,4 @@
+add_executable(test_pkg_monocypher main.c)
+target_link_libraries(test_pkg_monocypher PUBLIC RIOT::RIOT)
+riot_target_depends(test_pkg_monocypher PUBLIC embunit random)
+riot_check_missing_modules(test_pkg_monocypher)

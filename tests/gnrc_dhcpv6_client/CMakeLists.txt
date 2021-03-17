@@ -1,0 +1,4 @@
+add_executable(test_gnrc_dhcpv6_client main.c)
+target_link_libraries(test_gnrc_dhcpv6_client PUBLIC RIOT::RIOT)
+riot_target_depends(test_gnrc_dhcpv6_client PUBLIC gnrc_dhcpv6_client gnrc_ipv6_default xtimer netdev_default auto_init_gnrc_netif shell_commands)
+riot_check_missing_modules(test_gnrc_dhcpv6_client)

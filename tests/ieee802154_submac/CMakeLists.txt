@@ -1,0 +1,4 @@
+add_executable(test_ieee802154_submac main.c)
+target_link_libraries(test_ieee802154_submac PUBLIC RIOT::RIOT)
+riot_target_depends(test_ieee802154_submac PUBLIC od shell ps event_thread_highest netdev_ieee802154_submac netdev_default)
+riot_check_missing_modules(test_ieee802154_submac)

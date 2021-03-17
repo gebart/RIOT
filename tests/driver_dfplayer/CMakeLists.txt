@@ -1,0 +1,4 @@
+add_executable(test_driver_dfplayer main.c)
+target_link_libraries(test_driver_dfplayer PUBLIC RIOT::RIOT)
+riot_target_depends(test_driver_dfplayer PUBLIC dfplayer event_thread_lowest shell shell_commands)
+riot_check_missing_modules(test_driver_dfplayer)

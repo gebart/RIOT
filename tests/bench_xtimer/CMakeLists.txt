@@ -1,0 +1,4 @@
+add_executable(test_bench_xtimer main.c)
+target_link_libraries(test_bench_xtimer PUBLIC RIOT::RIOT)
+riot_target_depends(test_bench_xtimer PUBLIC xtimer)
+riot_check_missing_modules(test_bench_xtimer)

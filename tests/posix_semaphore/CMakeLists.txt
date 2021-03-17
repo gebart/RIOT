@@ -1,0 +1,4 @@
+add_executable(test_posix_semaphore main.c)
+target_link_libraries(test_posix_semaphore PUBLIC RIOT::RIOT)
+riot_target_depends(test_posix_semaphore PUBLIC fmt posix_semaphore)
+riot_check_missing_modules(test_posix_semaphore)

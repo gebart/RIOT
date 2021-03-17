@@ -1,0 +1,4 @@
+add_executable(test_gnrc_sixlowpan_iphc_w_vrb main.c)
+target_link_libraries(test_gnrc_sixlowpan_iphc_w_vrb PUBLIC RIOT::RIOT)
+riot_target_depends(test_gnrc_sixlowpan_iphc_w_vrb PUBLIC embunit gnrc_ipv6_nib_6ln gnrc_sixlowpan_iphc gnrc_sixlowpan_frag gnrc_sixlowpan_frag_vrb netdev_ieee802154 netdev_test od)
+riot_check_missing_modules(test_gnrc_sixlowpan_iphc_w_vrb)

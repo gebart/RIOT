@@ -1,0 +1,4 @@
+add_executable(test_event_threads main.c)
+target_link_libraries(test_event_threads PUBLIC RIOT::RIOT)
+riot_target_depends(test_event_threads PUBLIC event_thread_highest event_thread_medium)
+riot_check_missing_modules(test_event_threads)

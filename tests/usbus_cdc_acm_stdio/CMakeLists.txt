@@ -1,0 +1,4 @@
+add_executable(test_usbus_cdc_acm_stdio main.c)
+target_link_libraries(test_usbus_cdc_acm_stdio PUBLIC RIOT::RIOT)
+riot_target_depends(test_usbus_cdc_acm_stdio PUBLIC stdio_cdc_acm shell shell_commands ps)
+riot_check_missing_modules(test_usbus_cdc_acm_stdio)

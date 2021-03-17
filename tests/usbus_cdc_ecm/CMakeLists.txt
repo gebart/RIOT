@@ -1,0 +1,4 @@
+add_executable(test_usbus_cdc_ecm main.c)
+target_link_libraries(test_usbus_cdc_ecm PUBLIC RIOT::RIOT)
+riot_target_depends(test_usbus_cdc_ecm PUBLIC auto_init_gnrc_netif gnrc_ipv6_router_default gnrc_icmpv6_echo usbus_cdc_ecm shell shell_commands ps)
+riot_check_missing_modules(test_usbus_cdc_ecm)

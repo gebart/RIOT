@@ -1,0 +1,4 @@
+add_executable(test_pkg_libfixmath_unittests main.c)
+target_link_libraries(test_pkg_libfixmath_unittests PUBLIC RIOT::RIOT)
+riot_target_depends(test_pkg_libfixmath_unittests PUBLIC libfixmath-unittests printf_float)
+riot_check_missing_modules(test_pkg_libfixmath_unittests)

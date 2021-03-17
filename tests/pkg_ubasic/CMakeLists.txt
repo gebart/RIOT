@@ -1,0 +1,4 @@
+add_executable(test_pkg_ubasic)
+target_link_libraries(test_pkg_ubasic PUBLIC RIOT::RIOT)
+riot_target_depends(test_pkg_ubasic PUBLIC ubasic ubasic_tests printf_float)
+riot_check_missing_modules(test_pkg_ubasic)

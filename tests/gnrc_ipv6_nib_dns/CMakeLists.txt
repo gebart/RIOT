@@ -1,0 +1,4 @@
+add_executable(test_gnrc_ipv6_nib_dns main.c)
+target_link_libraries(test_gnrc_ipv6_nib_dns PUBLIC RIOT::RIOT)
+riot_target_depends(test_gnrc_ipv6_nib_dns PUBLIC sock_dns gnrc_ipv6_default gnrc_ipv6_nib_dns auto_init_gnrc_netif shell shell_commands posix_inet)
+riot_check_missing_modules(test_gnrc_ipv6_nib_dns)

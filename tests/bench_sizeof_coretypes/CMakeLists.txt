@@ -1,0 +1,4 @@
+add_executable(test_bench_sizeof_coretypes main.c)
+target_link_libraries(test_bench_sizeof_coretypes PUBLIC RIOT::RIOT)
+riot_target_depends(test_bench_sizeof_coretypes PUBLIC core_thread_flags)
+riot_check_missing_modules(test_bench_sizeof_coretypes)

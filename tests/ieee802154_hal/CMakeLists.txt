@@ -1,0 +1,4 @@
+add_executable(test_ieee802154_hal main.c)
+target_link_libraries(test_ieee802154_hal PUBLIC RIOT::RIOT)
+riot_target_depends(test_ieee802154_hal PUBLIC od luid ieee802154 shell ps event_thread_highest event_callback xtimer ieee802154_radio_hal netdev_default)
+riot_check_missing_modules(test_ieee802154_hal)

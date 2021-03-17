@@ -1,0 +1,4 @@
+add_executable(test_periph_backup_ram main.c)
+target_link_libraries(test_periph_backup_ram PUBLIC RIOT::RIOT)
+riot_target_depends(test_periph_backup_ram PUBLIC pm_layered periph_rtc xtimer)
+riot_check_missing_modules(test_periph_backup_ram)

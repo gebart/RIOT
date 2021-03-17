@@ -1,0 +1,4 @@
+add_executable(test_congure_test main.c)
+target_link_libraries(test_congure_test PUBLIC RIOT::RIOT)
+riot_target_depends(test_congure_test PUBLIC congure_mock congure_test fmt shell shell_commands)
+riot_check_missing_modules(test_congure_test)

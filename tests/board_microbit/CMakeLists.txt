@@ -1,0 +1,4 @@
+add_executable(test_board_microbit main.c)
+target_link_libraries(test_board_microbit PUBLIC RIOT::RIOT)
+riot_target_depends(test_board_microbit PUBLIC microbit)
+riot_check_missing_modules(test_board_microbit)

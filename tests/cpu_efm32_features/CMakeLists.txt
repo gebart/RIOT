@@ -1,0 +1,4 @@
+add_executable(test_cpu_efm32_features main.c)
+target_link_libraries(test_cpu_efm32_features PUBLIC RIOT::RIOT)
+riot_target_depends(test_cpu_efm32_features PUBLIC )
+riot_check_missing_modules(test_cpu_efm32_features)

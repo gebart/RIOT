@@ -1,0 +1,4 @@
+add_executable(test_driver_nrf24l01p_ng main.c)
+target_link_libraries(test_driver_nrf24l01p_ng PUBLIC RIOT::RIOT)
+riot_target_depends(test_driver_nrf24l01p_ng PUBLIC shell shell_commands ps gnrc auto_init_gnrc_netif nrf24l01p_ng nrf24l01p_ng_diagnostics netstats_l2 gnrc_txtsnd)
+riot_check_missing_modules(test_driver_nrf24l01p_ng)

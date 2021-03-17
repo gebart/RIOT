@@ -1,0 +1,4 @@
+add_executable(test_nanocoap_cli main.c)
+target_link_libraries(test_nanocoap_cli PUBLIC RIOT::RIOT)
+riot_target_depends(test_nanocoap_cli PUBLIC gnrc_netdev_default auto_init_gnrc_netif gnrc_ipv6_default sock_udp nanocoap_sock od shell)
+riot_check_missing_modules(test_nanocoap_cli)

@@ -1,0 +1,4 @@
+add_executable(test_pthread_cooperation main.c)
+target_link_libraries(test_pthread_cooperation PUBLIC RIOT::RIOT)
+riot_target_depends(test_pthread_cooperation PUBLIC posix_headers pthread)
+riot_check_missing_modules(test_pthread_cooperation)

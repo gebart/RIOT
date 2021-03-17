@@ -1,0 +1,4 @@
+add_executable(test_mpu_stack_guard main.c)
+target_link_libraries(test_mpu_stack_guard PUBLIC RIOT::RIOT)
+riot_target_depends(test_mpu_stack_guard PUBLIC mpu_stack_guard)
+riot_check_missing_modules(test_mpu_stack_guard)

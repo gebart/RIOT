@@ -1,0 +1,4 @@
+add_executable(test_gnrc_ipv6_ext_frag main.c)
+target_link_libraries(test_gnrc_ipv6_ext_frag PUBLIC RIOT::RIOT)
+riot_target_depends(test_gnrc_ipv6_ext_frag PUBLIC auto_init_gnrc_netif netdev_test gnrc_ipv6_router_default gnrc_icmpv6_error gnrc_pktdump gnrc_pktbuf_cmd gnrc_ipv6_ext_frag gnrc_udp od embunit shell shell_commands ps)
+riot_check_missing_modules(test_gnrc_ipv6_ext_frag)

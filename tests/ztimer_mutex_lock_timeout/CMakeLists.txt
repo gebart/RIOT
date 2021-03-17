@@ -1,0 +1,4 @@
+add_executable(test_ztimer_mutex_lock_timeout main.c)
+target_link_libraries(test_ztimer_mutex_lock_timeout PUBLIC RIOT::RIOT)
+riot_target_depends(test_ztimer_mutex_lock_timeout PUBLIC ztimer_usec)
+riot_check_missing_modules(test_ztimer_mutex_lock_timeout)

@@ -1,0 +1,4 @@
+add_executable(test_ps_schedstatistics main.c)
+target_link_libraries(test_ps_schedstatistics PUBLIC RIOT::RIOT)
+riot_target_depends(test_ps_schedstatistics PUBLIC shell shell_commands ps schedstatistics printf_float)
+riot_check_missing_modules(test_ps_schedstatistics)

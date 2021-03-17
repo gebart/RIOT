@@ -1,0 +1,4 @@
+add_executable(test_gnrc_lwmac main.c)
+target_link_libraries(test_gnrc_lwmac PUBLIC RIOT::RIOT)
+riot_target_depends(test_gnrc_lwmac PUBLIC shell shell_commands ps gnrc gnrc_netdev_default auto_init_gnrc_netif gnrc_txtsnd gnrc_pktdump gnrc_lwmac)
+riot_check_missing_modules(test_gnrc_lwmac)

@@ -1,0 +1,4 @@
+add_executable(test_suit_manifest main.c)
+target_link_libraries(test_suit_manifest PUBLIC RIOT::RIOT)
+riot_target_depends(test_suit_manifest PUBLIC suit suit_storage_ram suit_transport_mock riotboot_hdr embunit)
+riot_check_missing_modules(test_suit_manifest)

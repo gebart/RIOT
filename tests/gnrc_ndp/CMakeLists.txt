@@ -1,0 +1,4 @@
+add_executable(test_gnrc_ndp main.c)
+target_link_libraries(test_gnrc_ndp PUBLIC RIOT::RIOT)
+riot_target_depends(test_gnrc_ndp PUBLIC gnrc_ipv6_nib_router gnrc_ndp gnrc_netif gnrc_nettype_ipv6 embunit netdev_ieee802154 netdev_test)
+riot_check_missing_modules(test_gnrc_ndp)

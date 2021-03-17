@@ -1,0 +1,4 @@
+add_executable(test_nimble_autoconn_gnrc main.c)
+target_link_libraries(test_nimble_autoconn_gnrc PUBLIC RIOT::RIOT)
+riot_target_depends(test_nimble_autoconn_gnrc PUBLIC shell shell_commands ps gnrc_netdev_default auto_init_gnrc_netif gnrc_ipv6_router_default gnrc_icmpv6_echo auto_init_gnrc_rpl gnrc_rpl nimble_autoconn_ipsp)
+riot_check_missing_modules(test_nimble_autoconn_gnrc)

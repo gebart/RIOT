@@ -1,0 +1,4 @@
+add_executable(test_periph_uart_mode main.c)
+target_link_libraries(test_periph_uart_mode PUBLIC RIOT::RIOT)
+riot_target_depends(test_periph_uart_mode PUBLIC xtimer)
+riot_check_missing_modules(test_periph_uart_mode)

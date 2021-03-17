@@ -1,0 +1,4 @@
+add_executable(test_gnrc_ipv6_nib_6ln main.c)
+target_link_libraries(test_gnrc_ipv6_nib_6ln PUBLIC RIOT::RIOT)
+riot_target_depends(test_gnrc_ipv6_nib_6ln PUBLIC gnrc_ipv6 gnrc_sixlowpan gnrc_sixlowpan_ctx gnrc_ipv6_nib_6ln gnrc_netif embunit netdev_ieee802154 netdev_test)
+riot_check_missing_modules(test_gnrc_ipv6_nib_6ln)

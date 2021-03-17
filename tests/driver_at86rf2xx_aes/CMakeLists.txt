@@ -1,0 +1,4 @@
+add_executable(test_driver_at86rf2xx_aes main.c)
+target_link_libraries(test_driver_at86rf2xx_aes PUBLIC RIOT::RIOT)
+riot_target_depends(test_driver_at86rf2xx_aes PUBLIC at86rf2xx at86rf2xx_aes_spi)
+riot_check_missing_modules(test_driver_at86rf2xx_aes)

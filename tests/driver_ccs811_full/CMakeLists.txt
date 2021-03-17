@@ -1,0 +1,4 @@
+add_executable(test_driver_ccs811_full main.c)
+target_link_libraries(test_driver_ccs811_full PUBLIC RIOT::RIOT)
+riot_target_depends(test_driver_ccs811_full PUBLIC ccs811_full)
+riot_check_missing_modules(test_driver_ccs811_full)

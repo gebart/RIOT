@@ -1,0 +1,4 @@
+add_executable(test_driver_ph_oem main.c)
+target_link_libraries(test_driver_ph_oem PUBLIC RIOT::RIOT)
+riot_target_depends(test_driver_ph_oem PUBLIC ph_oem event_callback)
+riot_check_missing_modules(test_driver_ph_oem)

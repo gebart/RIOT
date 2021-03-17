@@ -1,0 +1,4 @@
+add_executable(test_gnrc_ipv6_fwd_w_sub main.c)
+target_link_libraries(test_gnrc_ipv6_fwd_w_sub PUBLIC RIOT::RIOT)
+riot_target_depends(test_gnrc_ipv6_fwd_w_sub PUBLIC gnrc_ipv6_router_default gnrc_netif gnrc_pktbuf_cmd netdev_eth netdev_test od ps shell shell_commands xtimer)
+riot_check_missing_modules(test_gnrc_ipv6_fwd_w_sub)

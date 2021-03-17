@@ -1,0 +1,4 @@
+add_executable(test_evtimer_mbox main.c)
+target_link_libraries(test_evtimer_mbox PUBLIC RIOT::RIOT)
+riot_target_depends(test_evtimer_mbox PUBLIC evtimer_mbox)
+riot_check_missing_modules(test_evtimer_mbox)

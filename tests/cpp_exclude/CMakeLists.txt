@@ -1,0 +1,6 @@
+add_subdirectory(module_exclude)
+
+add_executable(test_cpp_exclude main.cpp)
+target_link_libraries(test_cpp_exclude PUBLIC RIOT::RIOT)
+riot_target_depends(test_cpp_exclude PUBLIC test_cpp_exclude_module_exclude)
+riot_check_missing_modules(test_cpp_exclude)

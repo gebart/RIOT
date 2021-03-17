@@ -1,0 +1,4 @@
+add_executable(test_sys_stdio_semihosting main.c)
+target_link_libraries(test_sys_stdio_semihosting PUBLIC RIOT::RIOT)
+riot_target_depends(test_sys_stdio_semihosting PUBLIC stdio_semihosting shell shell_commands ps)
+riot_check_missing_modules(test_sys_stdio_semihosting)

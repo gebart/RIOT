@@ -1,0 +1,4 @@
+add_executable(test_sys_arduino_lib main.cpp)
+target_link_libraries(test_sys_arduino_lib PUBLIC RIOT::RIOT)
+riot_target_depends(test_sys_arduino_lib PUBLIC talking_leds)
+riot_check_missing_modules(test_sys_arduino_lib)

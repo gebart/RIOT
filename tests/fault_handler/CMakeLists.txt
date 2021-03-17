@@ -1,0 +1,4 @@
+add_executable(test_fault_handler main.c)
+target_link_libraries(test_fault_handler PUBLIC RIOT::RIOT)
+riot_target_depends(test_fault_handler PUBLIC xtimer)
+riot_check_missing_modules(test_fault_handler)

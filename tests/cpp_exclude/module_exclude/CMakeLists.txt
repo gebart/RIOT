@@ -1,0 +1,1 @@
+add_riot_module(test_cpp_exclude_module_exclude module.cpp)

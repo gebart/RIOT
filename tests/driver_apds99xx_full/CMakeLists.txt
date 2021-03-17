@@ -1,0 +1,6 @@
+add_executable(test_driver_apds99xx_full main.c)
+target_link_libraries(test_driver_apds99xx_full PUBLIC RIOT::RIOT)
+set(RIOT_TEST_DRIVER_APDS99XX_MODEL "apds9960" CACHE STRING "The specific driver model to build driver_apds99xx tests with")
+mark_as_advanced(RIOT_TEST_DRIVER_APDS99XX_MODEL)
+riot_target_depends(test_driver_apds99xx_full PUBLIC ${RIOT_TEST_DRIVER_APDS99XX_MODEL} apds99xx_full core_thread_flags)
+riot_check_missing_modules(test_driver_apds99xx_full)

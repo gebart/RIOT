@@ -1,0 +1,4 @@
+add_executable(test_gnrc_sock_neterr main.c)
+target_link_libraries(test_gnrc_sock_neterr PUBLIC RIOT::RIOT)
+riot_target_depends(test_gnrc_sock_neterr PUBLIC auto_init_gnrc_netif gnrc_ipv6_default gnrc_neterr sock_udp od xtimer)
+riot_check_missing_modules(test_gnrc_sock_neterr)

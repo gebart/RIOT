@@ -1,0 +1,4 @@
+add_executable(test_gnrc_netif_ieee802154 main.c)
+target_link_libraries(test_gnrc_netif_ieee802154 PUBLIC RIOT::RIOT)
+riot_target_depends(test_gnrc_netif_ieee802154 PUBLIC socket_zep auto_init_gnrc_netif gnrc gnrc_netif_ieee802154 gnrc_pktdump)
+riot_check_missing_modules(test_gnrc_netif_ieee802154)

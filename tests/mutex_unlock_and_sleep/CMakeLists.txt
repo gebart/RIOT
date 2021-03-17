@@ -1,0 +1,4 @@
+add_executable(test_mutex_unlock_and_sleep main.c)
+target_link_libraries(test_mutex_unlock_and_sleep PUBLIC RIOT::RIOT)
+riot_target_depends(test_mutex_unlock_and_sleep PUBLIC )
+riot_check_missing_modules(test_mutex_unlock_and_sleep)

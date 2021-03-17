@@ -1,0 +1,4 @@
+add_executable(test_gnrc_mac_timeout main.c)
+target_link_libraries(test_gnrc_mac_timeout PUBLIC RIOT::RIOT)
+riot_target_depends(test_gnrc_mac_timeout PUBLIC gnrc_mac)
+riot_check_missing_modules(test_gnrc_mac_timeout)

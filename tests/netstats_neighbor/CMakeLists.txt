@@ -1,0 +1,4 @@
+add_executable(test_netstats_neighbor main.c)
+target_link_libraries(test_netstats_neighbor PUBLIC RIOT::RIOT)
+riot_target_depends(test_netstats_neighbor PUBLIC netdev_default netstats_neighbor_etx netstats_neighbor_count netstats_neighbor_rssi netstats_neighbor_lqi netstats_neighbor_tx_time)
+riot_check_missing_modules(test_netstats_neighbor)

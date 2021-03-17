@@ -1,0 +1,6 @@
+add_executable(test_driver_sx127x main.c)
+target_link_libraries(test_driver_sx127x PUBLIC RIOT::RIOT)
+set(RIOT_TEST_DRIVER_SX127X_MODEL "sx1276" CACHE STRING "The specific device to build test_driver_sx127x for")
+mark_as_advanced(RIOT_TEST_DRIVER_SX127X_MODEL)
+riot_target_depends(test_driver_sx127x PUBLIC od shell shell_commands ps ${RIOT_TEST_DRIVER_SX127X_MODEL})
+riot_check_missing_modules(test_driver_sx127x)

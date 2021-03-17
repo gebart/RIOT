@@ -1,0 +1,4 @@
+add_executable(test_isr_yield_higher main.c)
+target_link_libraries(test_isr_yield_higher PUBLIC RIOT::RIOT)
+riot_target_depends(test_isr_yield_higher PUBLIC xtimer)
+riot_check_missing_modules(test_isr_yield_higher)

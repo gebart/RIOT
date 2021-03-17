@@ -1,0 +1,4 @@
+add_executable(test_pkg_tinydtls_sock_async main.c)
+target_link_libraries(test_pkg_tinydtls_sock_async PUBLIC RIOT::RIOT)
+riot_target_depends(test_pkg_tinydtls_sock_async PUBLIC gnrc_netdev_default auto_init_gnrc_netif gnrc_ipv6_default sock_async_event sock_dtls sock_udp sock_util event_thread_medium event_timeout prng_sha1prng shell shell_commands bitfield)
+riot_check_missing_modules(test_pkg_tinydtls_sock_async)

@@ -1,0 +1,4 @@
+add_executable(test_driver_atwinc15x0 main.c)
+target_link_libraries(test_driver_atwinc15x0 PUBLIC RIOT::RIOT)
+riot_target_depends(test_driver_atwinc15x0 PUBLIC atwinc15x0)
+riot_check_missing_modules(test_driver_atwinc15x0)

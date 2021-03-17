@@ -1,0 +1,4 @@
+add_executable(test_gnrc_tx_sync main.c)
+target_link_libraries(test_gnrc_tx_sync PUBLIC RIOT::RIOT)
+riot_target_depends(test_gnrc_tx_sync PUBLIC gnrc_sixlowpan_default netdev_ieee802154 gnrc_ipv6_default netdev_eth gnrc_tx_sync netdev_test sock_udp xtimer auto_init_gnrc_netif iolist)
+riot_check_missing_modules(test_gnrc_tx_sync)

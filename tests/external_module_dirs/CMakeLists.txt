@@ -1,0 +1,4 @@
+add_executable(test_external_module_dirs main.c)
+target_link_libraries(test_external_module_dirs PUBLIC RIOT::RIOT)
+riot_target_depends(test_external_module_dirs PUBLIC random external_module)
+riot_check_missing_modules(test_external_module_dirs)

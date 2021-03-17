@@ -1,0 +1,4 @@
+add_executable(test_gnrc_udp main.c)
+target_link_libraries(test_gnrc_udp PUBLIC RIOT::RIOT)
+riot_target_depends(test_gnrc_udp PUBLIC gnrc_netdev_default auto_init_gnrc_netif gnrc_ipv6_router_default gnrc_ipv6_ext_frag gnrc_pktbuf_cmd gnrc_udp gnrc_rpl auto_init_gnrc_rpl od gnrc_icmpv6_echo shell shell_commands ps netstats_l2 netstats_ipv6)
+riot_check_missing_modules(test_gnrc_udp)

@@ -1,0 +1,4 @@
+add_executable(test_riotboot_hdr main.c)
+target_link_libraries(test_riotboot_hdr PUBLIC RIOT::RIOT)
+riot_target_depends(test_riotboot_hdr PUBLIC riotboot_hdr embunit)
+riot_check_missing_modules(test_riotboot_hdr)

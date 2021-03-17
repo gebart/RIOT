@@ -1,0 +1,4 @@
+add_executable(test_irq_disable_restore main.c)
+target_link_libraries(test_irq_disable_restore PUBLIC RIOT::RIOT)
+riot_target_depends(test_irq_disable_restore PUBLIC fmt xtimer)
+riot_check_missing_modules(test_irq_disable_restore)

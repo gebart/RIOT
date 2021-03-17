@@ -1,0 +1,4 @@
+add_executable(test_driver_kw2xrf main.c)
+target_link_libraries(test_driver_kw2xrf PUBLIC RIOT::RIOT)
+riot_target_depends(test_driver_kw2xrf PUBLIC auto_init_gnrc_netif gnrc_netdev_default fmt shell shell_commands ps kw2xrf)
+riot_check_missing_modules(test_driver_kw2xrf)

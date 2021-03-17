@@ -1,0 +1,9 @@
+add_executable(test_ztimer_msg main.c)
+target_link_libraries(test_ztimer_msg PUBLIC RIOT::RIOT)
+riot_target_depends(test_ztimer_msg PUBLIC ztimer_usec)
+riot_check_missing_modules(test_ztimer_msg)
+
+add_executable(test_ztimer_msg_msec_on_rtt main.c)
+target_link_libraries(test_ztimer_msg_msec_on_rtt PUBLIC RIOT::RIOT)
+riot_target_depends(test_ztimer_msg_msec_on_rtt PUBLIC ztimer_usec ztimer_msec ztimer_periph_rtt)
+riot_check_missing_modules(test_ztimer_msg_msec_on_rtt)

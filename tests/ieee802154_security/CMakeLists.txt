@@ -1,0 +1,4 @@
+add_executable(test_ieee802154_security main.c)
+target_link_libraries(test_ieee802154_security PUBLIC RIOT::RIOT)
+riot_target_depends(test_ieee802154_security PUBLIC ieee802154 ieee802154_security gnrc_netif_ieee802154)
+riot_check_missing_modules(test_ieee802154_security)

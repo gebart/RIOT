@@ -1,0 +1,4 @@
+add_executable(test_gnrc_sixlowpan_frag_minfwd main.c)
+target_link_libraries(test_gnrc_sixlowpan_frag_minfwd PUBLIC RIOT::RIOT)
+riot_target_depends(test_gnrc_sixlowpan_frag_minfwd PUBLIC gnrc_ipv6_router_default gnrc_sixlowpan_frag_minfwd gnrc_sixlowpan_iphc gnrc_ipv6_nib gnrc_netif embunit netdev_ieee802154 netdev_test)
+riot_check_missing_modules(test_gnrc_sixlowpan_frag_minfwd)

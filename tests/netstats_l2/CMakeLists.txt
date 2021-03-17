@@ -1,0 +1,4 @@
+add_executable(test_netstats_l2 main.c)
+target_link_libraries(test_netstats_l2 PUBLIC RIOT::RIOT)
+riot_target_depends(test_netstats_l2 PUBLIC shell shell_commands gnrc gnrc_netdev_default auto_init_gnrc_netif netstats_l2)
+riot_check_missing_modules(test_netstats_l2)

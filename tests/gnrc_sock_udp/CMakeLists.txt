@@ -1,0 +1,4 @@
+add_executable(test_gnrc_sock_udp main.c)
+target_link_libraries(test_gnrc_sock_udp PUBLIC RIOT::RIOT)
+riot_target_depends(test_gnrc_sock_udp PUBLIC sock_aux_local sock_aux_timestamp sock_aux_rssi gnrc_sock_check_reuse sock_udp gnrc_ipv6 ps)
+riot_check_missing_modules(test_gnrc_sock_udp)

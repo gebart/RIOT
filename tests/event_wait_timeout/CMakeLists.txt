@@ -1,0 +1,4 @@
+add_executable(test_event_wait_timeout main.c)
+target_link_libraries(test_event_wait_timeout PUBLIC RIOT::RIOT)
+riot_target_depends(test_event_wait_timeout PUBLIC event xtimer core_thread_flags)
+riot_check_missing_modules(test_event_wait_timeout)

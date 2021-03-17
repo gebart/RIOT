@@ -1,0 +1,4 @@
+add_executable(test_bench_runtime_coreapis main.c)
+target_link_libraries(test_bench_runtime_coreapis PUBLIC RIOT::RIOT)
+riot_target_depends(test_bench_runtime_coreapis PUBLIC core_thread_flags benchmark)
+riot_check_missing_modules(test_bench_runtime_coreapis)
