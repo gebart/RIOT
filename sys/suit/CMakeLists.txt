@@ -1,5 +1,4 @@
 add_riot_module(suit
-  STATIC
   conditions.c
   handlers.c
   handlers_command_seq.c
