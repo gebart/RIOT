@@ -1,4 +1,4 @@
 add_executable(test_pkg_cryptoauthlib_internal-tests main.c)
 target_link_libraries(test_pkg_cryptoauthlib_internal-tests PUBLIC RIOT::RIOT)
-riot_target_depends(test_pkg_cryptoauthlib_internal-tests PUBLIC cryptoauthlib_test)
+riot_target_depends(test_pkg_cryptoauthlib_internal-tests PUBLIC cryptoauthlib cryptoauthlib_test)
 riot_check_missing_modules(test_pkg_cryptoauthlib_internal-tests)

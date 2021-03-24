@@ -1,4 +1,4 @@
 add_executable(test_pkg_lvgl_touch main.c)
 target_link_libraries(test_pkg_lvgl_touch PUBLIC RIOT::RIOT)
-riot_target_depends(test_pkg_lvgl_touch PUBLIC lvgl_contrib ili9341 lvgl_contrib_touch stmpe811)
+riot_target_depends(test_pkg_lvgl_touch PUBLIC lvgl lvgl_contrib ili9341 lvgl_contrib_touch stmpe811)
 riot_check_missing_modules(test_pkg_lvgl_touch)

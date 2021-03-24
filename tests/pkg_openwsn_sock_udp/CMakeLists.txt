@@ -1,4 +1,4 @@
 add_executable(test_pkg_openwsn_sock_udp main.c)
 target_link_libraries(test_pkg_openwsn_sock_udp PUBLIC RIOT::RIOT)
-riot_target_depends(test_pkg_openwsn_sock_udp PUBLIC openwsn_openstack openwsn_scheduler sock_udp openwsn_scheduler_mock ztimer_usec)
+riot_target_depends(test_pkg_openwsn_sock_udp PUBLIC openwsn openwsn_openstack openwsn_scheduler sock_udp openwsn_scheduler_mock ztimer_usec)
 riot_check_missing_modules(test_pkg_openwsn_sock_udp)

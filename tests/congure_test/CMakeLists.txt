@@ -1,4 +1,5 @@
-add_executable(test_congure_test main.c)
+add_executable(test_congure_test main.c congure_impl.c)
 target_link_libraries(test_congure_test PUBLIC RIOT::RIOT)
 riot_target_depends(test_congure_test PUBLIC congure_mock congure_test fmt shell shell_commands)
 riot_check_missing_modules(test_congure_test)
+target_include_directories(test_congure_test PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")

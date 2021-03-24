@@ -80,6 +80,9 @@ endfunction()
 #  target_link_libraries(riot_module_${module_name} INTERFACE $<$<BOOL:${genex_condition}>:${ARGN}>)
 #endfunction()
 
+function(riot_target_module_disable target_name module_name)
+endfunction()
+
 # Internal helper method to avoid duplicating the configuration steps
 function(riot_internal_propagate_target_properties target_name) # , [dependencies]
   set(dependencies ${ARGN})

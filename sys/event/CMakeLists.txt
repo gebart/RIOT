@@ -1,4 +1,5 @@
 add_riot_module(event event.c)
+riot_module_depends(event core_thread_flags)
 add_riot_module(event_callback callback.c)
 add_riot_module(event_thread thread.c)
 add_riot_module(event_timeout timeout.c)

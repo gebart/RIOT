@@ -1,4 +1,4 @@
 add_executable(test_pkg_microcoap main.c)
 target_link_libraries(test_pkg_microcoap PUBLIC RIOT::RIOT)
-riot_target_depends(test_pkg_microcoap PUBLIC gnrc_netdev_default auto_init_gnrc_netif gnrc_ipv6_default gnrc_icmpv6_echo sock_udp shell_commands prng_minstd)
+riot_target_depends(test_pkg_microcoap PUBLIC microcoap gnrc_netdev_default auto_init_gnrc_netif gnrc_ipv6_default gnrc_icmpv6_echo sock_udp shell_commands prng_minstd)
 riot_check_missing_modules(test_pkg_microcoap)

@@ -33,7 +33,7 @@ else()
   riot_module_depends(cpu periph_mcg)
 endif()
 
-get_filename_component(PARENT_DIR ${CMAKE_CURRENT_SOURCE_DIR} DIRECTORY)
+get_filename_component(PARENT_DIR "${CMAKE_CURRENT_SOURCE_DIR}" DIRECTORY)
 add_subdirectory(${PARENT_DIR}/cortexm_common cortexm_common)
 add_subdirectory(periph)
 # CPU init requires watchdog disable functionality

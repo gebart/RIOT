@@ -11,6 +11,9 @@ target_compile_definitions(riot_module_RIOT INTERFACE "CPU_MODEL_$<UPPER_CASE:$<
 # TODO allow multiple application names in one project
 target_compile_definitions(riot_module_RIOT INTERFACE "RIOT_APPLICATION=\"${CMAKE_PROJECT_NAME}\"")
 
+target_compile_definitions(riot_module_RIOT INTERFACE "RIOT_FILE_RELATIVE=__FILE__")
+target_compile_options(riot_module_RIOT INTERFACE "-fmacro-prefix-map=${PROJECT_SOURCE_DIR}=.")
+
 if (RIOT_DEVELHELP)
   target_compile_definitions(riot_module_RIOT INTERFACE DEVELHELP)
 endif()
@@ -88,6 +91,9 @@ else() # Assume anything else is GCC/Clang compatible
       #-Wswitch-enum
       #-Wdouble-promotion
       #-Wconversion
+
+      # Convert __FILE__ from an absolute path to a relative path for files in the RIOT repo
+      "-fmacro-prefix-map=${PROJECT_SOURCE_DIR}=."
   )
   if (RIOT_COMPRESS_DEBUG)
     list(APPEND cflags_to_try -gz)

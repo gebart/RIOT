@@ -2,6 +2,7 @@ add_executable(test_pkg_wolfssl main.c)
 target_link_libraries(test_pkg_wolfssl PUBLIC RIOT::RIOT)
 
 riot_target_depends(test_pkg_wolfssl PUBLIC
+    wolfssl
     wolfcrypt
     wolfcrypt-test
     wolfcrypt_sha512

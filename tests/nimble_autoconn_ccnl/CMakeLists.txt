@@ -1,4 +1,4 @@
 add_executable(test_nimble_autoconn_ccnl main.c)
 target_link_libraries(test_nimble_autoconn_ccnl PUBLIC RIOT::RIOT)
-riot_target_depends(test_nimble_autoconn_ccnl PUBLIC shell shell_commands ps gnrc_netdev_default auto_init_gnrc_netif nimble_autoconn_ndnsp)
+riot_target_depends(test_nimble_autoconn_ccnl PUBLIC ccn-lite shell shell_commands ps gnrc_netdev_default auto_init_gnrc_netif nimble_autoconn_ndnsp)
 riot_check_missing_modules(test_nimble_autoconn_ccnl)

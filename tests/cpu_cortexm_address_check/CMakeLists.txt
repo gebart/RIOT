@@ -1,4 +1,4 @@
 add_executable(test_cpu_cortexm_address_check main.c)
 target_link_libraries(test_cpu_cortexm_address_check PUBLIC RIOT::RIOT)
-riot_target_depends(test_cpu_cortexm_address_check PUBLIC shell shell_commands)
+riot_target_depends(test_cpu_cortexm_address_check PUBLIC cpu_check_address shell shell_commands)
 riot_check_missing_modules(test_cpu_cortexm_address_check)

@@ -13,7 +13,8 @@ doc/doxygen/*.tmp
 *bin
 # Build directory
 /build
-build*/
+/build*/
+/cmake-build*/
 # AFL findings
 fuzzing/**/findings/
 # Backup files

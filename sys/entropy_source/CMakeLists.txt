@@ -1,6 +1,8 @@
 add_riot_module(entropy_source entropy_source.c)
 add_riot_module(entropy_source_adc_noise adc_noise/adc_noise.c)
+riot_module_depends(entropy_source_adc_noise entropy_source)
 add_riot_module(entropy_source_zero_entropy zero_entropy/zero_entropy.c)
+riot_module_depends(entropy_source_zero_entropy entropy_source)
 
 # TODO Configuration
 #set(ENTROPY_SOURCE_ZERO_HMIN 58982 CACHE STRING "Estimated entropy per sample (byte)")

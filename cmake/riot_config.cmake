@@ -38,8 +38,13 @@ set(RIOT_LIBC "newlib" CACHE STRING
   "Specifies which libc implementation to use. If unsure, say \"newlib\"")
 set(RIOT_SYSCALLS "${RIOT_LIBC}_syscalls_default" CACHE STRING
   "Select which syscall implementation to use. If unsure, say \"${RIOT_LIBC}_syscalls_default\"")
-set(RIOT_STDIO "stdio_uart" CACHE STRING
-  "Selects which standard input/output module will be used for the default console output (printf etc.) If unsure, say \"stdio_uart\"")
+if (BOARD STREQUAL "native")
+  set(RIOT_STDIO_DEFAULT "stdio_native")
+else()
+  set(RIOT_STDIO_DEFAULT "stdio_uart")
+endif()
+set(RIOT_STDIO "${RIOT_STDIO_DEFAULT}" CACHE STRING
+  "Selects which standard input/output module will be used for the default console output (printf etc.) If unsure, say \"${RIOT_STDIO_DEFAULT}\"")
 set_property(CACHE RIOT_STDIO PROPERTY STRINGS
   "stdio_uart"
   "stdio_null"

@@ -1,1 +1,2 @@
 add_riot_module(test_cpp_exclude_module_exclude module.cpp)
+target_include_directories(riot_module_test_cpp_exclude_module_exclude INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}")

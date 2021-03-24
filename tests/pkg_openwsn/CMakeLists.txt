@@ -1,6 +1,7 @@
 add_executable(test_pkg_openwsn main.c)
 target_link_libraries(test_pkg_openwsn PUBLIC RIOT::RIOT)
 riot_target_depends(test_pkg_openwsn PUBLIC
+    openwsn
     openwsn_openstack
     sock_udp
     sock_async

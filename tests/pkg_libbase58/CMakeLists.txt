@@ -1,4 +1,4 @@
 add_executable(test_pkg_libbase58 main.c)
 target_link_libraries(test_pkg_libbase58 PUBLIC RIOT::RIOT)
-riot_target_depends(test_pkg_libbase58 PUBLIC embunit)
+riot_target_depends(test_pkg_libbase58 PUBLIC libbase58 embunit)
 riot_check_missing_modules(test_pkg_libbase58)

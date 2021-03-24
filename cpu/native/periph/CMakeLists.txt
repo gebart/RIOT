@@ -18,3 +18,5 @@ foreach(submodule IN LISTS submodules)
   add_riot_module(periph_${submodule} ${submodule}.c)
   riot_module_depends(periph_${submodule} periph_common)
 endforeach()
+
+riot_module_depends(periph_rtc xtimer)

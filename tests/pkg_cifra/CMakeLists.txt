@@ -1,4 +1,4 @@
 add_executable(test_pkg_cifra main.c)
 target_link_libraries(test_pkg_cifra PUBLIC RIOT::RIOT)
-riot_target_depends(test_pkg_cifra PUBLIC embunit random)
+riot_target_depends(test_pkg_cifra PUBLIC cifra embunit random)
 riot_check_missing_modules(test_pkg_cifra)

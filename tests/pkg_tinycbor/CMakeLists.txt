@@ -1,4 +1,4 @@
 add_executable(test_pkg_tinycbor main.c)
 target_link_libraries(test_pkg_tinycbor PUBLIC RIOT::RIOT)
-riot_target_depends(test_pkg_tinycbor PUBLIC embunit fmt tinycbor_float)
+riot_target_depends(test_pkg_tinycbor PUBLIC tinycbor embunit fmt tinycbor_float)
 riot_check_missing_modules(test_pkg_tinycbor)

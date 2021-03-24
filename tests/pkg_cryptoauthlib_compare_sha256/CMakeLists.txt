@@ -1,4 +1,4 @@
 add_executable(test_pkg_cryptoauthlib_compare_sha256 main.c)
 target_link_libraries(test_pkg_cryptoauthlib_compare_sha256 PUBLIC RIOT::RIOT)
-riot_target_depends(test_pkg_cryptoauthlib_compare_sha256 PUBLIC hashes)
+riot_target_depends(test_pkg_cryptoauthlib_compare_sha256 PUBLIC cryptoauthlib hashes)
 riot_check_missing_modules(test_pkg_cryptoauthlib_compare_sha256)

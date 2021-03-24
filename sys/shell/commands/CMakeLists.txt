@@ -47,7 +47,7 @@ endforeach()
 
 function(riot_is_module_used_genex genex usemodule)
   string(MAKE_C_IDENTIFIER "${usemodule}" usemodule_id)
-  set(${genex} "$<BOOL:$<TARGET_PROPERTY:INTERFACE_RIOT_USEMODULE_${usemodule_id}>>" PARENT_SCOPE)
+  set(${genex} "$<BOOL:$<TARGET_PROPERTY:INTERFACE_RIOT_MODULE_${usemodule_id}>>" PARENT_SCOPE)
 endfunction()
 
 function(riot_enable_shell_command_if_usemodule shell_command usemodule)

@@ -1,4 +1,0 @@
-add_executable(test_external_board_native main.c)
-target_link_libraries(test_external_board_native PUBLIC RIOT::RIOT)
-riot_target_depends(test_external_board_native PUBLIC )
-riot_check_missing_modules(test_external_board_native)
