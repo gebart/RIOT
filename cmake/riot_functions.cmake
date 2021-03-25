@@ -37,7 +37,6 @@ function(riot_check_missing_modules target_name)
   get_target_property(missing_mods ${target_name} INTERFACE_RIOT_MISSING_MODULES)
   if (missing_mods)
     message(VERBOSE "Excluding ${target_name} because of missing dependencies: ${missing_mods}")
-    set_property(TARGET ${target_name} PROPERTY EXCLUDE_FROM_ALL ON)
     set_property(GLOBAL APPEND PROPERTY RIOT_MISSING_MODULE_TARGETS ${target_name})
   endif()
 endfunction()
@@ -105,6 +104,11 @@ function(riot_internal_propagate_target_properties target_name) # , [dependencie
       # must also bring in the core system dependencies or some USEMODULE
       # checks will fail and we will not get the flags that we expect.
       list(PREPEND dependencies RIOT)
+      get_target_property(exclude_from_all ${target_name} EXCLUDE_FROM_ALL)
+      if (NOT exclude_from_all)
+        # Exclude from all if not all dependencies are satisfied
+        set_property(TARGET ${target_name} PROPERTY EXCLUDE_FROM_ALL $<BOOL:$<TARGET_PROPERTY:INTERFACE_RIOT_MISSING_MODULES>>)
+      endif()
     endif()
   endif()
   list(REMOVE_DUPLICATES dependencies)
