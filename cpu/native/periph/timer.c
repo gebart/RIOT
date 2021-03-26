@@ -120,7 +120,7 @@ static void do_timer_set(tim_t dev, unsigned int offset, bool periodic)
         itv.it_interval = itv.it_value;
     }
 
-    DEBUG("timer_set(): setting %lu.%06lu\n", itv.it_value.tv_sec, itv.it_value.tv_usec);
+    DEBUG("do_timer_set(): setting %ld.%06ld\n", itv.it_value.tv_sec, itv.it_value.tv_usec);
 
     timer_start(dev);
 }
@@ -194,7 +194,7 @@ void timer_stop(tim_t dev)
     }
     _native_syscall_leave();
 
-    DEBUG("time left: %lu.%06lu\n", itv.it_value.tv_sec, itv.it_value.tv_usec);
+    DEBUG("time left: %ld.%06ld\n", itv.it_value.tv_sec, itv.it_value.tv_usec);
 }
 
 unsigned int timer_read(tim_t dev)

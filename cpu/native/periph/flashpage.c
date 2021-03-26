@@ -34,7 +34,7 @@ void flashpage_erase(unsigned page)
 {
     assert(page < FLASHPAGE_NUMOF);
 
-    DEBUG("%p: erase %u bytes\n", flashpage_addr(page), FLASHPAGE_SIZE);
+    DEBUG("%p: erase %u bytes\n", flashpage_addr(page), (unsigned)FLASHPAGE_SIZE);
 
     memset(flashpage_addr(page), FLASHPAGE_ERASE_STATE, FLASHPAGE_SIZE);
 }
