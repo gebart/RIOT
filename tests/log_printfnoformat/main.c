@@ -14,20 +14,21 @@
  *
  */
 
-#include <inttypes.h>
+#include <stdint.h>
 
 #include "log.h"
+
+#define TEST_FORMAT "Logging value %d and string %s"
 
 int main(void)
 {
     uint8_t value = 42;
     const char *string = "test";
-    const char *format = "Logging value %d and string %s";
 
-    LOG_ERROR(format, value, string);
-    LOG_WARNING(format, value, string);
-    LOG_INFO(format, value, string);
-    LOG_DEBUG(format, value, string);
+    LOG_ERROR(TEST_FORMAT, value, string);
+    LOG_WARNING(TEST_FORMAT, value, string);
+    LOG_INFO(TEST_FORMAT, value, string);
+    LOG_DEBUG(TEST_FORMAT, value, string);
 
     return 0;
 }
