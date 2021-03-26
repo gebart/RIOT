@@ -115,7 +115,7 @@ int main(void)
 
     puts("\nTest for peripheral TIMERs\n");
 
-    printf("Available timers: %i\n", TIMER_NUMOF);
+    printf("Available timers: %u\n", (unsigned)TIMER_NUMOF);
 
     /* test all configured timers */
     for (unsigned i = 0; i < TIMER_NUMOF; i++) {
