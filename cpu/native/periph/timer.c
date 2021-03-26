@@ -114,8 +114,8 @@ static void do_timer_set(tim_t dev, unsigned int offset, bool periodic)
     }
 
     memset(&itv, 0, sizeof(itv));
-    itv.it_value.tv_sec = (offset / 1000000);
-    itv.it_value.tv_usec = offset % 1000000;
+    itv.it_value.tv_sec = (offset / 1000000u);
+    itv.it_value.tv_usec = offset % 1000000u;
     if (periodic) {
         itv.it_interval = itv.it_value;
     }
@@ -177,7 +177,7 @@ void timer_start(tim_t dev)
 
     _native_syscall_enter();
     if (real_setitimer(ITIMER_REAL, &itv, NULL) == -1) {
-        err(EXIT_FAILURE, "timer_arm: setitimer");
+        err(EXIT_FAILURE, "timer_start: setitimer");
     }
     _native_syscall_leave();
 }
@@ -190,7 +190,7 @@ void timer_stop(tim_t dev)
     _native_syscall_enter();
     struct itimerval zero = {0};
     if (real_setitimer(ITIMER_REAL, &zero, &itv) == -1) {
-        err(EXIT_FAILURE, "timer_arm: setitimer");
+        err(EXIT_FAILURE, "timer_stop: setitimer");
     }
     _native_syscall_leave();
 
