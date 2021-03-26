@@ -107,7 +107,7 @@ static int cmd_info(int argc, char **argv)
     (void)argc;
     (void)argv;
 
-    printf("Flash start addr:\t0x%08x\n", (int)CPU_FLASH_BASE);
+    printf("Flash start addr:\t%p\n", (const void *)CPU_FLASH_BASE);
 #ifdef FLASHPAGE_SIZE
     printf("Page size:\t\t%i\n", (int)FLASHPAGE_SIZE);
 #else
@@ -116,7 +116,7 @@ static int cmd_info(int argc, char **argv)
     printf("Number of pages:\t%i\n", (int)FLASHPAGE_NUMOF);
 
 #ifdef FLASHPAGE_RWWEE_NUMOF
-    printf("RWWEE Flash start addr:\t0x%08x\n", (int)CPU_FLASH_RWWEE_BASE);
+    printf("RWWEE Flash start addr:\t%p\n", (const void *)CPU_FLASH_RWWEE_BASE);
     printf("RWWEE Number of pages:\t%i\n", (int)FLASHPAGE_RWWEE_NUMOF);
 #endif
 
