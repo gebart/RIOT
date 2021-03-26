@@ -20,3 +20,5 @@ foreach(submodule IN LISTS submodules)
 endforeach()
 
 riot_module_depends(periph_rtc xtimer)
+add_riot_module(periph_flashpage_pagewise)
+riot_module_depends(periph_flashpage_pagewise periph_flashpage)
