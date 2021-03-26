@@ -79,7 +79,7 @@ int main(void)
            " message.\n"
            "On failure, this test prints an error message.\n\n");
 
-    printf("testing periph_timer %u, freq %lu\n", TEST_TIMER_DEV, TEST_TIMER_FREQ);
+    printf("testing periph_timer %u, freq %lu\n", (unsigned)TEST_TIMER_DEV, (unsigned long)TEST_TIMER_FREQ);
     timer_init(TEST_TIMER_DEV, TEST_TIMER_FREQ, cb, thread_get_active());
 
     uint32_t interval = 100;
