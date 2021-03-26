@@ -51,8 +51,10 @@ endfunction()
 function(riot_target_depends target_name link_kind) # , [dependencies]
   message(DEBUG "Adding dependency: ${target_name} -> ${ARGN}")
   riot_internal_propagate_target_properties(${target_name} ${ARGN})
-  list(TRANSFORM ARGN PREPEND "riot_module_")
-  target_link_libraries(${target_name} ${link_kind} ${ARGN})
+  foreach (module_name IN LISTS ARGN)
+    riot_module_target_name_unless_disabled_genex(dependency_name_conditional ${module_name})
+    target_link_libraries(${target_name} ${link_kind} ${dependency_name_conditional})
+  endforeach()
 endfunction()
 
 # Specifying dependencies between modules
@@ -61,6 +63,7 @@ function(riot_module_depends module_name) # , [dependencies]
 endfunction()
 
 # Depend on a module only if it exists at generation time
+# TODO Set USEMODULE for transitive deps of optional deps
 function(riot_target_depends_optional target_name link_kind) # , [dependencies]
   message(VERBOSE "Adding optional dependency: ${target_name} -> ${ARGN}")
   foreach (dependency IN LISTS ARGN)
@@ -80,6 +83,13 @@ endfunction()
 #endfunction()
 
 function(riot_target_module_disable target_name module_name)
+  string(MAKE_C_IDENTIFIER "${module_name}" module_name_id)
+  set_property(TARGET ${target_name} PROPERTY INTERFACE_RIOT_DISABLE_MODULE_${module_name_id} 1)
+endfunction()
+
+function(riot_module_target_name_unless_disabled_genex out_var module_name)
+  string(MAKE_C_IDENTIFIER "${module_name}" module_name_id)
+  set(${out_var} "$<$<NOT:$<BOOL:$<TARGET_PROPERTY:INTERFACE_RIOT_DISABLE_MODULE_${module_name_id}>>>:riot_module_${module_name}>" PARENT_SCOPE)
 endfunction()
 
 # Internal helper method to avoid duplicating the configuration steps
