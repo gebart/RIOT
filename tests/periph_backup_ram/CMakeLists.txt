@@ -1,4 +1,6 @@
 add_executable(test_periph_backup_ram main.c)
 target_link_libraries(test_periph_backup_ram PUBLIC RIOT::RIOT)
-riot_target_depends(test_periph_backup_ram PUBLIC pm_layered periph_rtc xtimer)
+riot_target_depends(test_periph_backup_ram PUBLIC backup_ram pm_layered periph_rtc xtimer)
+# TODO DISABLE_MODULE test_utils_interactive_sync
+target_compile_definitions(test_periph_backup_ram PUBLIC "LOG_LEVEL=LOG_WARNING")
 riot_check_missing_modules(test_periph_backup_ram)

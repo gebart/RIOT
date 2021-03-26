@@ -1,4 +1,4 @@
 add_executable(test_periph_timer_short_relative_set main.c)
 target_link_libraries(test_periph_timer_short_relative_set PUBLIC RIOT::RIOT)
-riot_target_depends(test_periph_timer_short_relative_set PUBLIC core_thread_flags)
+riot_target_depends(test_periph_timer_short_relative_set PUBLIC periph_timer core_thread_flags)
 riot_check_missing_modules(test_periph_timer_short_relative_set)

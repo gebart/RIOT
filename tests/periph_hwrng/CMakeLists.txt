@@ -1,4 +1,4 @@
 add_executable(test_periph_hwrng main.c)
 target_link_libraries(test_periph_hwrng PUBLIC RIOT::RIOT)
-riot_target_depends(test_periph_hwrng PUBLIC xtimer)
+riot_target_depends(test_periph_hwrng PUBLIC periph_hwrng xtimer)
 riot_check_missing_modules(test_periph_hwrng)

@@ -1,4 +1,4 @@
 add_executable(test_periph_timer_periodic main.c)
 target_link_libraries(test_periph_timer_periodic PUBLIC RIOT::RIOT)
-riot_target_depends(test_periph_timer_periodic PUBLIC fmt)
+riot_target_depends(test_periph_timer_periodic PUBLIC periph_timer_periodic fmt)
 riot_check_missing_modules(test_periph_timer_periodic)

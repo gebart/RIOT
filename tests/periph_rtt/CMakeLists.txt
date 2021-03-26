@@ -1,4 +1,6 @@
 add_executable(test_periph_rtt main.c)
 target_link_libraries(test_periph_rtt PUBLIC RIOT::RIOT)
-riot_target_depends(test_periph_rtt PUBLIC )
+# TODO DISABLE_MODULE periph_init_rtt
+riot_target_depends(test_periph_rtt PUBLIC periph_rtt)
+riot_target_depends_optional(test_periph_rtt PUBLIC periph_rtt_set_counter)
 riot_check_missing_modules(test_periph_rtt)

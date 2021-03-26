@@ -1,4 +1,4 @@
 add_executable(test_periph_uart_nonblocking main.c)
 target_link_libraries(test_periph_uart_nonblocking PUBLIC RIOT::RIOT)
-riot_target_depends(test_periph_uart_nonblocking PUBLIC xtimer)
+riot_target_depends(test_periph_uart_nonblocking PUBLIC periph_uart_nonblocking xtimer)
 riot_check_missing_modules(test_periph_uart_nonblocking)

@@ -1,4 +1,5 @@
 add_executable(test_periph_flashpage main.c)
 target_link_libraries(test_periph_flashpage PUBLIC RIOT::RIOT)
-riot_target_depends(test_periph_flashpage PUBLIC od shell)
+riot_target_depends(test_periph_flashpage PUBLIC periph_flashpage od shell)
+riot_target_depends_optional(test_periph_flashpage PUBLIC periph_flashpage_pagewise periph_flashpage_rwee)
 riot_check_missing_modules(test_periph_flashpage)
