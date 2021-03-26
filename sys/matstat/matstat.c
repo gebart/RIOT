@@ -53,7 +53,7 @@ uint64_t matstat_variance(const matstat_state_t *state)
         return 0;
     }
     uint64_t variance = state->sum_sq / (state->count - 1);
-    DEBUG("Var: (%" PRIu64 " / (%" PRId32 " - 1)) = %" PRIu64 "\n",
+    DEBUG("Var: (%" PRIu64 " / (%" PRIu32 " - 1)) = %" PRIu64 "\n",
         state->sum_sq, state->count, variance);
     return variance;
 }
