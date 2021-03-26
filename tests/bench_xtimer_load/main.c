@@ -207,7 +207,7 @@ int main(void)
 
     printf("drift: min=%" PRIi32 " max=%" PRIi32 " final=%" PRIi32 "\n",
            _min_drift, _max_drift, _final_drift);
-    printf("jitter: min=%" PRIi32 " max=%" PRIi32 " abs avg=%" PRIi32 "\n",
+    printf("jitter: min=%" PRIi32 " max=%" PRIi32 " abs avg=%" PRIu32 "\n",
            _min_jitter, _max_jitter, _total_jitter / _samples);
 
     puts("[DONE]");
